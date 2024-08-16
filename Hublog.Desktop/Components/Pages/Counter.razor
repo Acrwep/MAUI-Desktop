@@ -21,49 +21,56 @@
     private bool isOnBreak = false;
     private TimeSpan timeSpan = TimeSpan.Zero;
     private System.Threading.Timer timer;
-    private string buttonText = "Punch in";
+    private string buttonText = "Punch In";
     private string breakButtonText = "Break";
     private int currentType = 0;
 
-    private async Task ToggleTimer()
+    private void ToggleTimer()
     {
         if (isTimerRunning)
         {
-            isTimerRunning = false;
-            timer?.Dispose();
-            timeSpan = TimeSpan.Zero;
-            elapsedTime = "00:00:00";
-            buttonText = "Punch in";
-            isOnBreak = false;
-            breakButtonText = "Break";
-            //currentType = 0;
-
-            if (currentType == 1)
-            {
-                await PunchOut();
-            }
-            else
-            {
-               await ChangeStatus();
-            }
+            StopTimer();
         }
         else
         {
-            isTimerRunning = true;
-            timer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
-            buttonText = "Punch Out";
-            currentType = 1;
-            await PunchIn();
+            StartTimer();
         }
-
-        await InvokeAsync(StateHasChanged);
+        InvokeAsync(StateHasChanged);
     }
 
-    private async Task ChangeStatus()
+    private void StartTimer()
+    {
+        isTimerRunning = true;
+        timer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
+        buttonText = "Punch Out";
+        currentType = 1;
+        PunchIn();
+    }
+
+    private void StopTimer()
+    {
+        isTimerRunning = false;
+        timer?.Dispose();
+        timeSpan = TimeSpan.Zero;
+        elapsedTime = "00:00:00";
+        buttonText = "Punch In";
+        isOnBreak = false;
+        breakButtonText = "Break";
+
+        if (currentType == 1)
+        {
+            PunchOut();
+        }
+        else
+        {
+            ChangeStatus();
+        }
+    }
+
+    private void ChangeStatus()
     {
         if (currentType == 0)
         {
-            timer?.Dispose();
             buttonText = "Punch In";
             breakButtonText = "Break";
         }
@@ -77,8 +84,6 @@
             buttonText = "Punch Out";
             breakButtonText = "Resume";
         }
-
-        await Task.CompletedTask;
     }
 
     private void UpdateTimer(object state)
@@ -91,7 +96,7 @@
         }
     }
 
-    private async Task TakeBreak()
+    private void TakeBreak()
     {
         if (isOnBreak)
         {
@@ -106,42 +111,38 @@
             currentType = 2;
         }
 
-        await ChangeStatus();
-        //await ChangeStatus();
-        await InvokeAsync(StateHasChanged);
+        ChangeStatus();
+        InvokeAsync(StateHasChanged);
     }
 
-    private async Task PunchIn()
+    private async void PunchIn()
     {
         DateTime istTime = GetISTTime();
         var attendanceModels = new List<UserAttendanceModel>
-    {
-        new UserAttendanceModel
         {
-            Id = 0,
-            UserId = MauiProgram.Loginlist.Id,
-            OrganizationId = MauiProgram.Loginlist.OrganizationId,
-            AttendanceDate = istTime.Date,
-            Start_Time = istTime,
-            End_Time = null,
-            Late_Time = null,
-            Total_Time = null,
-            Status = currentType
-        }
-    };
+            new UserAttendanceModel
+            {
+                Id = 0,
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                AttendanceDate = istTime.Date,
+                Start_Time = istTime,
+                End_Time = null,
+                Late_Time = null,
+                Total_Time = null,
+                Status = currentType
+            }
+        };
 
         var json = JsonConvert.SerializeObject(attendanceModels);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
-
         var responseString = await response.Content.ReadAsStringAsync();
 
         if (response.IsSuccessStatusCode)
         {
-            buttonText = "Punch Out";
-            breakButtonText = "Break";
-            timer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
+            // Handle success if needed
         }
         else
         {
@@ -149,30 +150,29 @@
         }
     }
 
-    private async Task PunchOut()
+    private async void PunchOut()
     {
         DateTime istTime = GetISTTime();
         var attendanceModels = new List<UserAttendanceModel>
-    {
-        new UserAttendanceModel
         {
-            Id = 0,
-            UserId = MauiProgram.Loginlist.Id,
-            OrganizationId = MauiProgram.Loginlist.OrganizationId,
-            AttendanceDate = istTime.Date,
-            Start_Time = null,
-            End_Time = istTime,
-            Late_Time = null,
-            Total_Time = null,
-            Status = currentType
-        }
-    };
+            new UserAttendanceModel
+            {
+                Id = 0,
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                AttendanceDate = istTime.Date,
+                Start_Time = null,
+                End_Time = istTime,
+                Late_Time = null,
+                Total_Time = null,
+                Status = currentType
+            }
+        };
 
         var json = JsonConvert.SerializeObject(attendanceModels);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
-
         var responseString = await response.Content.ReadAsStringAsync();
 
         if (response.IsSuccessStatusCode)
@@ -189,7 +189,6 @@
         }
     }
 
-
     private DateTime GetISTTime()
     {
         TimeZoneInfo istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
@@ -198,4 +197,3 @@
         return istTime;
     }
 }
-
