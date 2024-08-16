@@ -44,7 +44,7 @@
             }
             else
             {
-                ChangeStatus();
+               await ChangeStatus();
             }
         }
         else
@@ -56,7 +56,7 @@
             await PunchIn();
         }
 
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task ChangeStatus()
@@ -77,6 +77,8 @@
             buttonText = "Punch Out";
             breakButtonText = "Resume";
         }
+
+        await Task.CompletedTask;
     }
 
     private void UpdateTimer(object state)
@@ -105,8 +107,8 @@
         }
 
         await ChangeStatus();
-        ChangeStatus();
-        InvokeAsync(StateHasChanged);
+        //await ChangeStatus();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task PunchIn()
