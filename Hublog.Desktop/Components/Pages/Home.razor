@@ -64,7 +64,7 @@
 
             if (response.IsSuccessStatusCode)
             {
-                var loginResult = JsonSerializer.Deserialize<loginresult>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var loginResult = JsonSerializer.Deserialize<Loginresult>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (loginResult != null)
                 {
