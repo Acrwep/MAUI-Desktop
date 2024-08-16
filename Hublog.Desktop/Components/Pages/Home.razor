@@ -5,7 +5,12 @@
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 
-<h3>Login</h3>
+<link href="/css/home.css" rel="stylesheet" />
+
+<div class="home_logindiv">
+    <img src="/images/logo-re-3.png" class="home_logo" />
+</div>
+<p class="signin_text">Sign in to your account</p>
 
 <div class="login-container">
     @if (isLoggedIn)
@@ -20,19 +25,19 @@
             <ValidationSummary />
 
             <div class="form-group">
-                <label for="username">Username</label>
-                <InputText id="username" class="form-control" @bind-Value="loginModel.UserName" />
+                <label for="username" class="loginform_labels">Email</label>
+                <InputText id="username" class="form-control signin_emailtextinput" @bind-Value="loginModel.UserName" />
                 <ValidationMessage For="@(() => loginModel.UserName)" />
             </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
+            <div class="form-group" style="margin-top: 12px;">
+                <label for="password" class="loginform_labels">Password</label>
+                <InputText id="password" type="password" class="form-control signin_emailtextinput" @bind-Value="loginModel.Password" />
                 <ValidationMessage For="@(() => loginModel.Password)" />
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="submit" class="login_button">Login</button>
             </div>
         </EditForm>
     }

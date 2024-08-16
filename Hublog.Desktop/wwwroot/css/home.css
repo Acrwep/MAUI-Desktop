@@ -1,0 +1,52 @@
+﻿.login_heading {
+    font-weight:600;
+    font-size: 16px;
+}
+.home_logindiv {
+    display: flex;
+    justify-content: center;
+}
+.home_logo {
+    width: 170px;
+}
+.signin_text {
+    color: #706f6fee;
+    font-weight: 600;
+    margin-top: 3px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size:14px;
+}
+.signin_emailtextinput {
+    height: 36px;
+    background-color: #ffffff;
+    background-image: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #d9d9d9;
+    border-radius: 6px;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 3px;
+}
+.signin_emailtextinput:focus {
+    border-color: #5cb3fd;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.loginform_labels{
+    font-weight:600;
+    font-size:15px;
+}
+.login_button {
+    color: #fff;
+    background-color: #25a17d;
+    box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
+    font-size: 14px;
+    height: 35px;
+    width: 100%;
+    font-weight: 600;
+    border-radius: 6px;
+    margin-top: 22px;
+    border-color: #25a17d;
+    border:none
+}
