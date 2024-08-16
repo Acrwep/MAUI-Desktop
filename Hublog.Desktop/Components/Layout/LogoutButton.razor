@@ -11,21 +11,51 @@
     {
         try
         {
-            var response = await Http.PostAsync($"{MauiProgram.OnlineURL}api/Login/UserLogout", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
+            var currentUser = MauiProgram.Loginlist; 
+
+            if (currentUser == null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No user is currently logged in.");
+                return;
+            }
+
+            var loginModel = new LoginModels
+            {
+                UserName = currentUser.Email, 
+                Password = currentUser.Password  
+            };
+
+            var loginJson = JsonSerializer.Serialize(loginModel);
+
+            var content = new StringContent(loginJson, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await Http.PostAsync($"{MauiProgram.OnlineURL}api/Login/UserLogout", content);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
             if (response.IsSuccessStatusCode)
             {
-                MauiProgram.Loginlist = new Users();
-                MauiProgram.token = "";
-
-                Preferences.Default.Set("UserLoginData", string.Empty);
-
-                Navigation.NavigateTo("/");
+                await LogoutProcessAsync();
             }
             else
             {
-                var responseString = await response.Content.ReadAsStringAsync();
-                var errorResult = JsonSerializer.Deserialize<dynamic>(responseString);
-                var errorMessage = (string)errorResult?.message ?? "Logout failed. Please try again.";
+                var errorMessage = "Logout failed. Please try again.";
+                try
+                {
+                    using (var document = JsonDocument.Parse(responseString))
+                    {
+                        var root = document.RootElement;
+                        if (root.TryGetProperty("message", out var messageProperty))
+                        {
+                            errorMessage = messageProperty.GetString() ?? errorMessage;
+                        }
+                    }
+                }
+                catch
+                {
+                    // Use the default error message if JSON parsing fails
+                }
+
                 await JSRuntime.InvokeVoidAsync("alert", errorMessage);
             }
         }
@@ -33,5 +63,24 @@
         {
             await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
         }
+    }
+
+    private async Task LogoutProcessAsync()
+    {
+        MauiProgram.Loginlist = new Users();
+        MauiProgram.token = "";
+
+        var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "systemdata");
+        var data = JsonSerializer.Serialize(MauiProgram.Loginlist);
+
+        using (var sha256 = System.Security.Cryptography.SHA256.Create())
+        {
+            var saltedPasswordAsBytes = System.Text.Encoding.UTF8.GetBytes(data);
+            var data1 = Convert.ToBase64String(sha256.ComputeHash(saltedPasswordAsBytes));
+
+            await System.IO.File.WriteAllTextAsync(filePath, data1);
+        }
+
+        Navigation.NavigateTo("/");
     }
 }

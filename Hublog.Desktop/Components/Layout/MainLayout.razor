@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
 <div class="page">
     <div class="sidebar">
@@ -8,9 +9,19 @@
     <main>
         <article class="content px-4">
             @Body
-            <LogoutButton />
+
+            @if (!IsHomePage())
+            {
+                <LogoutButton />
+            }
         </article>
     </main>
 </div>
 
-
+@code {
+    private bool IsHomePage()
+    {
+        var currentUrl = Navigation.Uri;
+        return currentUrl.EndsWith("/") || currentUrl.EndsWith("/home");
+    }
+}
