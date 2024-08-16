@@ -8,26 +8,34 @@
 <h3>Login</h3>
 
 <div class="login-container">
-    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    @if (isLoggedIn)
+    {
+        <button @onclick="Logout">Logout</button>
+        <p>Welcome, @loginModel.UserName</p>
+    }
+    else
+    {
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <div class="form-group">
-            <label for="username">Username</label>
-            <InputText id="username" class="form-control" @bind-Value="loginModel.UserName" />
-            <ValidationMessage For="@(() => loginModel.UserName)" />
-        </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <InputText id="username" class="form-control" @bind-Value="loginModel.UserName" />
+                <ValidationMessage For="@(() => loginModel.UserName)" />
+            </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
-            <ValidationMessage For="@(() => loginModel.Password)" />
-        </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
+                <ValidationMessage For="@(() => loginModel.Password)" />
+            </div>
 
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Login</button>
-        </div>
-    </EditForm>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+        </EditForm>
+    }
 </div>
 
 @code {
@@ -44,7 +52,6 @@
 
             var responseString = await response.Content.ReadAsStringAsync();
 
-
             if (response.IsSuccessStatusCode)
             {
                 var loginResult = JsonSerializer.Deserialize<loginresult>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -56,7 +63,6 @@
                     isLoggedIn = true;
 
                     Navigation.NavigateTo("/counter");
-
                 }
             }
             else
@@ -71,4 +77,55 @@
             await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
         }
     }
+
+    private async Task Logout()
+    {
+        var logoutModel = new LoginModels
+            {
+                UserName = loginModel.UserName,
+                Password = loginModel.Password
+            };
+
+        try
+        {
+            var requestContent = JsonContent.Create(logoutModel);
+
+            var response = await Http.PostAsync($"{MauiProgram.OnlineURL}api/Login/UserLogout", requestContent);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                LogoutProcess();
+            }
+            else
+            {
+                var errorResult = JsonSerializer.Deserialize<dynamic>(responseString);
+                var errorMessage = (string)errorResult?.message ?? "Logout failed. Please try again.";
+                await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
+        }
+    }
+
+    private void LogoutProcess()
+    {
+        MauiProgram.Loginlist = new Users();
+        MauiProgram.token = "";
+
+        Navigation.NavigateTo("/");
+
+        try
+        {
+            Preferences.Default.Set("UserLoginData", string.Empty);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error clearing local storage: {ex.Message}");
+        }
+    }
+
 }

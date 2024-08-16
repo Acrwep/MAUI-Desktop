@@ -1,0 +1,37 @@
+@using Hublog.Desktop.Entities
+@using System.Text.Json
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<button @onclick="Logout" class="btn btn-primary">Logout</button>
+
+@code {
+    private async Task Logout()
+    {
+        try
+        {
+            var response = await Http.PostAsync($"{MauiProgram.OnlineURL}api/Login/UserLogout", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
+            if (response.IsSuccessStatusCode)
+            {
+                MauiProgram.Loginlist = new Users();
+                MauiProgram.token = "";
+
+                Preferences.Default.Set("UserLoginData", string.Empty);
+
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                var errorResult = JsonSerializer.Deserialize<dynamic>(responseString);
+                var errorMessage = (string)errorResult?.message ?? "Logout failed. Please try again.";
+                await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
+        }
+    }
+}
