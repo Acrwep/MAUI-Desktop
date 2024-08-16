@@ -1,5 +1,74 @@
 ﻿@page "/"
+@using Hublog.Desktop.Entities
+@using System.Text.Json
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
 
-<h1>Hello, world!</h1>
+<h3>Login</h3>
 
-Welcome to your new app.
+<div class="login-container">
+    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <InputText id="username" class="form-control" @bind-Value="loginModel.UserName" />
+            <ValidationMessage For="@(() => loginModel.UserName)" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
+            <ValidationMessage For="@(() => loginModel.Password)" />
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private LoginModels loginModel = new LoginModels();
+    private bool isLoggedIn = false;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var requestContent = JsonContent.Create(loginModel);
+
+            var response = await Http.PostAsync($"{MauiProgram.OnlineURL}api/Login/UserLogin", requestContent);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                var loginResult = JsonSerializer.Deserialize<loginresult>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (loginResult != null)
+                {
+                    MauiProgram.Loginlist = loginResult.user;
+                    MauiProgram.token = loginResult.token;
+                    isLoggedIn = true;
+
+                    Navigation.NavigateTo("/counter");
+
+                }
+            }
+            else
+            {
+                var errorResult = JsonSerializer.Deserialize<dynamic>(responseString);
+                var errorMessage = (string)errorResult?.message ?? "Login failed. Please try again.";
+                await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
+        }
+    }
+}

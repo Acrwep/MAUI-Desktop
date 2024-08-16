@@ -1,9 +1,15 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Hublog.Desktop.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Hublog.Desktop
 {
     public static class MauiProgram
     {
+        public static string OnlineURL = "https://localhost:7263/";
+
+        public static Users Loginlist = new Users();
+        public static string token = "";
+
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
@@ -15,11 +21,12 @@ namespace Hublog.Desktop
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddHttpClient();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
-#endif
+            #endif
 
             return builder.Build();
         }
