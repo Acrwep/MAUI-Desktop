@@ -5,14 +5,8 @@
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 
-<link href="/css/home.css" rel="stylesheet" />
 
-<div class="home_logindiv">
-    <img src="/images/logo-re-3.png" class="home_logo" />
-</div>
-<p class="signin_text">Sign in to your account</p>
-
-<div class="login-container">
+<div>
     @if (isLoggedIn)
     {
         <button @onclick="Logout">Logout</button>
@@ -20,6 +14,15 @@
     }
     else
     {
+        <div class="login-container">
+            <div>
+            <link href="/css/home.css" rel="stylesheet" />
+
+            <div class="home_logindiv">
+                <img src="/images/logo-re-3.png" class="home_logo" />
+            </div>
+            <p class="signin_text">Sign in to your account</p>
+
         <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
             <DataAnnotationsValidator />
             <ValidationSummary />
@@ -40,6 +43,8 @@
                 <button type="submit" class="login_button">Login</button>
             </div>
         </EditForm>
+            </div>
+        </div>
     }
 </div>
 

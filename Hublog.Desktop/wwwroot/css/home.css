@@ -1,5 +1,13 @@
-﻿.login_heading {
-    font-weight:600;
+﻿.login-container {
+    display: flex;
+    justify-content:center;
+    height: 84vh;
+    width: 100%;
+    flex-direction: column;
+    padding: 0px;
+}
+.login_heading {
+    font-weight: 600;
     font-size: 16px;
 }
 .home_logindiv {
@@ -28,6 +36,7 @@
     transition: all 0.2s;
     width: 100%;
     margin-top: 3px;
+    margin-bottom:14px;
 }
 .signin_emailtextinput:focus {
     border-color: #5cb3fd;
@@ -46,7 +55,10 @@
     width: 100%;
     font-weight: 600;
     border-radius: 6px;
-    margin-top: 22px;
+    margin-top: 12px;
     border-color: #25a17d;
-    border:none
+    border:none;
+}
+.login_button:hover {
+    background-color: #009737;
 }
