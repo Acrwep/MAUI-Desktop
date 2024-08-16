@@ -1,11 +1,14 @@
-﻿namespace Hublog.Desktop
+﻿using System.Runtime.InteropServices;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
+
+namespace Hublog.Desktop
 {
     public partial class App : Application
     {
         public App()
         {
             InitializeComponent();
-
             MainPage = new MainPage();
         }
 

@@ -1,16 +1,199 @@
 ﻿@page "/counter"
+@inject HttpClient HttpClient
+@using Hublog.Desktop.Entities
+@using System.Text
+@using Newtonsoft.Json
 
-<h1>Counter</h1>
+<h1>Timer</h1>
 
-<p role="status">Current count: @currentCount</p>
+<p role="timer">@elapsedTime</p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<button class="btn btn-primary" @onclick="ToggleTimer">@buttonText</button>
+
+@if (isTimerRunning)
+{
+    <button class="btn btn-secondary" @onclick="TakeBreak">@breakButtonText</button>
+}
 
 @code {
-    private int currentCount = 0;
+    private string elapsedTime = "00:00:00";
+    private bool isTimerRunning = false;
+    private bool isOnBreak = false;
+    private TimeSpan timeSpan = TimeSpan.Zero;
+    private System.Threading.Timer timer;
+    private string buttonText = "Punch in";
+    private string breakButtonText = "Break";
+    private int currentType = 0;
 
-    private void IncrementCount()
+    private async Task ToggleTimer()
     {
-        currentCount++;
+        if (isTimerRunning)
+        {
+            isTimerRunning = false;
+            timer?.Dispose();
+            timeSpan = TimeSpan.Zero;
+            elapsedTime = "00:00:00";
+            buttonText = "Punch in";
+            isOnBreak = false;
+            breakButtonText = "Break";
+            //currentType = 0;
+
+            if (currentType == 1)
+            {
+                await PunchOut();
+            }
+            else
+            {
+                ChangeStatus();
+            }
+        }
+        else
+        {
+            isTimerRunning = true;
+            timer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
+            buttonText = "Punch Out";
+            currentType = 1;
+            await PunchIn();
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ChangeStatus()
+    {
+        if (currentType == 0)
+        {
+            timer?.Dispose();
+            buttonText = "Punch In";
+            breakButtonText = "Break";
+        }
+        else if (currentType == 1)
+        {
+            buttonText = "Punch Out";
+            breakButtonText = "Break";
+        }
+        else if (currentType == 2)
+        {
+            buttonText = "Punch Out";
+            breakButtonText = "Resume";
+        }
+    }
+
+    private void UpdateTimer(object state)
+    {
+        if (isTimerRunning)
+        {
+            timeSpan = timeSpan.Add(TimeSpan.FromSeconds(1));
+            elapsedTime = timeSpan.ToString(@"hh\:mm\:ss");
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task TakeBreak()
+    {
+        if (isOnBreak)
+        {
+            isOnBreak = false;
+            breakButtonText = "Break";
+            currentType = 1;
+        }
+        else
+        {
+            isOnBreak = true;
+            breakButtonText = "Resume";
+            currentType = 2;
+        }
+
+        await ChangeStatus();
+        ChangeStatus();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PunchIn()
+    {
+        DateTime istTime = GetISTTime();
+        var attendanceModels = new List<UserAttendanceModel>
+    {
+        new UserAttendanceModel
+        {
+            Id = 0,
+            UserId = MauiProgram.Loginlist.Id,
+            OrganizationId = MauiProgram.Loginlist.OrganizationId,
+            AttendanceDate = istTime.Date,
+            Start_Time = istTime,
+            End_Time = null,
+            Late_Time = null,
+            Total_Time = null,
+            Status = currentType
+        }
+    };
+
+        var json = JsonConvert.SerializeObject(attendanceModels);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
+
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
+        {
+            buttonText = "Punch Out";
+            breakButtonText = "Break";
+            timer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
+        }
+        else
+        {
+            Console.WriteLine($"Error: {responseString}");
+        }
+    }
+
+    private async Task PunchOut()
+    {
+        DateTime istTime = GetISTTime();
+        var attendanceModels = new List<UserAttendanceModel>
+    {
+        new UserAttendanceModel
+        {
+            Id = 0,
+            UserId = MauiProgram.Loginlist.Id,
+            OrganizationId = MauiProgram.Loginlist.OrganizationId,
+            AttendanceDate = istTime.Date,
+            Start_Time = null,
+            End_Time = istTime,
+            Late_Time = null,
+            Total_Time = null,
+            Status = currentType
+        }
+    };
+
+        var json = JsonConvert.SerializeObject(attendanceModels);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
+
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
+        {
+            currentType = 0;
+            buttonText = "Punch In";
+            breakButtonText = "Break";
+            isOnBreak = false;
+            timer?.Dispose();
+        }
+        else
+        {
+            Console.WriteLine($"Error: {responseString}");
+        }
+    }
+
+
+    private DateTime GetISTTime()
+    {
+        TimeZoneInfo istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+        DateTime utcTime = DateTime.UtcNow;
+        DateTime istTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, istTimeZone);
+        return istTime;
     }
 }
+
