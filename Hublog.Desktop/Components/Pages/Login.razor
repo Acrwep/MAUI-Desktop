@@ -69,6 +69,17 @@
                 {
                     MauiProgram.Loginlist = loginResult.user;
                     MauiProgram.token = loginResult.token;
+
+                    var claims = new Dictionary<string, string>
+                {
+                    { "First_Name", loginResult.user.First_Name },
+                    { "Last_Name", loginResult.user.Last_Name },
+                    { "Email", loginResult.user.Email }
+                };
+
+                    var claimsJson = JsonSerializer.Serialize(claims);
+                    Preferences.Default.Set("Claim", claimsJson);
+
                     isLoggedIn = true;
 
                     Navigation.NavigateTo("/Dashboard");
@@ -87,6 +98,7 @@
             //await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
         }
     }
+
 
     private async Task Logout()
     {

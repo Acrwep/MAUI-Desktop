@@ -2,20 +2,20 @@
 @inject HttpClient HttpClient
 @using Hublog.Desktop.Entities
 @using System.Text
-@using Newtonsoft.Json;
+@using Newtonsoft.Json
 <link href="/css/dashboard.css" rel="stylesheet" />
 
 <div class="dashboard_mainContainer">
     <div class="row g-1">
         <div class="col-4">
             <div class="dashboard_nameContainer">
-                <p class="dashboard_initialtext">UA</p>
+                <p class="dashboard_initialtext">@initials</p>
             </div>
         </div>
         <div class="col-8">
             <div class="dashboard_nameandemailContainer">
-                <p style="margin:0; margin-bottom:4px; font-weight:600;">User A</p>
-                <p style="font-weight:600;">user@hublog.com</p>
+                <p style="margin:0; margin-bottom:4px; font-weight:600;">@firstName @lastName</p>
+                <p style="font-weight:600;">@userEmail</p>
             </div>
         </div>
     </div>
@@ -24,7 +24,7 @@
         <p class="dashboard_timer">@elapsedTime</p>
 
         <div style="position:relative;">
-            @if (@buttonText == "Punch In")
+            @if (buttonText == "Punch In")
             {
                 <div class="punchin_NonbuttonContainer" />
                 <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> In</button>
@@ -34,7 +34,6 @@
                 <div class="punchin_buttonContainer" />
                 <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> Out</button>
             }
-
         </div>
     </div>
 
@@ -51,7 +50,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 @code {
@@ -68,6 +66,42 @@
     private string lastName;
     private string userEmail;
     private string initials;
+
+    protected override void OnInitialized()
+    {
+        var claimsJson = Preferences.Default.Get("Claim", string.Empty);
+        if (!string.IsNullOrEmpty(claimsJson))
+        {
+            try
+            {
+                var claims = JsonConvert.DeserializeObject<Dictionary<string, string>>(claimsJson);
+                if (claims != null)
+                {
+                    firstName = claims.ContainsKey("First_Name") ? claims["First_Name"] : "N/A";
+                    lastName = claims.ContainsKey("Last_Name") ? claims["Last_Name"] : "N/A";
+                    userEmail = claims.ContainsKey("Email") ? claims["Email"] : "N/A";
+                    initials = GetInitials(firstName, lastName);
+                }
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Error deserializing claims: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("No claims found in Preferences.");
+        }
+    }
+
+
+    private string GetInitials(string firstName, string lastName)
+    {
+        if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+            return "N/A";
+
+        return $"{firstName?[0]}{lastName?[0]}".ToUpper();
+    }
 
     private void ToggleTimer()
     {
@@ -205,20 +239,20 @@
 
         DateTime istTime = GetISTTime();
         var attendanceModels = new List<UserAttendanceModel>
-    {
-        new UserAttendanceModel
         {
-            Id = 0,
-            UserId = MauiProgram.Loginlist.Id,
-            OrganizationId = MauiProgram.Loginlist.OrganizationId,
-            AttendanceDate = istTime.Date,
-            Start_Time = null,
-            End_Time = istTime,
-            Late_Time = null,
-            Total_Time = null,
-            Status = currentType
-        }
-    };
+            new UserAttendanceModel
+            {
+                Id = 0,
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                AttendanceDate = istTime.Date,
+                Start_Time = null,
+                End_Time = istTime,
+                Late_Time = null,
+                Total_Time = null,
+                Status = currentType
+            }
+        };
 
         var json = JsonConvert.SerializeObject(attendanceModels);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -240,35 +274,10 @@
         }
     }
 
-    private string GetInitials(string firstName, string lastName)
-    {
-        if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
-            return "N/A";
-
-        return $"{firstName?[0]}{lastName?[0]}".ToUpper();
-    }
-
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-
-        var token = Preferences.Default.Get("UserToken", string.Empty);
-        var claimsJson = Preferences.Default.Get("UserClaims", string.Empty);
-        if (!string.IsNullOrEmpty(claimsJson))
-        {
-            var claims = JsonConvert.DeserializeObject<Dictionary<string, string>>(claimsJson);
-            firstName = claims.GetValueOrDefault("first_name", "N/A");
-            lastName = claims.GetValueOrDefault("last_name", "N/A");
-            userEmail = claims.GetValueOrDefault("email", "N/A");
-            initials = GetInitials(firstName, lastName);
-        }
-    }
-
     private DateTime GetISTTime()
     {
-        TimeZoneInfo istTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
-        DateTime utcTime = DateTime.UtcNow;
-        DateTime istTime = TimeZoneInfo.ConvertTimeFromUtc(utcTime, istTimeZone);
-        return istTime;
+        var utcNow = DateTime.UtcNow;
+        var istOffset = TimeSpan.FromHours(5.5);
+        return utcNow + istOffset;
     }
 }
