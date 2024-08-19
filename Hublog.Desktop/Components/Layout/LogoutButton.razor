@@ -3,8 +3,11 @@
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
+<link href="/css/dashboard.css" rel="stylesheet" />
 
-<button @onclick="Logout" class="btn btn-primary">Logout</button>
+<button @onclick="Logout" class="logout_button">
+    <img src="/images/log-out.svg" class="logout_image" />
+</button>
 
 @code {
     private async Task Logout()
