@@ -2,20 +2,20 @@
 @inject HttpClient HttpClient
 @using Hublog.Desktop.Entities
 @using System.Text
-@using Newtonsoft.Json
+@using Newtonsoft.Json;
 <link href="/css/dashboard.css" rel="stylesheet" />
 
 <div class="dashboard_mainContainer">
     <div class="row g-1">
         <div class="col-4">
             <div class="dashboard_nameContainer">
-                <p class="dashboard_initialtext">BR</p>
+                <p class="dashboard_initialtext">UA</p>
             </div>
         </div>
         <div class="col-8">
             <div class="dashboard_nameandemailContainer">
-                <p style="margin:0; margin-bottom:4px; font-weight:600;">Balaji R</p>
-                <p style="font-weight:600;">balaji@gmail.com</p>
+                <p style="margin:0; margin-bottom:4px; font-weight:600;">User A</p>
+                <p style="font-weight:600;">user@hublog.com</p>
             </div>
         </div>
     </div>
@@ -29,11 +29,12 @@
                 <div class="punchin_NonbuttonContainer" />
                 <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> In</button>
             }
-            else{
+            else
+            {
                 <div class="punchin_buttonContainer" />
                 <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> Out</button>
             }
-            
+
         </div>
     </div>
 
@@ -53,17 +54,6 @@
 
 </div>
 
-@* <h1>Timer</h1>
-
-<p role="timer">@elapsedTime</p>
-
-<button class="btn btn-primary" @onclick="ToggleTimer">@buttonText</button>
-
-@if (isTimerRunning)
-{
-    <button class="btn btn-secondary" @onclick="TakeBreak">@breakButtonText</button>
-}
- *@
 @code {
     private string elapsedTime = "00:00:00";
     private bool isTimerRunning = false;
@@ -73,6 +63,11 @@
     private string buttonText = "Punch In";
     private string breakButtonText = "Break";
     private int currentType = 0;
+
+    private string firstName;
+    private string lastName;
+    private string userEmail;
+    private string initials;
 
     private void ToggleTimer()
     {
@@ -242,6 +237,30 @@
         else
         {
             Console.WriteLine($"Error: {responseString}");
+        }
+    }
+
+    private string GetInitials(string firstName, string lastName)
+    {
+        if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+            return "N/A";
+
+        return $"{firstName?[0]}{lastName?[0]}".ToUpper();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        var token = Preferences.Default.Get("UserToken", string.Empty);
+        var claimsJson = Preferences.Default.Get("UserClaims", string.Empty);
+        if (!string.IsNullOrEmpty(claimsJson))
+        {
+            var claims = JsonConvert.DeserializeObject<Dictionary<string, string>>(claimsJson);
+            firstName = claims.GetValueOrDefault("first_name", "N/A");
+            lastName = claims.GetValueOrDefault("last_name", "N/A");
+            userEmail = claims.GetValueOrDefault("email", "N/A");
+            initials = GetInitials(firstName, lastName);
         }
     }
 

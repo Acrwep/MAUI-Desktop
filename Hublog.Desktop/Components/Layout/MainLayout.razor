@@ -2,16 +2,16 @@
 @inject NavigationManager Navigation
 
 <div class="page">
-  @*    <div class="sidebar">
-        <NavMenu />
+    @*    <div class="sidebar">
+    <NavMenu />
     </div>  *@
 
-            @Body
+    @Body
 
-            @if (!IsHomePage())
-            {
-                <LogoutButton />
-            }
+    @if (!IsHomePage())
+    {
+        <LogoutButton />
+    }
 </div>
 
 @code {
