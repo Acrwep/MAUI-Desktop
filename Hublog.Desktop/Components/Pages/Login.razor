@@ -1,10 +1,10 @@
-﻿@page "/"
+﻿@page "/counter"
 @using Hublog.Desktop.Entities
 @using System.Text.Json
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
-
+<link href="/css/home.css" rel="stylesheet" />
 
 <div>
     @if (isLoggedIn)
@@ -16,7 +16,6 @@
     {
         <div class="login-container">
             <div class="login_formcontainer">
-                <link href="/css/home.css" rel="stylesheet" />
 
                 <div class="home_logindiv">
                     <img src="/images/logo-re-3.png" class="home_logo" />

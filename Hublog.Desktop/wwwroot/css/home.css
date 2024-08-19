@@ -1,7 +1,6 @@
 ﻿html, body {
     background: linear-gradient(#73c8f7, #63f097);
-    padding: 0;
-    margin: 0;
+    margin: 0px 9px;
     overflow: hidden;
 }
 .login-container {

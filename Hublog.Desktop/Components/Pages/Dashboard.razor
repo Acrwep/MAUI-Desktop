@@ -3,8 +3,49 @@
 @using Hublog.Desktop.Entities
 @using System.Text
 @using Newtonsoft.Json
+<link href="/css/count.css" rel="stylesheet" />
 
-<h1>Timer</h1>
+<div class="dashboard_mainContainer">
+    <div class="row g-1">
+        <div class="col-4">
+           <div class="dashboard_nameContainer">
+               <p class="dashboard_initialtext">BR</p>
+           </div>
+        </div>
+        <div class="col-8">
+            <div class="dashboard_nameandemailContainer">
+                <p style="margin:0; margin-bottom:4px; font-weight:600;">Balaji R</p>
+                <p style="font-weight:600;">balaji@gmail.com</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard_timerContainer">
+        <p class="dashboard_timer">07:14:07</p>
+
+        <div style="position:relative;">
+            <div class="punchin_buttonContainer" />
+            <button class="punchin_button">Punch <br /> In</button>
+        </div>
+    </div>
+
+    <div class="logoutrow_container">
+          <div class="row g-1">
+            <div class="col-6">
+            <button class="opendashboard_button">Open Dashboard</button>
+        </div>
+            <div class="col-6">
+                <div class="logout_container">
+            <img src="/images/logout.png" class="logout_image" />
+            <p class="logout_text">Logout</p>
+                </div>
+        </div>
+    </div>
+    </div>
+  
+</div>
+
+@* <h1>Timer</h1>
 
 <p role="timer">@elapsedTime</p>
 
@@ -14,7 +55,7 @@
 {
     <button class="btn btn-secondary" @onclick="TakeBreak">@breakButtonText</button>
 }
-
+ *@
 @code {
     private string elapsedTime = "00:00:00";
     private bool isTimerRunning = false;
