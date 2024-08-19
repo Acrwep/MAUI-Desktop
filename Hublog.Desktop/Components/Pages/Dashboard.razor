@@ -1,4 +1,4 @@
-﻿@page "/dashboard"
+﻿﻿@page "/dashboard"
 @inject HttpClient HttpClient
 @using Hublog.Desktop.Entities
 @using System.Text
@@ -6,7 +6,7 @@
 <link href="/css/dashboard.css" rel="stylesheet" />
 
 <div class="dashboard_mainContainer">
-    <div class="row g-0">
+ @*    <div class="row g-0">
         <div class="col-4">
             <div class="dashboard_nameContainer">
                 <p class="dashboard_initialtext">@initials</p>
@@ -18,6 +18,16 @@
                 <p style="font-weight:600;">@userEmail</p>
             </div>
         </div>
+    </div> *@
+
+    <div class="dashboard_headerContainer">
+        <div class="dashboard_profileContainer">
+          <img src="/images/user.png" style="width:100%" />
+        </div>
+    </div>
+    <div class="dashboard_namesContainer">
+        <p class="dashboard_fullname">@firstName @lastName</p>
+        <p class="dashboard_email">@userEmail</p>
     </div>
 
     <div class="dashboard_timerContainer">
@@ -32,7 +42,7 @@
             else
             {
                 <div class="punchin_buttonContainer" />
-                <button class="punchout_button" @onclick="ToggleTimer"> Punch <br /> Out</button>
+                <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> Out</button>
             }
         </div>
         @if (buttonText == "Punch Out")
