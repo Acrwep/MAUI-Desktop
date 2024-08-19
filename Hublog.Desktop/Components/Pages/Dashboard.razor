@@ -8,9 +8,9 @@
 <div class="dashboard_mainContainer">
     <div class="row g-1">
         <div class="col-4">
-           <div class="dashboard_nameContainer">
-               <p class="dashboard_initialtext">BR</p>
-           </div>
+            <div class="dashboard_nameContainer">
+                <p class="dashboard_initialtext">BR</p>
+            </div>
         </div>
         <div class="col-8">
             <div class="dashboard_nameandemailContainer">
@@ -21,28 +21,36 @@
     </div>
 
     <div class="dashboard_timerContainer">
-        <p class="dashboard_timer">07:14:07</p>
+        <p class="dashboard_timer">@elapsedTime</p>
 
         <div style="position:relative;">
-            <div class="punchin_buttonContainer" />
-            <button class="punchin_button">Punch <br /> In</button>
+            @if (@buttonText == "Punch In")
+            {
+                <div class="punchin_NonbuttonContainer" />
+                <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> In</button>
+            }
+            else{
+                <div class="punchin_buttonContainer" />
+                <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> Out</button>
+            }
+            
         </div>
     </div>
 
     <div class="logoutrow_container">
-          <div class="row g-1">
+        <div class="row g-1">
             <div class="col-6">
-            <button class="opendashboard_button">Open Dashboard</button>
-        </div>
+                <button class="opendashboard_button">Open Dashboard</button>
+            </div>
             <div class="col-6">
                 <div class="logout_container">
-            <img src="/images/logout.png" class="logout_image" />
-            <p class="logout_text">Logout</p>
+                    <img src="/images/logout.png" class="logout_image" />
+                    <p class="logout_text">Logout</p>
                 </div>
+            </div>
         </div>
     </div>
-    </div>
-  
+
 </div>
 
 @* <h1>Timer</h1>
@@ -71,6 +79,7 @@
         if (isTimerRunning)
         {
             StopTimer();
+            buttonText = "Punch In";
         }
         else
         {
@@ -98,7 +107,7 @@
         isOnBreak = false;
         breakButtonText = "Break";
 
-        if (currentType == 1 || currentType == 2) 
+        if (currentType == 1 || currentType == 2)
         {
             PunchOut();
         }

@@ -63,6 +63,19 @@ html, body {
         transform: rotate(360deg);
     }
 }
+
+.punchin_NonbuttonContainer {
+    border-radius: 50%;
+    border: 2px solid #d9d9d9;
+    padding: 16px;
+    background: radial-gradient(circle at top right, rgba(0,126,239,0.76) 30%, transparent 40%), radial-gradient(circle at bottom left, rgba(0,126,239,0.76) 30%, transparent 40%), white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 162px;
+    width: 162px;
+}
+
 .punchin_button {
     color: #fff;
     background-color: #009737;
@@ -74,9 +87,9 @@ html, body {
     border-radius: 50%;
     border-color: rgba(0,151,55,0.82);
     border: none;
-    position:absolute;
-    top:10%;
-    right:14px;
+    position: absolute;
+    top: 10%;
+    right: 14px;
 }
 .punchin_button:hover {
     opacity:0.9;
