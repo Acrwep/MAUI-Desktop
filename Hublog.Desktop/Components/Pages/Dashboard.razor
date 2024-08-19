@@ -1,4 +1,4 @@
-﻿@page "/counter"
+﻿@page "/Dashboard"
 @inject HttpClient HttpClient
 @using Hublog.Desktop.Entities
 @using System.Text
@@ -53,11 +53,11 @@
         timer?.Dispose();
         timeSpan = TimeSpan.Zero;
         elapsedTime = "00:00:00";
-        buttonText = "Punch In";
+
         isOnBreak = false;
         breakButtonText = "Break";
 
-        if (currentType == 1)
+        if (currentType == 1 || currentType == 2) 
         {
             PunchOut();
         }
@@ -152,22 +152,28 @@
 
     private async void PunchOut()
     {
+        if (currentType == 2)
+        {
+            isOnBreak = false;
+            currentType = 1;
+        }
+
         DateTime istTime = GetISTTime();
         var attendanceModels = new List<UserAttendanceModel>
+    {
+        new UserAttendanceModel
         {
-            new UserAttendanceModel
-            {
-                Id = 0,
-                UserId = MauiProgram.Loginlist.Id,
-                OrganizationId = MauiProgram.Loginlist.OrganizationId,
-                AttendanceDate = istTime.Date,
-                Start_Time = null,
-                End_Time = istTime,
-                Late_Time = null,
-                Total_Time = null,
-                Status = currentType
-            }
-        };
+            Id = 0,
+            UserId = MauiProgram.Loginlist.Id,
+            OrganizationId = MauiProgram.Loginlist.OrganizationId,
+            AttendanceDate = istTime.Date,
+            Start_Time = null,
+            End_Time = istTime,
+            Late_Time = null,
+            Total_Time = null,
+            Status = currentType
+        }
+    };
 
         var json = JsonConvert.SerializeObject(attendanceModels);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
