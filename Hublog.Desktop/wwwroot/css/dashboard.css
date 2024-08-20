@@ -6,27 +6,34 @@ html, body {
     position: relative;
     height: 100vh;
     overflow: hidden;
+    /*background:#000000;*/
 }
 .dashboard_headerContainer {
     background: linear-gradient(#73c8f7, #63f097);
-    height: 109px;
+    height: 150px;
     position: relative;
+}
+.dashboard_waveimage {
+    position: absolute;
+    width:100%;
+    height:510px;
+    top:0%;
 }
 .dashboard_profileContainer {
     position: absolute;
-    top: 50%;
+    top: 38%;
     right: 38%;
     border-radius: 50%;
     height: 90px;
     width: 90px;
     background-color: #25a17d;
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-weight:600;
-    font-size:36px;
-    letter-spacing:2px;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 36px;
+    letter-spacing: 2px;
 }
 .initial_text{
     margin-top:14px;
@@ -36,7 +43,7 @@ html, body {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    margin-top: 52px;
+    margin-top: 16px;
 }
 .dashboard_nameContainer {
     background-color: #8C9090;
@@ -56,7 +63,7 @@ html, body {
     color:gray;
     font-weight:500;
     margin:0 !important;
-    margin-bottom:10px !important;
+    margin-bottom:4px !important;
 }
 .dashboard_initialtext {
     font-size: 70px;

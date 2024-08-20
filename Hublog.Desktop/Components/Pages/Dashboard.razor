@@ -1,4 +1,4 @@
-﻿@page "/dashboard"
+﻿@page "/dashborad"
 @inject HttpClient HttpClient
 @using Hublog.Desktop.Entities
 @using System.Text
@@ -7,11 +7,12 @@
 
 <div class="dashboard_mainContainer">
     <div class="dashboard_headerContainer">
+            <img src="/images/wave.png" class="dashboard_waveimage" />
         <div class="dashboard_profileContainer">
-@*           <img src="/images/user.png" style="width:100%" />*@
             <p class="initial_text">@initials</p>
     </div>
     </div>
+
     <div class="dashboard_namesContainer">
         <p class="dashboard_fullname">@firstName @lastName</p>
         <p class="dashboard_email">@userEmail</p>
