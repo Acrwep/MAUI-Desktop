@@ -9,7 +9,7 @@ html, body {
 }
 .dashboard_headerContainer {
     background: linear-gradient(#73c8f7, #63f097);
-    height: 90px;
+    height: 109px;
     position: relative;
 }
 .dashboard_profileContainer {
@@ -36,7 +36,7 @@ html, body {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    margin-top: 60px;
+    margin-top: 52px;
 }
 .dashboard_nameContainer {
     background-color: #8C9090;
