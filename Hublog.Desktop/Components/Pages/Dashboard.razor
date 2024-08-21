@@ -2,7 +2,17 @@
 @inject HttpClient HttpClient
 @using Hublog.Desktop.Entities
 @using System.Text
+@using Microsoft.Maui.Controls.Shapes
 @using Newtonsoft.Json
+@using System.Net.Http.Headers
+@using System.IO
+@using System.Drawing
+@using System.Drawing.Imaging
+@using System.Threading.Tasks
+@using System.Threading
+@using Microsoft.AspNetCore.Components
+@using System.Net.Http
+
 <link href="/css/dashboard.css" rel="stylesheet" />
 
 <div class="dashboard_mainContainer">
@@ -49,7 +59,7 @@
             <div class="col-7">
                 <div class="lastsync_container">
                     <img src="/images/refresh-cw.svg" class="lastsync_image" />
-                    <p class="lastsync_text">@lastSyncText</p>
+                    <p class="lastsync_text">last sync 0 min ago</p>
                     <Hublog.Desktop.Components.Layout.LogoutButton />
                 </div>
             </div>
@@ -62,7 +72,10 @@
     private bool isTimerRunning = false;
     private bool isOnBreak = false;
     private TimeSpan timeSpan = TimeSpan.Zero;
-    private System.Threading.Timer timer;
+    
+    private System.Threading.Timer punchInTimer;
+    private System.Threading.Timer screenshotTimer;
+
     private string buttonText = "Punch In";
     private string breakButtonText = "Break";
     private int currentType = 0;
@@ -72,9 +85,12 @@
     private string userEmail;
     private string initials;
 
-    private DateTime lastSyncTime;
-    private string lastSyncText = "Last sync 0 mins ago";
-    private System.Threading.Timer syncTimer;
+    private TimeSpan screenshotInterval = TimeSpan.FromSeconds(20); 
+    private bool isTimerActive = false;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
 
     protected override void OnInitialized()
     {
@@ -101,12 +117,7 @@
         {
             Console.WriteLine("No claims found in Preferences.");
         }
-
-        // Initialize last sync timer
-        lastSyncTime = DateTime.Now;
-        StartSyncTimer();
     }
-
 
     private string GetInitials(string firstName, string lastName)
     {
@@ -133,16 +144,17 @@
     private void StartTimer()
     {
         isTimerRunning = true;
-        timer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
+        punchInTimer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
         buttonText = "Punch Out";
         currentType = 1;
         PunchIn();
+        StartScreenshotTimer();
     }
 
     private void StopTimer()
     {
         isTimerRunning = false;
-        timer?.Dispose();
+        punchInTimer?.Dispose();
         timeSpan = TimeSpan.Zero;
         elapsedTime = "00:00:00";
 
@@ -152,10 +164,82 @@
         if (currentType == 1 || currentType == 2)
         {
             PunchOut();
+            StopScreenshotTimer();
         }
         else
         {
             ChangeStatus();
+        }
+    }
+
+    private void StartScreenshotTimer()
+    {
+        if (isTimerActive)
+        {
+            return;
+        }
+
+        screenshotTimer = new System.Threading.Timer(async _ =>
+        {
+            await CaptureAndUploadScreenshot();
+        }, null, TimeSpan.Zero, screenshotInterval);
+
+        isTimerActive = true;
+    }
+
+    private void StopScreenshotTimer()
+    {
+        screenshotTimer?.Dispose();
+        isTimerActive = false;
+    }
+
+    private async Task CaptureAndUploadScreenshot()
+    {
+        try
+        {
+            var base64Screenshot = await JSRuntime.InvokeAsync<string>("captureScreenshot");
+            var imageData = Convert.FromBase64String(base64Screenshot.Split(',')[1]);
+
+            await UploadScreenshot(imageData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Screenshot Error: {ex.Message}");
+        }
+    }
+
+    private async Task UploadScreenshot(byte[] imageData)
+    {
+        string filename = DateTime.Now.ToString("yyyyMMddHHmmss") + ".jpg";
+        string URL = MauiProgram.OnlineURL + "api/Users/UploadFile";
+
+        using (var client = new HttpClient())
+        {
+            client.BaseAddress = new Uri(URL);
+            client.Timeout = TimeSpan.FromMinutes(30);
+            client.DefaultRequestHeaders.Add("UId", MauiProgram.Loginlist.Id.ToString());
+            client.DefaultRequestHeaders.Add("OId", MauiProgram.Loginlist.OrganizationId.ToString());
+            client.DefaultRequestHeaders.Add("SDate", DateTime.Now.ToString());
+            client.DefaultRequestHeaders.Add("SType", "ScreenShots");
+            client.DefaultRequestHeaders.Add("Authorization", MauiProgram.token);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var content = new MultipartFormDataContent();
+            var imageContent = new ByteArrayContent(imageData);
+            imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            content.Add(imageContent, "file", filename);
+
+            HttpResponseMessage response = await client.PostAsync(URL, content);
+            string responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Screenshot uploaded successfully at {DateTime.Now}");
+            }
+            else
+            {
+                Console.WriteLine($"Upload Error: {response.StatusCode}, Details: {responseString}");
+            }
         }
     }
 
@@ -279,7 +363,7 @@
             buttonText = "Punch In";
             breakButtonText = "Break";
             isOnBreak = false;
-            timer?.Dispose();
+            punchInTimer?.Dispose();
         }
         else
         {
@@ -293,17 +377,5 @@
         var istOffset = TimeSpan.FromHours(5.5);
         return utcNow.Add(istOffset);
 
-    }
-
-    private void StartSyncTimer()
-    {
-        syncTimer = new System.Threading.Timer(UpdateSyncTime, null, 0, 5000 * 60);
-    }
-
-    private void UpdateSyncTime(object state)
-    {
-        var timeDifference = DateTime.Now - lastSyncTime;
-        lastSyncText = $"Last sync {timeDifference.Minutes} mins ago";
-        InvokeAsync(StateHasChanged);
     }
 }

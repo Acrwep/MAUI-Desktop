@@ -28,7 +28,7 @@ namespace Hublog.Desktop
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
-            #endif
+#endif
 
             return builder.Build();
         }
