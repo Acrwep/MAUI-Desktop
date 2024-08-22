@@ -29,7 +29,11 @@
     <script src="js/screenshot.js"></script>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
-
+    <script>
+        function openNewWindow(url, width, height) {
+            window.open(url, '_blank', `width=${width},height=${height},scrollbars=yes,resizable=yes`);
+        }
+    </script>
 </body>
 
 </html>

@@ -63,7 +63,6 @@ html, body {
     color:gray;
     font-weight:500;
     margin:0 !important;
-    margin-bottom:4px !important;
 }
 .dashboard_initialtext {
     font-size: 70px;
@@ -84,6 +83,7 @@ html, body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    margin-top:12px;
 }
 .dashboard_timer {
     font-size: 42px;
@@ -95,7 +95,6 @@ html, body {
 .punchin_buttonContainer {
     border-radius: 50%;
     border: 2px solid #d9d9d9;
-    padding: 16px;
     background: radial-gradient(circle at top right, #ABB3B3 30%, transparent 40%), radial-gradient(circle at bottom left, #ABB3B3 30%, transparent 40%), white;
     animation: rotate 40s linear infinite; /* Apply the rotation animation */
     display: flex;
@@ -117,7 +116,6 @@ html, body {
 .punchin_NonbuttonContainer {
     border-radius: 50%;
     border: 2px solid #d9d9d9;
-    padding: 16px;
     background: radial-gradient(circle at top right, #ABB3B3 30%, transparent 40%), radial-gradient(circle at bottom left, #ABB3B3 30%, transparent 40%), white;
     display: flex;
     justify-content: center;
@@ -148,6 +146,10 @@ html, body {
     transform: scale(0.9);
     box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
 }
+.break_buttonContainer{
+    margin-top:20px;
+    position:relative;
+}
 .break_button {
     color: #fff;
     background-color: #25a17d;
@@ -162,37 +164,13 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top:15px
+    cursor: pointer;
 }
 .break_button:hover {
     background-color: #009737;
 }
 
 .break_button:active {
-    transform: scale(0.9);
-    box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
-}
-.punchout_button {
-    color: #fff;
-    background-color: #ff4d4f;
-    box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
-    font-size: 22px;
-    height: 132px;
-    width: 132px;
-    font-weight: 700;
-    border-radius: 50%;
-    border-color: #ff4d4f;
-    border: none;
-    position: absolute;
-    top: 10%;
-    right: 14px;
-}
-
-.punchout_button:hover {
-    opacity:0.9;
-}
-
-.punchout_button:active {
     transform: scale(0.9);
     box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
 }

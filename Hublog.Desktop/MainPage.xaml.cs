@@ -1,4 +1,6 @@
-﻿namespace Hublog.Desktop
+﻿using Hublog.Desktop.Components.Pages;
+
+namespace Hublog.Desktop
 {
     public partial class MainPage : ContentPage
     {

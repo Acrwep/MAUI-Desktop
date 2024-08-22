@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Hublog.Desktop.Components.Pages;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 
@@ -19,7 +20,7 @@ namespace Hublog.Desktop
             if (DeviceInfo.Idiom == DeviceIdiom.Desktop)
             {
                 window.Width = 390;
-                window.Height = 640;
+                window.Height = 670;
             }
 
             return window;

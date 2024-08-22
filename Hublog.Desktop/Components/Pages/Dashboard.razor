@@ -47,7 +47,9 @@
         </div>
         @if (buttonText == "Punch Out")
         {
-            <button class="break_button" @onclick="TakeBreak">@breakButtonText</button>
+            <div class="break_buttonContainer">
+                <button class="break_button" @onclick="TakeBreak">@breakButtonText</button>
+            </div>
         }
     </div>
 
