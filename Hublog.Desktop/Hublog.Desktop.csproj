@@ -82,10 +82,4 @@
       <Folder Include="wwwroot\Images\" />
     </ItemGroup>
 
-    <ItemGroup>
-      <MauiXaml Update="Components\Pages\NewPage1.xaml">
-        <Generator>MSBuild:Compile</Generator>
-      </MauiXaml>
-    </ItemGroup>
-
 </Project>

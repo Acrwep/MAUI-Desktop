@@ -5,8 +5,8 @@ namespace Hublog.Desktop
 {
     public static class MauiProgram
     {
-        public static string OnlineURL = "https://localhost:44322/";
-        //public static string OnlineURL = "https://localhost:7263/";
+        //public static string OnlineURL = "https://localhost:44322/";
+        public static string OnlineURL = "https://localhost:7263/";
 
         //public static TokenClaims UserClaims { get; set; }
         public static Users Loginlist = new Users();

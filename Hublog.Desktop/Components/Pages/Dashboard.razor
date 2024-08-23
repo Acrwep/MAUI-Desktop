@@ -10,7 +10,6 @@
 @using System.Drawing.Imaging
 @using System.Threading.Tasks
 @using System.Threading
-@using Microsoft.AspNetCore.Components
 @using System.Net.Http
 @inject IJSRuntime JSRuntime
 
@@ -71,7 +70,7 @@
                                     <input type="radio" class="form-check-input" id="@breakOption.Id" name="breakOption" value="@breakOption.Id" @onchange="OnBreakOptionChanged" />
                                     <label class="form-check-label" for="@breakOption.Id">@breakOption.Name<br /> @* (@breakOption.Max_Break_Time minutes) *@</label>
                                 </div>
-                            </div>  
+                            </div>
                         }
                     }
                     else
@@ -102,7 +101,7 @@
             var modal = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
             modal.hide();
         }
- </script>
+    </script>
 
     <div class="logoutrow_container">
         <div class="row g-2">
@@ -150,6 +149,8 @@
     @inject IScreenCaptureService ScreenCaptureService
     @inject HttpClient HttpClient
 
+
+    #region GetAvailableBreak
     private async Task FetchAvailableBreaks()
     {
         try
@@ -160,7 +161,7 @@
                 {
                     OrganizationId = MauiProgram.Loginlist.OrganizationId,
                     UserId = MauiProgram.Loginlist.Id,
-                    CDate = DateTime.UtcNow 
+                    CDate = DateTime.UtcNow
                 };
 
             string jsonData = JsonConvert.SerializeObject(getModel);
@@ -205,9 +206,6 @@
 
     private void CloseModal()
     {
-        Console.WriteLine($"Available Breaks: {availableBreaks.Count}");
-        Console.WriteLine($"Selected Break ID: {selectedBreakId}");
-
         var selectedBreak = availableBreaks.FirstOrDefault(b => b.Id == selectedBreakId);
 
         if (selectedBreak != null)
@@ -218,8 +216,6 @@
                     Name = selectedBreak.Name,
                     Max_Break_Time = selectedBreak.Max_Break_Time
                 };
-
-            Console.WriteLine($"Selected Break Info: ID={selectedBreakInfo.Id}, Name={selectedBreakInfo.Name}, MaxBreakTime={selectedBreakInfo.Max_Break_Time}");
         }
         else
         {
@@ -228,6 +224,7 @@
 
         JSRuntime.InvokeVoidAsync("closeBreakModal");
     }
+    #endregion
 
     protected override void OnInitialized()
     {
@@ -309,6 +306,8 @@
         }
     }
 
+    #region Screenshot
+
     private void StartScreenshotTimer()
     {
         if (isTimerActive)
@@ -344,7 +343,6 @@
         }
     }
 
-
     private async Task UploadScreenshot(byte[] imageData)
     {
         string filename = DateTime.Now.ToString("yyyyMMddHHmmss") + ".jpg";
@@ -379,6 +377,8 @@
             }
         }
     }
+
+    #endregion
 
     private void ChangeStatus()
     {
