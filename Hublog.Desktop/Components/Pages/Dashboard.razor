@@ -57,20 +57,27 @@
     <div class="modal fade" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
-          @*       <div class="modal-header">
-                    <h5 class="modal-title" id="breakModalLabel">Break Window</h5>
-                    <button type="button" class="btn-close" onclick="closeBreakModal()" aria-label="Close"></button>
-                </div> *@
                 <div class="modal-header modal-body">
-                    <!-- Break Button Inside Modal -->
-                    <button type="button" class="btn btn-danger" onclick="handleBreak()">Break</button>
+                    @if (availableBreaks != null && availableBreaks.Count > 0)
+                    {
+                        @foreach (var breakOption in availableBreaks)
+                        {
+                            <div class="form-check">
+                                <input type="radio" class="form-check-input" id="@breakOption.Id" name="breakOption" value="@breakOption.Id" @onchange="OnBreakOptionChanged" />
+                                <label class="form-check-label" for="@breakOption.Id">@breakOption.Name<br /> @* (@breakOption.Max_Break_Time minutes) *@</label>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No available breaks found.</p>
+                    }
+                    <button type="button" class="btn btn-danger" @onclick="CloseModal">Choose</button>
                 </div>
-                @* <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeBreakModal()">Close</button>
-                </div> *@
             </div>
         </div>
     </div>
+
 
     <script>
 
@@ -83,41 +90,12 @@
             modalElement.show();
         }
 
-
         function closeBreakModal() {
-            const modalElement = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
-            modalElement.hide();
+            var modal = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
+            modal.hide();
         }
+ </script>
 
-        // Draggable functionality
-        // const modalDialog = document.querySelector('.modal-dialog');
-        // const modalHeader = document.querySelector('.modal-header');
-
-        // let isDragging = false;
-        // let offsetX, offsetY;
-
-        // modalHeader.addEventListener('mousedown', (e) => {
-        //     isDragging = true;
-        //     offsetX = e.clientX - modalDialog.getBoundingClientRect().left;
-        //     offsetY = e.clientY - modalDialog.getBoundingClientRect().top;
-        //     document.addEventListener('mousemove', onMouseMove);
-        //     document.addEventListener('mouseup', onMouseUp);
-        // });
-
-        // function onMouseMove(e) {
-        //     if (isDragging) {
-        //         modalDialog.style.position = 'absolute';
-        //         modalDialog.style.left = `${e.clientX - offsetX}px`;
-        //         modalDialog.style.top = `${e.clientY - offsetY}px`;
-        //     }
-        // }
-
-        // function onMouseUp() {
-        //     isDragging = false;
-        //     document.removeEventListener('mousemove', onMouseMove);
-        //     document.removeEventListener('mouseup', onMouseUp);
-        // }
-    // </script>
     <div class="logoutrow_container">
         <div class="row g-2">
             <div class="col-5">
@@ -154,15 +132,94 @@
     private string userEmail;
     private string initials;
 
-    @inject IScreenCaptureService ScreenCaptureService
-    @inject HttpClient HttpClient
-
     private TimeSpan screenshotInterval = TimeSpan.FromSeconds(20);
     private bool isTimerActive = false;
 
-    // [Inject]
-    // private IJSRuntime JSRuntime { get; set; }
+    private List<BreakMaster> availableBreaks = new List<BreakMaster>();
+    private int selectedBreakId;
+    private BreakInfo selectedBreakInfo;
 
+    @inject IScreenCaptureService ScreenCaptureService
+    @inject HttpClient HttpClient
+
+    private async Task FetchAvailableBreaks()
+    {
+        try
+        {
+            string URL = MauiProgram.OnlineURL + "api/Users/GetAvailableBreak";
+
+            var getModel = new GetModels
+                {
+                    OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                    UserId = MauiProgram.Loginlist.Id,
+                    CDate = DateTime.UtcNow 
+                };
+
+            string jsonData = JsonConvert.SerializeObject(getModel);
+
+            var requestContent = new StringContent(jsonData, Encoding.UTF8, "application/json");
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+
+            var response = await HttpClient.PostAsync(URL, requestContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                availableBreaks = JsonConvert.DeserializeObject<List<BreakMaster>>(responseString);
+            }
+            else
+            {
+                Console.WriteLine("Failed to fetch available breaks.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching breaks: {ex.Message}");
+        }
+    }
+
+    private void OpenBreakModal()
+    {
+        FetchAvailableBreaks().ContinueWith(_ =>
+        {
+            JSRuntime.InvokeVoidAsync("openBreakModal");
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void OnBreakOptionChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out int breakId))
+        {
+            selectedBreakId = breakId;
+        }
+    }
+
+    private void CloseModal()
+    {
+        Console.WriteLine($"Available Breaks: {availableBreaks.Count}");
+        Console.WriteLine($"Selected Break ID: {selectedBreakId}");
+
+        var selectedBreak = availableBreaks.FirstOrDefault(b => b.Id == selectedBreakId);
+
+        if (selectedBreak != null)
+        {
+            selectedBreakInfo = new BreakInfo
+                {
+                    Id = selectedBreak.Id,
+                    Name = selectedBreak.Name,
+                    Max_Break_Time = selectedBreak.Max_Break_Time
+                };
+
+            Console.WriteLine($"Selected Break Info: ID={selectedBreakInfo.Id}, Name={selectedBreakInfo.Name}, MaxBreakTime={selectedBreakInfo.Max_Break_Time}");
+        }
+        else
+        {
+            Console.WriteLine("No break selected or break not found.");
+        }
+
+        JSRuntime.InvokeVoidAsync("closeBreakModal");
+    }
 
     protected override void OnInitialized()
     {
@@ -315,7 +372,6 @@
         }
     }
 
-
     private void ChangeStatus()
     {
         if (currentType == 0)
@@ -358,7 +414,7 @@
             isOnBreak = true;
             breakButtonText = "Resume";
             currentType = 2;
-            JSRuntime.InvokeVoidAsync("openBreakModal");
+            OpenBreakModal();
         }
 
         ChangeStatus();
