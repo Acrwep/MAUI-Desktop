@@ -42,9 +42,10 @@
                     <div class="form-group">
                         <button type="submit" class="login_button">Login</button>
                     </div>
+
                     @* <button class="btn btn-primary" @onclick="ShowPopup">Open Popup</button> *@
 
-                    <button Text="Open Small Window" @onclick="OpenSmallWindow">Hii</button>
+                    @* <button Text="Open Small Window" @onclick="OpenSmallWindow">Hii</button> *@
 
                 @*  @if (isPopupVisible)
                 {
@@ -160,31 +161,31 @@
         }
     }
 
-    private void ShowPopup()
-    {
-        isPopupVisible = true;
-    }
+    // private void ShowPopup()
+    // {
+    //     isPopupVisible = true;
+    // }
 
-    private void ClosePopup()
-    {
-        isPopupVisible = false;
-    }
+    // private void ClosePopup()
+    // {
+    //     isPopupVisible = false;
+    // }
 
-            private void OpenSmallWindow()
-        {
-            var smallWindow = new Window(new NewPage1())
-            {
-                Title = "Small Window"
-            };
+    //         private void OpenSmallWindow()
+    //     {
+    //         var smallWindow = new Window(new NewPage1())
+    //         {
+    //             Title = "Small Window"
+    //         };
 
-            smallWindow.Width = 400;
-            smallWindow.Height = 300;
+    //         smallWindow.Width = 400;
+    //         smallWindow.Height = 300;
 
-            Application.Current.OpenWindow(smallWindow);
-        }
+    //         Application.Current.OpenWindow(smallWindow);
+    //     }
 
-        private void OpenSmallWindow(object sender, EventArgs e)
-        {
-            OpenSmallWindow();
-        }
+    //     private void OpenSmallWindow(object sender, EventArgs e)
+    //     {
+    //         OpenSmallWindow();
+    //     }
 }

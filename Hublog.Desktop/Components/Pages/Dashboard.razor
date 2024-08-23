@@ -12,17 +12,17 @@
 @using System.Threading
 @using Microsoft.AspNetCore.Components
 @using System.Net.Http
-
+@inject IJSRuntime JSRuntime
 
 
 <link href="/css/dashboard.css" rel="stylesheet" />
 
 <div class="dashboard_mainContainer">
     <div class="dashboard_headerContainer">
-            <img src="/images/wave.png" class="dashboard_waveimage" />
+        <img src="/images/wave.png" class="dashboard_waveimage" />
         <div class="dashboard_profileContainer">
             <p class="initial_text">@initials</p>
-    </div>
+        </div>
     </div>
 
     <div class="dashboard_namesContainer">
@@ -53,6 +53,71 @@
         }
     </div>
 
+    <!-- Modal Structure -->
+    <div class="modal fade" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+          @*       <div class="modal-header">
+                    <h5 class="modal-title" id="breakModalLabel">Break Window</h5>
+                    <button type="button" class="btn-close" onclick="closeBreakModal()" aria-label="Close"></button>
+                </div> *@
+                <div class="modal-header modal-body">
+                    <!-- Break Button Inside Modal -->
+                    <button type="button" class="btn btn-danger" onclick="handleBreak()">Break</button>
+                </div>
+                @* <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBreakModal()">Close</button>
+                </div> *@
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function openBreakModal() {
+            console.log("openBreakModal called");
+            const modalElement = new bootstrap.Modal(document.getElementById('breakModal'), {
+                backdrop: 'static',
+                keyboard: true
+            });
+            modalElement.show();
+        }
+
+
+        function closeBreakModal() {
+            const modalElement = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
+            modalElement.hide();
+        }
+
+        // Draggable functionality
+        // const modalDialog = document.querySelector('.modal-dialog');
+        // const modalHeader = document.querySelector('.modal-header');
+
+        // let isDragging = false;
+        // let offsetX, offsetY;
+
+        // modalHeader.addEventListener('mousedown', (e) => {
+        //     isDragging = true;
+        //     offsetX = e.clientX - modalDialog.getBoundingClientRect().left;
+        //     offsetY = e.clientY - modalDialog.getBoundingClientRect().top;
+        //     document.addEventListener('mousemove', onMouseMove);
+        //     document.addEventListener('mouseup', onMouseUp);
+        // });
+
+        // function onMouseMove(e) {
+        //     if (isDragging) {
+        //         modalDialog.style.position = 'absolute';
+        //         modalDialog.style.left = `${e.clientX - offsetX}px`;
+        //         modalDialog.style.top = `${e.clientY - offsetY}px`;
+        //     }
+        // }
+
+        // function onMouseUp() {
+        //     isDragging = false;
+        //     document.removeEventListener('mousemove', onMouseMove);
+        //     document.removeEventListener('mouseup', onMouseUp);
+        // }
+    // </script>
     <div class="logoutrow_container">
         <div class="row g-2">
             <div class="col-5">
@@ -76,7 +141,7 @@
     private bool isTimerRunning = false;
     private bool isOnBreak = false;
     private TimeSpan timeSpan = TimeSpan.Zero;
-    
+
     private System.Threading.Timer punchInTimer;
     private System.Threading.Timer screenshotTimer;
 
@@ -92,11 +157,11 @@
     @inject IScreenCaptureService ScreenCaptureService
     @inject HttpClient HttpClient
 
-    private TimeSpan screenshotInterval = TimeSpan.FromSeconds(20); 
+    private TimeSpan screenshotInterval = TimeSpan.FromSeconds(20);
     private bool isTimerActive = false;
 
-    [Inject]
-    private IJSRuntime JSRuntime { get; set; }
+    // [Inject]
+    // private IJSRuntime JSRuntime { get; set; }
 
 
     protected override void OnInitialized()
@@ -293,6 +358,7 @@
             isOnBreak = true;
             breakButtonText = "Resume";
             currentType = 2;
+            JSRuntime.InvokeVoidAsync("openBreakModal");
         }
 
         ChangeStatus();
