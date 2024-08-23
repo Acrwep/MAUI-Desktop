@@ -348,3 +348,14 @@ html, body {
         transform: scale(0.9);
         box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
     }
+
+.form-check-input:checked {
+    background-color: #009737; /* Change this to your desired color */
+    border-color: #009737; /* Change this to match the background color */
+}
+
+/* Optional: Change the focus ring color when the checkbox is focused */
+.form-check-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Adjust the color and transparency */
+}
