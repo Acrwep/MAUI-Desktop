@@ -57,22 +57,30 @@
     <div class="modal fade" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header modal-body">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="breakModalLabel">Choose a Break Option</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                     @if (availableBreaks != null && availableBreaks.Count > 0)
                     {
                         @foreach (var breakOption in availableBreaks)
                         {
-                            <div class="form-check">
-                                <input type="radio" class="form-check-input" id="@breakOption.Id" name="breakOption" value="@breakOption.Id" @onchange="OnBreakOptionChanged" />
-                                <label class="form-check-label" for="@breakOption.Id">@breakOption.Name<br /> @* (@breakOption.Max_Break_Time minutes) *@</label>
-                            </div>
+                            <div class="break_checkboxContainer">
+                                <div class="form-check">
+                                    <input type="radio" class="form-check-input" id="@breakOption.Id" name="breakOption" value="@breakOption.Id" @onchange="OnBreakOptionChanged" />
+                                    <label class="form-check-label" for="@breakOption.Id">@breakOption.Name<br /> @* (@breakOption.Max_Break_Time minutes) *@</label>
+                                </div>
+                            </div>  
                         }
                     }
                     else
                     {
                         <p>No available breaks found.</p>
                     }
-                    <button type="button" class="btn btn-danger" @onclick="CloseModal">Choose</button>
+                    <div class="breakchoose_buttonContainer">
+                        <button type="button" class="breakchoose_button" @onclick="CloseModal">Choose</button>
+                    </div>
                 </div>
             </div>
         </div>

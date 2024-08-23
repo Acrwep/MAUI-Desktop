@@ -271,32 +271,80 @@ html, body {
     border: none;
     color: #ff4d4f;
 }
-
+.modal-title{
+    font-size:16px;
+    font-weight:600;
+}
+.modalclose_button {
+    width: 10px;
+    height:2px;
+}
+.modal-header .btn-close {
+    width: 11px; /* Adjust the width as needed */
+    height: 11px; /* Adjust the height as needed */
+    padding: 2px; /* Adjust the padding as needed */
+}
 .modal-dialog {
     display: flex;
     align-items: center;
-    justify-content: center;
     min-height: 100vh;
     margin: 0;
-    border:none !important;
+    border: none !important;
+    display: flex;
+    flex-direction: column;
+    outline: none !important;
+    border: none !important;
 }
 .modal-content {
     max-width: 300px;
     margin: auto;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-    outline:none !important;
-    border: none !important;
+    position: relative;
+    background-color: #ffffff;
+    background-clip: padding-box;
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+    pointer-events: auto;
+    padding: 0px 24px;
+}
+.break_checkboxContainer {
+    margin-bottom: 12px;
 }
 .modal-body {
-    /*display:flex;
-    justify-content:center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+.breakchoose_buttonContainer{
+    display:flex;
     align-items:center;
-    text-align:center;*/
+    margin-left:46px;
+    margin-bottom:6px;
+}
+.breakchoose_button {
+    color: #fff;
+    background-color: #25a17d;
+    box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
+    font-size: 14px;
+    height: 34px;
+    width: 120px;
+    font-weight: 600;
+    border-radius: 6px;
+    border-color: #25a17d;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin-top: 2px;
 }
 
-.modal-header {
-    /*  background: white;
-    color: white;
-    padding: 10px;*/
-    /*cursor: move;*/
-}
+    .breakchoose_button:hover {
+        background-color: #009737;
+    }
+
+    .breakchoose_button:active {
+        transform: scale(0.9);
+        box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
+    }
