@@ -47,7 +47,7 @@
         @if (buttonText == "Punch Out")
         {
             <div class="break_buttonContainer">
-                <button class="break_button" @onclick="TakeBreak">@breakButtonText</button>
+                <button class="break_button" @onclick="TakeBreak">Break</button>
             </div>
         }
     </div>
@@ -95,7 +95,7 @@
                 <div class="modal-body">
                     <p id="breakTimeDisplay">@remainingTime</p>
                     <div class="breakchoose_buttonContainer">
-                        <button type="button" class="breakchoose_button" @onclick="ResumeWorking">Resume Working</button>
+                        <button type="button" class="breakResume_button" @onclick="ResumeWorking">Resume Working</button>
                     </div>
                 </div>
             </div>
@@ -132,6 +132,14 @@
         function closeBreakTimerModal() {
             var modal = bootstrap.Modal.getInstance(document.getElementById('breakTimerModal'));
             modal.hide();
+        }
+
+        function changeResumeButtonColorToRed() {
+            var button = document.querySelector('.breakResume_button');
+            if (button) {
+                button.style.backgroundColor = 'red';
+                button.style.color = 'white'; 
+            }
         }
     </script>
 
@@ -442,7 +450,7 @@
         else if (currentType == 2)
         {
             buttonText = "Punch Out";
-            breakButtonText = "Resume";
+            //breakButtonText = "Resume";
         }
     }
 
@@ -467,7 +475,7 @@
         else
         {
             isOnBreak = true;
-            breakButtonText = "Resume";
+            //breakButtonText = "Resume";
             currentType = 2;
             OpenBreakModal();
         }
@@ -563,6 +571,21 @@
         breakTimer = new Timer(TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
 
+    // private void TimerCallback(object state)
+    // {
+    //     if (remainingTime.TotalSeconds > 0)
+    //     {
+    //         remainingTime = remainingTime.Subtract(TimeSpan.FromSeconds(1));
+    //         InvokeAsync(StateHasChanged);
+    //     }
+    //     else
+    //     {
+    //         isBreakActive = false;
+    //         breakTimer?.Dispose();
+    //         InvokeAsync(StateHasChanged);
+    //     }
+    // }
+
     private void TimerCallback(object state)
     {
         if (remainingTime.TotalSeconds > 0)
@@ -574,9 +597,14 @@
         {
             isBreakActive = false;
             breakTimer?.Dispose();
-            InvokeAsync(StateHasChanged);
+            InvokeAsync(() =>
+            {
+                StateHasChanged();
+                JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
+            });
         }
     }
+
 
     private async Task PunchBreakIn(int breakEntryId)
     {
@@ -690,7 +718,6 @@
     private async Task ResumeWorking()
     {
         await PunchBreakOut();
-        breakButtonText = "Break";
     }
 
     private async Task<BreakInfo> GetBreakDetails(int breakEntryId)

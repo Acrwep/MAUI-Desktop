@@ -359,3 +359,21 @@ html, body {
     outline: none;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Adjust the color and transparency */
 }
+
+.breakResume_button {
+    color: #fff;
+    background-color: #25a17d;
+    box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
+    font-size: 14px;
+    height: 34px;
+    width: 120px;
+    font-weight: 600;
+    border-radius: 6px;
+    border-color: #25a17d;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin-top: 2px;
+}
