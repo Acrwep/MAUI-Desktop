@@ -52,7 +52,7 @@
         }
     </div>
 
-    <!-- Modal Structure -->
+    <!-- Modal Structure Break Selection -->
     <div class="modal fade" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -68,7 +68,7 @@
                             <div class="break_checkboxContainer">
                                 <div class="form-check">
                                     <input type="radio" class="form-check-input" id="@breakOption.Id" name="breakOption" value="@breakOption.Id" @onchange="OnBreakOptionChanged" />
-                                    <label class="form-check-label" for="@breakOption.Id">@breakOption.Name<br /> @* (@breakOption.Max_Break_Time minutes) *@</label>
+                                    <label class="form-check-label" for="@breakOption.Id">@breakOption.Name<br /></label>
                                 </div>
                             </div>
                         }
@@ -85,8 +85,35 @@
         </div>
     </div>
 
+    <!-- Modal Structure Break Timer -->
+    <div class="modal fade" id="breakTimerModal" tabindex="-1" aria-labelledby="breakTimerModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Break Timer</h5>
+                </div>
+                <div class="modal-body">
+                    <p id="breakTimeDisplay">@remainingTime</p>
+                    <div class="breakchoose_buttonContainer">
+                        <button type="button" class="breakchoose_button" @onclick="ResumeWorking">Resume Working</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <script>
+
+        function openBreakTimerModal() {
+            console.log("openBreakModal called");
+            const modalElement = new bootstrap.Modal(document.getElementById('breakTimerModal'), {
+                backdrop: 'static',
+                keyboard: true
+            });
+            modalElement.show();
+        }
 
         function openBreakModal() {
             console.log("openBreakModal called");
@@ -99,6 +126,11 @@
 
         function closeBreakModal() {
             var modal = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
+            modal.hide();
+        }
+
+        function closeBreakTimerModal() {
+            var modal = bootstrap.Modal.getInstance(document.getElementById('breakTimerModal'));
             modal.hide();
         }
     </script>
@@ -146,9 +178,13 @@
     private int selectedBreakId;
     private BreakInfo selectedBreakInfo;
 
+    private Timer breakTimer;
+    private TimeSpan remainingTime;
+    private bool isBreakActive = false;
+    private int _currentBreakEntryId;
+
     @inject IScreenCaptureService ScreenCaptureService
     @inject HttpClient HttpClient
-
 
     #region GetAvailableBreak
     private async Task FetchAvailableBreaks()
@@ -196,6 +232,12 @@
         });
     }
 
+    private void OpenBreakTimerModal()
+    {
+        JSRuntime.InvokeVoidAsync("openBreakTimerModal");
+        InvokeAsync(StateHasChanged);
+    }
+
     private void OnBreakOptionChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value.ToString(), out int breakId))
@@ -216,6 +258,11 @@
                     Name = selectedBreak.Name,
                     Max_Break_Time = selectedBreak.Max_Break_Time
                 };
+
+            PunchBreakIn(selectedBreak.Id).ContinueWith(_ =>
+            {
+                InvokeAsync(StateHasChanged);
+            });
         }
         else
         {
@@ -506,6 +553,170 @@
         else
         {
             Console.WriteLine($"Error: {responseString}");
+        }
+    }
+
+    private void StartBreakTimer(int breakDurationMinutes)
+    {
+        remainingTime = TimeSpan.FromMinutes(breakDurationMinutes);
+        isBreakActive = true;
+        breakTimer = new Timer(TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+    }
+
+    private void TimerCallback(object state)
+    {
+        if (remainingTime.TotalSeconds > 0)
+        {
+            remainingTime = remainingTime.Subtract(TimeSpan.FromSeconds(1));
+            InvokeAsync(StateHasChanged);
+        }
+        else
+        {
+            isBreakActive = false;
+            breakTimer?.Dispose();
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task PunchBreakIn(int breakEntryId)
+    {
+        DateTime istTime = GetISTTime();
+        int currentType = 1;
+        var userBreakList = new List<UserBreakModel>
+        {
+            new UserBreakModel
+            {
+                Id = 0,
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                BreakDate = istTime.Date,
+                Start_Time = istTime,
+                BreakEntryId = breakEntryId,
+                End_Time = null,
+                Status = currentType
+            }
+        };
+
+        var jsonString = JsonConvert.SerializeObject(userBreakList);
+        var apiUrl = MauiProgram.OnlineURL + "api/Users/InsertBreak";
+
+        var httpContent = new StringContent(jsonString, Encoding.UTF8, "application/json");
+        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+
+        try
+        {
+            var response = await HttpClient.PostAsync(apiUrl, httpContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var breakDetails = await GetBreakDetails(breakEntryId);
+                if (breakDetails != null)
+                {
+                    _currentBreakEntryId = breakDetails.Id;
+                    selectedBreakInfo = breakDetails;
+                    StartBreakTimer(selectedBreakInfo.Max_Break_Time);
+                    OpenBreakTimerModal();
+                }
+                else
+                {
+                    Console.WriteLine("Failed to retrieve break details.");
+                }
+            }
+            else
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {response.StatusCode} - {responseContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception occurred: {ex.Message}");
+        }
+    }
+
+    private async Task PunchBreakOut()
+    {
+        if (_currentBreakEntryId == 0)
+        {
+            Console.WriteLine("No active break found.");
+            return;
+        }
+
+        DateTime istTime = GetISTTime();
+        var breakEndDetails = new List<UserBreakModel>
+        {
+            new UserBreakModel
+            {
+                Id = 0,
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                BreakDate = istTime.Date,
+                Start_Time = istTime,
+                End_Time = istTime,
+                BreakEntryId = _currentBreakEntryId,
+                Status = 2
+            }
+        };
+
+        var jsonString = JsonConvert.SerializeObject(breakEndDetails);
+        var apiUrl = MauiProgram.OnlineURL + "api/Users/InsertBreak";
+
+        var httpContent = new StringContent(jsonString, Encoding.UTF8, "application/json");
+        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+
+        try
+        {
+            var response = await HttpClient.PostAsync(apiUrl, httpContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Break ended successfully.");
+                isBreakActive = false;
+                await JSRuntime.InvokeVoidAsync("closeBreakTimerModal");
+            }
+            else
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {response.StatusCode} - {responseContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception occurred: {ex.Message}");
+        }
+    }
+
+
+    private async Task ResumeWorking()
+    {
+        await PunchBreakOut();
+        breakButtonText = "Break";
+    }
+
+    private async Task<BreakInfo> GetBreakDetails(int breakEntryId)
+    {
+        var apiUrl = $"{MauiProgram.OnlineURL}api/Users/GetBreakMasterById?id={breakEntryId}";
+
+        try
+        {
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+            var response = await HttpClient.GetAsync(apiUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<BreakInfo>(responseString);
+            }
+            else
+            {
+                Console.WriteLine($"Failed to retrieve break details: {response.StatusCode}");
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving break details: {ex.Message}");
+            return null;
         }
     }
 
