@@ -467,7 +467,7 @@ namespace Hublog.Desktop.Components.Pages
                 client.Timeout = TimeSpan.FromMinutes(30);
                 client.DefaultRequestHeaders.Add("UId", MauiProgram.Loginlist.Id.ToString());
                 client.DefaultRequestHeaders.Add("OId", MauiProgram.Loginlist.OrganizationId.ToString());
-                client.DefaultRequestHeaders.Add("SDate", DateTime.Now.ToString());
+                client.DefaultRequestHeaders.Add("SDate", GetISTTime().ToString("yyyy-MM-dd HH:mm:ss"));
                 client.DefaultRequestHeaders.Add("SType", "ScreenShots");
                 client.DefaultRequestHeaders.Add("Authorization", MauiProgram.token);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

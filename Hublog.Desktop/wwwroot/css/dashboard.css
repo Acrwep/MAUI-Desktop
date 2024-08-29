@@ -271,19 +271,23 @@ html, body {
     border: none;
     color: #ff4d4f;
 }
-.modal-title{
-    font-size:16px;
-    font-weight:600;
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 600;
 }
+
 .modalclose_button {
     width: 10px;
-    height:2px;
+    height: 2px;
 }
+
 .modal-header .btn-close {
     width: 11px; /* Adjust the width as needed */
     height: 11px; /* Adjust the height as needed */
     padding: 2px; /* Adjust the padding as needed */
 }
+
 .modal-dialog {
     display: flex;
     align-items: center;
@@ -295,6 +299,7 @@ html, body {
     outline: none !important;
     border: none !important;
 }
+
 .modal-content {
     max-width: 300px;
     margin: auto;
@@ -307,21 +312,25 @@ html, body {
     pointer-events: auto;
     padding: 0px 24px;
 }
+
 .break_checkboxContainer {
     margin-bottom: 12px;
 }
+
 .modal-body {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
 }
-.breakchoose_buttonContainer{
-    display:flex;
-    align-items:center;
-    margin-left:46px;
-    margin-bottom:6px;
+
+.breakchoose_buttonContainer {
+    display: flex;
+    align-items: center;
+    margin-left: 46px;
+    margin-bottom: 6px;
 }
+
 .breakchoose_button {
     color: #fff;
     background-color: #25a17d;
@@ -359,14 +368,44 @@ html, body {
     outline: none;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Adjust the color and transparency */
 }
-
+.breaktimer_modalheader {
+    border-bottom: none !important;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin: 0 !important;
+}
+.youron_text {
+    margin: 0 !important;
+    font-weight:500;
+}
+.break_heading {
+    margin: 0 !important;
+    font-weight: 700;
+    font-size: 22px;
+    color: #d32f2f
+}
+.breaktimer_modalbody {
+    margin-top: -23px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center !important;
+    align-items:center;
+}
+.break_timer {
+    margin: 0 !important;
+    font-size: 40px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    margin-bottom:14px !important;
+}
 .breakResume_button {
     color: #fff;
     background-color: #25a17d;
     box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
     font-size: 14px;
     height: 34px;
-    width: 120px;
+    width: 160px;
     font-weight: 600;
     border-radius: 6px;
     border-color: #25a17d;
@@ -377,3 +416,11 @@ html, body {
     cursor: pointer;
     margin-top: 2px;
 }
+    .breakResume_button:hover {
+        background-color: #009737;
+    }
+
+    .breakResume_button:active {
+        transform: scale(0.9);
+        box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
+    }

@@ -86,14 +86,15 @@
     <div class="modal fade" id="breakTimerModal" tabindex="-1" aria-labelledby="breakTimerModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Break Timer</h5>
+                <div class="modal-header breaktimer_modalheader">
+                    <p class="youron_text">Your on</p>
+                    @if (selectedBreakInfo!=null){
+                        <p class="modal-title break_heading">@selectedBreakInfo.Name</p>
+                    }
                 </div>
-                <div class="modal-body">
-                    <p id="breakTimeDisplay">@remainingTime</p>
-                    <div class="breakchoose_buttonContainer">
+                <div class="modal-body breaktimer_modalbody">
+                    <p id="breakTimeDisplay" class="break_timer">@remainingTime</p>
                         <button type="button" class="breakResume_button" @onclick="ResumeWorking">Resume Working</button>
-                    </div>
                 </div>
             </div>
         </div>
