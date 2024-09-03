@@ -35,7 +35,8 @@ namespace Hublog.Desktop.Components.Pages
                 {
                     { "First_Name", loginResult.user.First_Name },
                     { "Last_Name", loginResult.user.Last_Name },
-                    { "Email", loginResult.user.Email }
+                    { "Email", loginResult.user.Email },
+                            { "UserId", loginResult.user.Id.ToString()}
                 };
 
                         var claimsJson = JsonSerializer.Serialize(claims);
