@@ -510,7 +510,6 @@ namespace Hublog.Desktop.Components.Pages
             buttonText = "Punch Out";
             currentType = 1;
             PunchIn();
-            StartTracking();
             StartScreenshotTimer();
         }
         private void StopTimer()
@@ -526,7 +525,6 @@ namespace Hublog.Desktop.Components.Pages
             if (currentType == 1 || currentType == 2)
             {
                 PunchOut();
-                StopTracking();
                 StopScreenshotTimer();
             }
             else
