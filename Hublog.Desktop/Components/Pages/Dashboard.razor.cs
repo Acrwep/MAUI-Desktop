@@ -420,7 +420,6 @@ namespace Hublog.Desktop.Components.Pages
         }
         #endregion
 
-        #region Screenshot
         private void StartScreenshotTimer()
         {
             if (isTimerActive)
@@ -491,9 +490,6 @@ namespace Hublog.Desktop.Components.Pages
             }
         }
 
-        #endregion
-
-        #region Timers
         private void ToggleTimer()
         {
             if (isTimerRunning)
@@ -572,6 +568,5 @@ namespace Hublog.Desktop.Components.Pages
             return utcNow.Add(istOffset);
 
         }
-        #endregion
     }
 }
