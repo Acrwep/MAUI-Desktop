@@ -8,7 +8,7 @@ namespace Hublog.Desktop.Platforms.Windows
         public byte[] CaptureScreen()
         {
             var screenSize = Screen.PrimaryScreen.Bounds;
-            using var bitmap = new Bitmap(screenSize.Width, screenSize.Height);
+            using var bitmap =    new Bitmap(screenSize.Width, screenSize.Height);
 
             using var graphics = Graphics.FromImage(bitmap);
             graphics.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
