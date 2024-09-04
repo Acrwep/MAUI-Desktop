@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -42,33 +41,6 @@ namespace Hublog.Desktop.Components.Pages
 
         [Inject]
         public IScreenCaptureService ScreenCaptureService { get; set; }
-        #endregion
-
-        #region Track
-        private ApplicationMonitor _monitor;
-        private bool isTracking = false;
-        private string token;
-
-        private async Task StartTracking()
-        {
-            isTracking = true;
-
-            var httpClient = MauiProgram.CreateMauiApp().Services.GetRequiredService<HttpClient>();
-            httpClient.BaseAddress = new Uri(MauiProgram.OnlineURL);
-
-            _monitor = new ApplicationMonitor(httpClient);
-
-            while (isTracking)
-            {
-                await _monitor.UpdateApplicationUsageAsync(token);
-                await Task.Delay(10000);
-            }
-        }
-
-        private void StopTracking()
-        {
-            isTracking = false;
-        }
         #endregion
 
         protected override void OnInitialized()
