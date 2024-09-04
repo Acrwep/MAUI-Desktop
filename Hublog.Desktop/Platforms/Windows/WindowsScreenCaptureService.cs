@@ -11,7 +11,7 @@ namespace Hublog.Desktop.Platforms.Windows
             using var bitmap =    new Bitmap(screenSize.Width, screenSize.Height);
 
             using var graphics = Graphics.FromImage(bitmap);
-            graphics.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
+            graphics.CopyFromScreen(0, 1, 0, 0, bitmap.Size);
 
             using var memoryStream = new MemoryStream();
             bitmap.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
