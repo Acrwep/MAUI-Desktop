@@ -1,14 +1,10 @@
 ﻿using Hublog.Desktop.Entities;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Hublog.Desktop
 {
@@ -131,7 +127,8 @@ namespace Hublog.Desktop
                     UserId = userId,
                     ApplicationName = applicationName,
                     TotalUsage = usageTime,
-                    Details = $"User spent time on the {applicationName}."
+                    Details = $"User spent time on the {applicationName}.",
+                    UsageDate = DateTime.Now.Date 
                 };
 
                 string jsonPayload = JsonSerializer.Serialize(usage);
