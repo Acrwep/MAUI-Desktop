@@ -68,6 +68,22 @@ namespace Hublog.Desktop
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
+        //public string GetActiveApplicationName()
+        //{
+        //    IntPtr handle = GetForegroundWindow();
+        //    const int nChars = 256;
+        //    StringBuilder Buff = new StringBuilder(nChars);
+
+        //    if (GetWindowText(handle, Buff, nChars) > 0)
+        //    {
+        //        GetWindowThreadProcessId(handle, out uint processId);
+        //        var process = Process.GetProcessById((int)processId);
+
+        //        return $"{process.ProcessName} - {Buff.ToString()}";
+        //    }
+        //    return string.Empty;
+        //}
+
         public string GetActiveApplicationName()
         {
             IntPtr handle = GetForegroundWindow();
@@ -79,10 +95,12 @@ namespace Hublog.Desktop
                 GetWindowThreadProcessId(handle, out uint processId);
                 var process = Process.GetProcessById((int)processId);
 
-                return $"{process.ProcessName} - {Buff.ToString()}";
+                string applicationName = process.ProcessName.Split(' ')[0]; 
+                return applicationName.Trim();
             }
             return string.Empty;
         }
+
 
         private int GetUserIdFromToken(string token)
         {
@@ -128,13 +146,13 @@ namespace Hublog.Desktop
                     ApplicationName = applicationName,
                     TotalUsage = usageTime,
                     Details = $"User spent time on the {applicationName}.",
-                    UsageDate = DateTime.Now.Date 
+                    UsageDate = DateTime.Now.Date
                 };
 
                 string jsonPayload = JsonSerializer.Serialize(usage);
                 Console.WriteLine($"Sending JSON: {jsonPayload}");
 
-                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/Users/AppUsage", usage);
+                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/AppUsage", usage);
                 if (!response.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
