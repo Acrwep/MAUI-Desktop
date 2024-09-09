@@ -43,6 +43,33 @@ namespace Hublog.Desktop.Components.Pages
         public IScreenCaptureService ScreenCaptureService { get; set; }
         #endregion
 
+        #region Track
+        private ApplicationMonitor _monitor;
+        private bool isTracking = false;
+        private string token;
+
+        private async Task StartTracking()
+        {
+            isTracking = true;
+
+            var httpClient = MauiProgram.CreateMauiApp().Services.GetRequiredService<HttpClient>();
+            httpClient.BaseAddress = new Uri(MauiProgram.OnlineURL);
+
+            _monitor = new ApplicationMonitor(httpClient);
+
+            while (isTracking)
+            {
+                await _monitor.UpdateApplicationUsageAsync(token);
+                await Task.Delay(10000);
+            }
+        }
+
+        private void StopTracking()
+        {
+            isTracking = false;
+        }
+        #endregion
+
         protected override void OnInitialized()
         {
             var claimsJson = Preferences.Default.Get("Claim", string.Empty);
@@ -510,6 +537,7 @@ namespace Hublog.Desktop.Components.Pages
             buttonText = "Punch Out";
             currentType = 1;
             PunchIn();
+            StartTracking();
             StartScreenshotTimer();
         }
         private void StopTimer()
@@ -525,6 +553,7 @@ namespace Hublog.Desktop.Components.Pages
             if (currentType == 1 || currentType == 2)
             {
                 PunchOut();
+                StopTracking();
                 StopScreenshotTimer();
             }
             else
