@@ -6,6 +6,7 @@
         public string BrowserName { get; set; }
         public string Url { get; set; }
         public string Details { get; set; }
+        public DateTime CreatedDate { get; set; }
         public DateTime UsageDate { get; set; }
     }
 }
