@@ -23,42 +23,203 @@ namespace Hublog.Desktop
             _httpClient = httpClient;
         }
 
-        public async Task UpdateApplicationUsageAsync(string token)
+        public async Task UpdateApplicationOrUrlUsageAsync(string token)
         {
             int userId = GetUserIdFromToken(MauiProgram.token);
-            Console.WriteLine($"User ID from token: {userId}");
+            string activeAppOrUrl = GetActiveApplicationName();
+            string activeApplicationName = activeAppOrUrl;
 
-            string activeApplicationNameOrUrl = GetActiveApplicationName();
-            Console.WriteLine($"Active Application/URL: {activeApplicationNameOrUrl}");
-
-            if (!string.IsNullOrEmpty(activeApplicationNameOrUrl))
+            if (!string.IsNullOrEmpty(activeAppOrUrl))
             {
-                if (!appStartTimes.ContainsKey(activeApplicationNameOrUrl))
+                if (!appStartTimes.ContainsKey(activeAppOrUrl))
                 {
-                    appStartTimes[activeApplicationNameOrUrl] = DateTime.Now;
-                    Console.WriteLine($"Started tracking application/URL: {activeApplicationNameOrUrl}");
+                    appStartTimes[activeAppOrUrl] = DateTime.Now;
                 }
             }
             else
             {
                 if (appStartTimes.Any())
                 {
-                    foreach (var app in appStartTimes.Keys.ToList())
+                    foreach (var appOrUrl in appStartTimes.Keys.ToList())
                     {
-                        if (appUsageTimes.ContainsKey(app))
+                        if (appUsageTimes.ContainsKey(appOrUrl))
                         {
-                            appUsageTimes[app] += DateTime.Now - appStartTimes[app];
+                            appUsageTimes[appOrUrl] += DateTime.Now - appStartTimes[appOrUrl];
                         }
                         else
                         {
-                            appUsageTimes[app] = DateTime.Now - appStartTimes[app];
+                            appUsageTimes[appOrUrl] = DateTime.Now - appStartTimes[appOrUrl];
                         }
 
-                        await SaveUsageDataAsync(userId, app);
-                        Console.WriteLine($"Stopped tracking application/URL: {app}. Total usage time: {appUsageTimes[app]}");
+                        if (IsUrl(appOrUrl))
+                        {
+                            await SaveUrlUsageDataAsync(userId, appOrUrl);
+                            await SaveApplicationUsageDataAsync(userId, appOrUrl);
+                        }
+                        else
+                        {
+                            await SaveApplicationUsageDataAsync(userId, appOrUrl);
+                        }
 
-                        appStartTimes.Remove(app);
+                        appStartTimes.Remove(appOrUrl);
                     }
+                }
+            }
+        }
+
+        private string ExtractApplicationName(string appOrUrl)
+        {
+            var parts = appOrUrl.Split(':');
+            return parts.Length > 0 ? parts[0].Trim() : string.Empty;
+        }
+
+        private string ExtractUrl(string appOrUrl)
+        {
+            var parts = appOrUrl.Split(':');
+            return parts.Length > 1 ? parts[1].Trim() : string.Empty;
+        }
+
+        private bool IsUrl(string appOrUrl)
+        {
+            return appOrUrl.Contains(".com") || appOrUrl.Contains(".net") || appOrUrl.Contains(".org") || appOrUrl.Contains(".ai") || appOrUrl.Contains(".in");
+        }
+
+        //public string GetActiveApplicationName()
+        //{
+        //    IntPtr handle = GetForegroundWindow();
+        //    const int nChars = 256;
+        //    StringBuilder buff = new StringBuilder(nChars);
+
+        //    if (GetWindowText(handle, buff, nChars) > 0)
+        //    {
+        //        GetWindowThreadProcessId(handle, out uint processId);
+        //        var process = Process.GetProcessById((int)processId);
+        //        string applicationName = process.ProcessName.Split(' ')[0];
+
+        //        if (applicationName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
+        //            applicationName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
+        //            applicationName.Equals("firefox", StringComparison.OrdinalIgnoreCase))
+        //        {
+        //            string browserUrl = GetBrowserUrl(process);
+        //            if (!string.IsNullOrEmpty(browserUrl))
+        //            {
+        //                return $"{applicationName}: {browserUrl}";
+        //            }
+        //        }
+
+        //        return applicationName.Trim();
+        //    }
+
+        //    return string.Empty;
+        //}
+
+        public string GetActiveApplicationName()
+        {
+            IntPtr handle = GetForegroundWindow();
+            const int nChars = 256;
+            StringBuilder buff = new StringBuilder(nChars);
+
+            if (GetWindowText(handle, buff, nChars) > 0)
+            {
+                GetWindowThreadProcessId(handle, out uint processId);
+                var process = Process.GetProcessById((int)processId);
+                string appName = process.ProcessName;
+
+                if (appName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
+                    appName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
+                    appName.Equals("firefox", StringComparison.OrdinalIgnoreCase))
+                {
+                    return GetBrowserUrl(process);
+                }
+
+                return appName;
+            }
+
+            return string.Empty;
+        }
+
+        public string GetBrowserUrl(Process browserProcess)
+        {
+#if WINDOWS
+            if (browserProcess.ProcessName == "chrome" || browserProcess.ProcessName == "msedge")
+            {
+                return GetChromeEdgeUrl(browserProcess);
+            }
+            else if (browserProcess.ProcessName == "firefox")
+            {
+                return GetFirefoxUrl(browserProcess);
+            }
+#endif
+            return string.Empty;
+        }
+
+#if WINDOWS
+        private string GetChromeEdgeUrl(Process process)
+        {
+            var automationElement = System.Windows.Automation.AutomationElement.FromHandle(process.MainWindowHandle);
+            var condition = new System.Windows.Automation.PropertyCondition(System.Windows.Automation.AutomationElement.ControlTypeProperty, System.Windows.Automation.ControlType.Edit);
+            var element = automationElement.FindFirst(System.Windows.Automation.TreeScope.Descendants, condition);
+            return element != null ? ((System.Windows.Automation.ValuePattern)element.GetCurrentPattern(System.Windows.Automation.ValuePattern.Pattern)).Current.Value as string : string.Empty;
+        }
+
+        private string GetFirefoxUrl(Process process)
+        {
+            return process.MainWindowTitle;
+        }
+#endif
+
+        private int GetUserIdFromToken(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+        }
+
+        private async Task SaveApplicationUsageDataAsync(int userId, string applicationName)
+        {
+            if (appUsageTimes.TryGetValue(applicationName, out TimeSpan usageTime))
+            {
+                string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
+
+                var appUsage = new ApplicationUsage
+                {
+                    UserId = userId,
+                    ApplicationName = applicationName,
+                    TotalUsage = totalUsage,
+                    UsageDate = DateTime.Now.Date,
+                    Details = $"User spent time on application: {applicationName}"
+                };
+
+                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Application", appUsage);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
+                }
+            }
+        }
+
+
+        private async Task SaveUrlUsageDataAsync(int userId, string url)
+        {
+            if (appUsageTimes.TryGetValue(url, out TimeSpan usageTime))
+            {
+                string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
+                string baseUrl = new UriBuilder(url).Uri.Host;
+
+                var urlUsage = new UrlUsage
+                {
+                    UserId = userId,
+                    Url = baseUrl,
+                    TotalUsage = totalUsage,
+                    UsageDate = DateTime.Now.Date,
+                    Details = $"User spent time on URL: {baseUrl}"
+                };
+
+                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Url", urlUsage);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Failed to log URL usage: {response.ReasonPhrase}");
                 }
             }
         }
@@ -71,222 +232,5 @@ namespace Hublog.Desktop
 
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-
-        public string GetActiveApplicationName()
-        {
-            IntPtr handle = GetForegroundWindow();
-            const int nChars = 256;
-            StringBuilder buff = new StringBuilder(nChars);
-
-            if (GetWindowText(handle, buff, nChars) > 0)
-            {
-                GetWindowThreadProcessId(handle, out uint processId);
-                var process = Process.GetProcessById((int)processId);
-                string applicationName = process.ProcessName.Split(' ')[0];
-
-                if (applicationName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
-                    applicationName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
-                    applicationName.Equals("firefox", StringComparison.OrdinalIgnoreCase))
-                {
-                    string browserUrl = GetBrowserUrl(process);
-                    if (!string.IsNullOrEmpty(browserUrl))
-                    {
-                        return $"{applicationName}: {browserUrl}";
-                    }
-                    else
-                    {
-                        return applicationName;
-                    }
-                }
-
-                return applicationName.Trim();
-            }
-
-            return string.Empty;
-        }
-
-
-        public string GetBrowserUrl(Process browserProcess)
-        {
-            if (browserProcess.ProcessName == "chrome" || browserProcess.ProcessName == "msedge")
-            {
-#if WINDOWS
-                return GetChromeEdgeUrl(browserProcess);
-#endif
-            }
-            else if (browserProcess.ProcessName == "firefox")
-            {
-#if WINDOWS
-                return GetFirefoxUrl(browserProcess);
-#endif
-            }
-
-            return string.Empty;
-        }
-
-#if WINDOWS
-        private string GetChromeEdgeUrl(Process process)
-        {
-            try
-            {
-                var automationElement = System.Windows.Automation.AutomationElement.FromHandle(process.MainWindowHandle);
-                var condition = new System.Windows.Automation.PropertyCondition(System.Windows.Automation.AutomationElement.ControlTypeProperty, System.Windows.Automation.ControlType.Edit);
-                var element = automationElement.FindFirst(System.Windows.Automation.TreeScope.Descendants, condition);
-                if (element != null)
-                {
-                    return ((System.Windows.Automation.ValuePattern)element.GetCurrentPattern(System.Windows.Automation.ValuePattern.Pattern)).Current.Value as string;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error getting browser URL: {ex.Message}");
-            }
-            return string.Empty;
-        }
-#endif
-
-#if WINDOWS
-        private string GetFirefoxUrl(Process process)
-        {
-            try
-            {
-                var title = process.MainWindowTitle;
-                if (!string.IsNullOrEmpty(title))
-                {
-                    return title;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error getting Firefox URL: {ex.Message}");
-            }
-            return string.Empty;
-        }
-#endif
-
-        private int GetUserIdFromToken(string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                Console.WriteLine("Token is null or empty. Cannot extract user ID.");
-                return 0;
-            }
-
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadJwtToken(token);
-
-                var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-
-                if (userIdClaim != null && !string.IsNullOrEmpty(userIdClaim.Value))
-                {
-                    return int.Parse(userIdClaim.Value);
-                }
-                else
-                {
-                    Console.WriteLine("User ID claim not found or has an invalid value.");
-                    return 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error parsing JWT token: {ex.Message}");
-                return 0;
-            }
-        }
-
-        private async Task SaveUsageDataAsync(int userId, string applicationOrUrl)
-        {
-            bool isUrl = applicationOrUrl.Contains(".com") || applicationOrUrl.Contains(".ai") || applicationOrUrl.Contains(".in");
-
-            string baseUrl = isUrl ? ExtractBaseUrl(applicationOrUrl) : null;
-
-            string applicationName = isUrl ? GetBrowserNameFromUrl(applicationOrUrl) : applicationOrUrl;
-            string url = isUrl ? baseUrl : null;
-            string details = isUrl ? $"User spent time on the URL: {baseUrl}" : $"User spent time on application: {applicationOrUrl}";
-
-            if (applicationOrUrl.Contains(":"))
-            {
-                var parts = applicationOrUrl.Split(new[] { ':' }, 2);
-                if (parts.Length == 2)
-                {
-                    applicationName = parts[0].Trim();
-                    url = isUrl ? ExtractBaseUrl(parts[1].Trim()) : null;
-                }
-            }
-
-            if (appUsageTimes.TryGetValue(applicationOrUrl, out TimeSpan totalUsageTime))
-            {
-                string usageTime = $"{(int)totalUsageTime.TotalHours:D2}:{totalUsageTime.Minutes:D2}:{totalUsageTime.Seconds:D2}";
-
-                var usage = new ApplicationUsage
-                {
-                    UserId = userId,
-                    ApplicationName = applicationName,
-                    TotalUsage = usageTime,
-                    Details = details,
-                    UsageDate = DateTime.Now.Date,
-                    Url = url
-                };
-
-                string jsonPayload = JsonSerializer.Serialize(usage);
-                Console.WriteLine($"Sending JSON: {jsonPayload}");
-
-                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/AppUsage", usage);
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"Failed to log application/URL usage: {response.ReasonPhrase}");
-                }
-            }
-        }
-
-
-
-        private string ExtractBaseUrl(string url)
-        {
-            string urlToParse = url;
-            if (urlToParse.Contains(":"))
-            {
-                var parts = urlToParse.Split(new[] { ':' }, 2);
-                if (parts.Length == 2)
-                {
-                    urlToParse = parts[1].Trim();
-                }
-            }
-
-            try
-            {
-                var uri = new UriBuilder(urlToParse).Uri; 
-                string host = uri.Host;
-
-                return urlToParse.Substring(0, urlToParse.IndexOf(host) + host.Length);
-            }
-            catch (UriFormatException)
-            {
-                Console.WriteLine($"Invalid URL format: {url}");
-                return urlToParse; 
-            }
-        }
-
-
-
-        private string GetBrowserNameFromUrl(string url)
-        {
-            if (url.Contains("chrome", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Chrome";
-            }
-            else if (url.Contains("edge", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Edge";
-            }
-            else if (url.Contains("firefox", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Firefox";
-            }
-
-            return "Unknown Browser";
-        }
     }
 }

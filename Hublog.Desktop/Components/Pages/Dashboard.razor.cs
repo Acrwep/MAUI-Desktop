@@ -59,7 +59,7 @@ namespace Hublog.Desktop.Components.Pages
 
             while (isTracking)
             {
-                await _monitor.UpdateApplicationUsageAsync(token);
+                await _monitor.UpdateApplicationOrUrlUsageAsync(token);
                 await Task.Delay(10000);
             }
         }
