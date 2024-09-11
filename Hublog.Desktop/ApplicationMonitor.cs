@@ -67,6 +67,8 @@ namespace Hublog.Desktop
             }
         }
 
+
+
         private string ExtractApplicationName(string appOrUrl)
         {
             var parts = appOrUrl.Split(':');
@@ -84,35 +86,6 @@ namespace Hublog.Desktop
             return appOrUrl.Contains(".com") || appOrUrl.Contains(".net") || appOrUrl.Contains(".org") || appOrUrl.Contains(".ai") || appOrUrl.Contains(".in");
         }
 
-        //public string GetActiveApplicationName()
-        //{
-        //    IntPtr handle = GetForegroundWindow();
-        //    const int nChars = 256;
-        //    StringBuilder buff = new StringBuilder(nChars);
-
-        //    if (GetWindowText(handle, buff, nChars) > 0)
-        //    {
-        //        GetWindowThreadProcessId(handle, out uint processId);
-        //        var process = Process.GetProcessById((int)processId);
-        //        string applicationName = process.ProcessName.Split(' ')[0];
-
-        //        if (applicationName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
-        //            applicationName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
-        //            applicationName.Equals("firefox", StringComparison.OrdinalIgnoreCase))
-        //        {
-        //            string browserUrl = GetBrowserUrl(process);
-        //            if (!string.IsNullOrEmpty(browserUrl))
-        //            {
-        //                return $"{applicationName}: {browserUrl}";
-        //            }
-        //        }
-
-        //        return applicationName.Trim();
-        //    }
-
-        //    return string.Empty;
-        //}
-
         public string GetActiveApplicationName()
         {
             IntPtr handle = GetForegroundWindow();
@@ -123,16 +96,20 @@ namespace Hublog.Desktop
             {
                 GetWindowThreadProcessId(handle, out uint processId);
                 var process = Process.GetProcessById((int)processId);
-                string appName = process.ProcessName;
+                string applicationName = process.ProcessName.Split(' ')[0];
 
-                if (appName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
-                    appName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
-                    appName.Equals("firefox", StringComparison.OrdinalIgnoreCase))
+                if (applicationName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
+                    applicationName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
+                    applicationName.Equals("firefox", StringComparison.OrdinalIgnoreCase))
                 {
-                    return GetBrowserUrl(process);
+                    string browserUrl = GetBrowserUrl(process);
+                    if (!string.IsNullOrEmpty(browserUrl))
+                    {
+                        return $"{applicationName}: {browserUrl}";
+                    }
                 }
 
-                return appName;
+                return applicationName.Trim();
             }
 
             return string.Empty;
@@ -178,51 +155,69 @@ namespace Hublog.Desktop
 
         private async Task SaveApplicationUsageDataAsync(int userId, string applicationName)
         {
-            if (appUsageTimes.TryGetValue(applicationName, out TimeSpan usageTime))
+            try
             {
-                string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
+                string appName = ExtractApplicationName(applicationName);
 
-                var appUsage = new ApplicationUsage
+                if (appUsageTimes.TryGetValue(applicationName, out TimeSpan usageTime))
                 {
-                    UserId = userId,
-                    ApplicationName = applicationName,
-                    TotalUsage = totalUsage,
-                    UsageDate = DateTime.Now.Date,
-                    Details = $"User spent time on application: {applicationName}"
-                };
+                    string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
 
-                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Application", appUsage);
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
+                    var appUsage = new ApplicationUsage
+                    {
+                        UserId = userId,
+                        ApplicationName = appName,
+                        TotalUsage = totalUsage,
+                        UsageDate = DateTime.Now.Date,
+                        Details = $"User spent time on application: {appName}"
+                    };
+
+                    var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Application", appUsage);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
-
 
         private async Task SaveUrlUsageDataAsync(int userId, string url)
         {
-            if (appUsageTimes.TryGetValue(url, out TimeSpan usageTime))
+            try
             {
-                string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
-                string baseUrl = new UriBuilder(url).Uri.Host;
+                string actualUrl = ExtractUrl(url);
 
-                var urlUsage = new UrlUsage
+                if (appUsageTimes.TryGetValue(url, out TimeSpan usageTime))
                 {
-                    UserId = userId,
-                    Url = baseUrl,
-                    TotalUsage = totalUsage,
-                    UsageDate = DateTime.Now.Date,
-                    Details = $"User spent time on URL: {baseUrl}"
-                };
+                    string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
+                    string baseUrl = new UriBuilder(actualUrl).Uri.Host;  
 
-                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Url", urlUsage);
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"Failed to log URL usage: {response.ReasonPhrase}");
+                    var urlUsage = new UrlUsage
+                    {
+                        UserId = userId,
+                        Url = baseUrl,
+                        TotalUsage = totalUsage,
+                        UsageDate = DateTime.Now.Date,
+                        Details = $"User spent time on URL: {baseUrl}"
+                    };
+
+                    var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Url", urlUsage);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Failed to log URL usage: {response.ReasonPhrase}");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
+
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
