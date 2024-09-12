@@ -103,7 +103,8 @@ html, body {
     font-weight: 600;
     letter-spacing: 4px;
     margin: 0 !important;
-    margin-bottom: 4px !important
+    margin-bottom: 4px !important;
+    width:210px;
 }
 
 .punchin_buttonContainer {
@@ -383,7 +384,7 @@ html, body {
     margin: 0 !important;
     font-weight: 700;
     font-size: 22px;
-    color: #d32f2f
+    color: #d32f2f;
 }
 .breaktimer_modalbody {
     margin-top: -23px;
