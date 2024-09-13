@@ -5,7 +5,6 @@ namespace Hublog.Desktop
 {
     public static class MauiProgram
     {
-        //public static string OnlineURL = "https://localhost:44322/";
         public static string OnlineURL = "https://localhost:7263/";
 
         //production api url
@@ -35,7 +34,7 @@ namespace Hublog.Desktop
 #if WINDOWS
             builder.Services.AddSingleton<IScreenCaptureService, Platforms.Windows.WindowsScreenCaptureService>();
 #endif
-            return builder.Build();
+            return builder .Build();
 
         }
     }
