@@ -43,7 +43,8 @@ namespace Hublog.Desktop
             {
                 _trayIcon = new NotifyIcon
                 {
-                    Icon = SystemIcons.Application,
+                    //Icon = SystemIcons.Application,
+                    Icon = LoadTrayIcon(),
                     Visible = true,
                     Text = "Hublog"
                 };
@@ -64,6 +65,22 @@ namespace Hublog.Desktop
                 _trayIcon.ContextMenuStrip = contextMenu;
             }
         }
+
+        private static Icon LoadTrayIcon()
+        {
+            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "Images", "hublog.ico");
+
+            if (File.Exists(iconPath))
+            {
+                return new Icon(iconPath);
+            }
+            else
+            {
+                return SystemIcons.Application;
+            }
+        }
+
+
 
         private static void ConfirmQuit()
         {
