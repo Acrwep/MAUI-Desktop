@@ -31,8 +31,15 @@ namespace Hublog.Desktop
 
                 appWindow.Closing += (s, e) =>
                 {
-                    e.Cancel = true;
-                    TrayIconHelper.MinimizeToTray();
+                    if (MauiProgram.Loginlist == null || !MauiProgram.Loginlist.Active)
+                    {
+                        TrayIconHelper.QuitApplication();
+                    }
+                    else
+                    {
+                        e.Cancel = true;
+                        TrayIconHelper.MinimizeToTray();
+                    }
                 };
             });
 #endif
@@ -50,5 +57,6 @@ namespace Hublog.Desktop
 
             return window;
         }
+
     }
 }

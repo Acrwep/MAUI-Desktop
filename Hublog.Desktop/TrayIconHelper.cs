@@ -154,6 +154,13 @@ namespace Hublog.Desktop
                 _trayIcon = null;
             }
         }
+
+        public static void QuitApplication()
+        {
+            DisposeTrayIcon();
+            Microsoft.Maui.Controls.Application.Current.Quit();
+        }
+
     }
 }
 #endif
