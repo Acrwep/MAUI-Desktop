@@ -31,7 +31,7 @@ namespace Hublog.Desktop
 #if WINDOWS
             builder.Services.AddSingleton<IScreenCaptureService, Platforms.Windows.WindowsScreenCaptureService>();
 #endif
-            return builder.Build();
+            return builder .Build();
 
         }
     }
