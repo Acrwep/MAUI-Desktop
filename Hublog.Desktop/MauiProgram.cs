@@ -5,13 +5,8 @@ namespace Hublog.Desktop
 {
     public static class MauiProgram
     {
-        //public static string OnlineURL = "https://localhost:44322/";
         public static string OnlineURL = "https://localhost:7263/";
 
-        //production api url
-        //public static string OnlineURL = "https://hublog.org:8086/";
-
-        //public static TokenClaims UserClaims { get; set; }
         public static Users Loginlist = new Users();
         public static string token = "";
 
@@ -27,6 +22,7 @@ namespace Hublog.Desktop
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddHttpClient();
+
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

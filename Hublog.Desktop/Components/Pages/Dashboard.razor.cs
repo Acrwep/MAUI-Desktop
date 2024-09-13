@@ -41,7 +41,18 @@ namespace Hublog.Desktop.Components.Pages
 
         [Inject]
         public IScreenCaptureService ScreenCaptureService { get; set; }
+        [Inject] public HttpClient HttpClient { get; set; }
         #endregion
+
+        private HttpClient _httpClient;
+
+        public Dashboard()
+        {
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(MauiProgram.OnlineURL)  
+            };
+        }
 
         #region Track
         private ApplicationMonitor _monitor;
@@ -401,14 +412,14 @@ namespace Hublog.Desktop.Components.Pages
                 Console.WriteLine($"Error: {responseString}");
             }
         }
-        private async void PunchOut()
+        public async void PunchOut()
         {
             if (currentType == 2)
             {
                 isOnBreak = false;
                 currentType = 1;
             }
-
+            currentType = 1;
             DateTime istTime = GetISTTime();
             var attendanceModels = new List<UserAttendanceModel>
         {
@@ -429,7 +440,8 @@ namespace Hublog.Desktop.Components.Pages
             var json = JsonConvert.SerializeObject(attendanceModels);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
+            //var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
+            var response = await _httpClient.PostAsync($"api/Users/InsertAttendance", content);
             var responseString = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)
