@@ -1,12 +1,9 @@
-﻿using Hublog.Desktop.Components.Pages;
-using Microsoft.Maui;
-using Microsoft.Maui.Controls;
-#if WINDOWS
+﻿#if WINDOWS
+using Hublog.Desktop.Components.Pages;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using System.Runtime.InteropServices;
 using WinRT.Interop;
-#endif
 
 namespace Hublog.Desktop
 {
@@ -30,7 +27,7 @@ namespace Hublog.Desktop
 
                 TrayIconHelper.InitializeTrayIcon(_dashboard);
 
-                DisableMaximizeButton(windowHandle);
+                HideMinimizeAndMaximizeButtons(windowHandle); 
 
                 appWindow.Closing += (s, e) =>
                 {
@@ -63,32 +60,25 @@ namespace Hublog.Desktop
 
 #if WINDOWS
         private const int GWL_STYLE = -16;
-        private const int WS_MAXIMIZEBOX = 0x00010000;
-        private const int WS_THICKFRAME = 0x00040000; 
+        private const int WS_MINIMIZEBOX = 0x20000;
+        private const int WS_MAXIMIZEBOX = 0x10000;
+        private const int WS_THICKFRAME = 0x40000;
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll", SetLastError = true)]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll", SetLastError = true)]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
-        [DllImport("user32.dll")]
-        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-
-        private const uint SWP_NOMOVE = 0x0002;
-        private const uint SWP_NOSIZE = 0x0001;
-        private const uint SWP_NOACTIVATE = 0x0010;
-        private const uint SWP_NOREDRAW = 0x0008;
-
-        private void DisableMaximizeButton(IntPtr hWnd)
+        private void HideMinimizeAndMaximizeButtons(IntPtr hWnd)
         {
             int style = GetWindowLong(hWnd, GWL_STYLE);
             style &= ~WS_MAXIMIZEBOX; 
-            style &= ~WS_THICKFRAME;  
+            style &= ~WS_MINIMIZEBOX; 
             SetWindowLong(hWnd, GWL_STYLE, style);
-            SetWindowPos(hWnd, IntPtr.Zero, 0, 0, 0, 0, (uint)(SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW));
         }
 #endif
 
     }
 }
+#endif

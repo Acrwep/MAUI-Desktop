@@ -43,7 +43,6 @@ namespace Hublog.Desktop
             {
                 _trayIcon = new NotifyIcon
                 {
-                    //Icon = SystemIcons.Application,
                     Icon = LoadTrayIcon(),
                     Visible = true,
                     Text = "Hublog"
@@ -80,8 +79,6 @@ namespace Hublog.Desktop
             }
         }
 
-
-
         private static void ConfirmQuit()
         {
             var result = MessageBox.Show("Are you sure you want to punch out?", "Confirm Quit", MessageBoxButtons.YesNo);
@@ -89,11 +86,11 @@ namespace Hublog.Desktop
             {
                 _dashboardInstance.PunchOut();
                 DisposeTrayIcon();
-                Microsoft.Maui.Controls.Application.Current.Quit(); 
+                Microsoft.Maui.Controls.Application.Current.Quit();
             }
         }
 
-        private static void ShowMainWindow()
+        public static void ShowMainWindow()
         {
             var mainWindow = App.Current.Windows[0];
             var nativeWindow = mainWindow.Handler.PlatformView as Microsoft.UI.Xaml.Window;
@@ -124,24 +121,6 @@ namespace Hublog.Desktop
                 int exStyle = GetWindowLong(handle, GWL_EXSTYLE);
                 SetWindowLong(handle, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
                 _trayIcon.Visible = true;
-            }
-        }
-
-        public static void RestoreToTaskbar()
-        {
-            var mainWindow = App.Current.Windows[0];
-            var nativeWindow = mainWindow.Handler.PlatformView as Microsoft.UI.Xaml.Window;
-
-            if (nativeWindow != null)
-            {
-                var handle = WindowNative.GetWindowHandle(nativeWindow);
-
-                ShowWindow(handle, SW_SHOW);
-
-                int exStyle = GetWindowLong(handle, GWL_EXSTYLE);
-                SetWindowLong(handle, GWL_EXSTYLE, exStyle & ~WS_EX_TOOLWINDOW);
-
-                SetForegroundWindow(handle);
             }
         }
 
