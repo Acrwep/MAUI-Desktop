@@ -473,13 +473,11 @@ namespace Hublog.Desktop.Components.Pages
 
             isTimerActive = true;
         }
-
         private void StopScreenshotTimer()
         {
             screenshotTimer?.Dispose();
             isTimerActive = false;
         }
-
         private async Task CaptureAndUploadScreenshot()
         {
             try
@@ -493,7 +491,6 @@ namespace Hublog.Desktop.Components.Pages
                 Console.WriteLine($"Screenshot Error: {ex.Message}");
             }
         }
-
         private async Task UploadScreenshot(byte[] imageData)
         {
             string filename = DateTime.Now.ToString("yyyyMMddHHmmss") + ".jpg";
@@ -528,7 +525,6 @@ namespace Hublog.Desktop.Components.Pages
                 }
             }
         }
-
         private void ToggleTimer()
         {
             if (isTimerRunning)

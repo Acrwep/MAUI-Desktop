@@ -10,6 +10,7 @@ namespace Hublog.Desktop.Components.Pages
         private LoginModels loginModel = new LoginModels();
         private bool isLoggedIn = false;
         private bool isPopupVisible = false;
+        private string errorMessage = "";
 
         #region HandleLogin
         private async Task HandleLogin()
@@ -49,15 +50,19 @@ namespace Hublog.Desktop.Components.Pages
                 }
                 else
                 {
-                    var errorResult = JsonSerializer.Deserialize<dynamic>(responseString);
-                    var errorMessage = (string)errorResult?.message ?? "Login failed. Please try again.";
-                    await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+                    errorMessage = responseString;
+                    ShowPopup();
+                    //var errorResult = JsonSerializer.Deserialize<dynamic>(responseString);
+                    //var errorMessage = (string)errorResult?.message ?? "Login failed. Please try again.";
+                    //await JSRuntime.InvokeVoidAsync("alert", errorMessage);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
+                errorMessage = $"An unexpected error occurred: {ex.Message}";
+                ShowPopup();
+                //Console.WriteLine(ex);
+                //await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
             }
         }
         #endregion
@@ -113,6 +118,20 @@ namespace Hublog.Desktop.Components.Pages
             {
                 Console.WriteLine($"Error clearing local storage: {ex.Message}");
             }
+        }
+        #endregion
+
+        #region Show/Close Popup
+        private void ShowPopup()
+        {
+            isPopupVisible = true;
+            StateHasChanged(); 
+        }
+
+        private void ClosePopup()
+        {
+            isPopupVisible = false;
+            errorMessage = ""; 
         }
         #endregion
     }

@@ -46,6 +46,27 @@
             </div>
         </div>
     }
+
+    @if (isPopupVisible)
+    {
+        <div class="modal show d-block" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Login Error</h5>
+                        <button type="button" class="btn-close" aria-label="Close" @onclick="ClosePopup"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>@errorMessage</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="ClosePopup">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    }
 </div>
 
 
