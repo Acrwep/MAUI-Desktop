@@ -10,11 +10,15 @@ namespace Hublog.Desktop.Components.Pages
         private LoginModels loginModel = new LoginModels();
         private bool isLoggedIn = false;
         private bool isPopupVisible = false;
-        private string errorMessage = "";
+
+        private string userNameError = "";
+        private string passwordError = "";
+        private string generalError = "";
 
         #region HandleLogin
         private async Task HandleLogin()
         {
+            ClearErrorMessages();
             try
             {
                 var requestContent = JsonContent.Create(loginModel);
@@ -50,17 +54,28 @@ namespace Hublog.Desktop.Components.Pages
                 }
                 else
                 {
-                    errorMessage = responseString;
-                    ShowPopup();
-                    //var errorResult = JsonSerializer.Deserialize<dynamic>(responseString);
-                    //var errorMessage = (string)errorResult?.message ?? "Login failed. Please try again.";
-                    //await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+                    //errorMessage = responseString;
+                    //ShowPopup();
+
+                    if (responseString.Contains("Invalid UserName"))
+                    {
+                        userNameError = "Invalid username. Please try again.";
+                    }
+                    else if (responseString.Contains("Invalid Password"))
+                    {
+                        passwordError = "Invalid password. Please try again.";
+                    }
+                    else
+                    {
+                        generalError = "Login failed. Please try again.";
+                    }
                 }
             }
             catch (Exception ex)
             {
-                errorMessage = $"An unexpected error occurred: {ex.Message}";
-                ShowPopup();
+                generalError = $"An unexpected error occurred: {ex.Message}";
+                //errorMessage = $"An unexpected error occurred: {ex.Message}";
+                //ShowPopup();
                 //Console.WriteLine(ex);
                 //await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
             }
@@ -121,17 +136,12 @@ namespace Hublog.Desktop.Components.Pages
         }
         #endregion
 
-        #region Show/Close Popup
-        private void ShowPopup()
+        #region ClearErrorMessages
+        private void ClearErrorMessages()
         {
-            isPopupVisible = true;
-            StateHasChanged(); 
-        }
-
-        private void ClosePopup()
-        {
-            isPopupVisible = false;
-            errorMessage = ""; 
+            userNameError = "";
+            passwordError = "";
+            generalError = "";
         }
         #endregion
     }

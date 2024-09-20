@@ -7,7 +7,7 @@
 @inject IJSRuntime JSRuntime
 <link href="/css/home.css" rel="stylesheet" />
 
-<div>
+@* <div>
     @if (isLoggedIn)
     {
         <button @onclick="Logout">Logout</button>
@@ -31,6 +31,7 @@
                         <label for="username" class="loginform_labels">Email</label>
                         <InputText id="username" class="form-control signin_emailtextinput" @bind-Value="loginModel.UserName" />
                         <ValidationMessage For="@(() => loginModel.UserName)" />
+
                     </div>
 
                     <div class="form-group" style="margin-top: 12px;">
@@ -67,6 +68,64 @@
         </div>
         <div class="modal-backdrop fade show"></div>
     }
+</div> *@
+
+
+
+<div>
+    @if (isLoggedIn)
+    {
+        <button @onclick="Logout">Logout</button>
+        <p>Welcome, @loginModel.UserName</p>
+    }
+    else
+    {
+        <div class="login-container">
+            <div class="login_formcontainer">
+
+                <div class="home_logindiv">
+                    <img src="/images/logo-re-3.png" class="home_logo" />
+                </div>
+                <p class="signin_text">Sign in to your account</p>
+
+                <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label for="username" class="loginform_labels">Email</label>
+                        <InputText id="username" class="form-control signin_emailtextinput" @bind-Value="loginModel.UserName" />
+                        <ValidationMessage For="@(() => loginModel.UserName)" />
+                    </div>
+
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label for="password" class="loginform_labels">Password</label>
+                        <InputText id="password" type="password" class="form-control signin_emailtextinput" @bind-Value="loginModel.Password" />
+                        <ValidationMessage For="@(() => loginModel.Password)" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(userNameError))
+                    {
+                        <p class="text-danger">@userNameError</p>
+                    }
+
+                    <div class="form-group">
+                        <button type="submit" class="login_button">Login</button>
+                    </div>
+
+@*                     @if (!string.IsNullOrEmpty(passwordError))
+                    {
+                        <p class="text-danger">@passwordError</p>
+                    }
+                    @if (!string.IsNullOrEmpty(generalError))
+                    {
+                        <p class="text-danger">@generalError</p> 
+                    } *@
+                </EditForm>
+            </div>
+        </div>
+    }
 </div>
+
 
 
