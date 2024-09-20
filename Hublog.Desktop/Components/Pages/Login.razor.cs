@@ -59,11 +59,11 @@ namespace Hublog.Desktop.Components.Pages
 
                     if (responseString.Contains("Invalid UserName"))
                     {
-                        userNameError = "Invalid username. Please try again.";
+                        userNameError = "Invalid username or password";
                     }
                     else if (responseString.Contains("Invalid Password"))
                     {
-                        passwordError = "Invalid password. Please try again.";
+                        passwordError = "Invalid username or password";
                     }
                     else
                     {

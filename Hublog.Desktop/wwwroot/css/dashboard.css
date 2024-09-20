@@ -3,7 +3,6 @@ html, body {
 }
 
 .dashboard_mainContainer {
-    margin-top: 30px;
     position: relative;
     height: 100vh;
     overflow: hidden;
@@ -64,7 +63,7 @@ html, body {
 .dashboard_fullname {
     font-weight: 700;
     margin: 0 !important;
-    font-size: 19px;
+    font-size: 20px;
     margin-bottom: 4px !important;
 }
 
@@ -89,17 +88,22 @@ html, body {
     flex-direction: column;
     padding: 0px 12px;
 }
-
+.dashboard_currentdateandtime {
+    font-size: 10.5px;
+    font-weight: 600;
+    margin-top: -12px;
+    letter-spacing: 0.4px;
+}
 .dashboard_timerContainer {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    margin-top: 12px;
+    margin-top: 10px;
 }
 
 .dashboard_timer {
-    font-size: 42px;
+    font-size: 44px;
     font-weight: 600;
     letter-spacing: 4px;
     margin: 0 !important;
@@ -232,12 +236,22 @@ html, body {
 
 .logoutrow_container {
     position: absolute;
-    background: #F0F1F1;
-    bottom: 30px;
+    bottom: 0px;
+    padding: 0px 0px;
     width: 100%;
-    padding: 9px 12px;
 }
-
+.dashboard_versionnumber{
+    text-align:center;
+    font-size:12px;
+    margin:0 !important;
+    margin-bottom:2px !important;
+    font-weight:500 !important;
+}
+.opendashboard_buttoncontainer {
+    background: #F0F1F1;
+    width:100%;
+    padding:6px 12px;
+}
 .logout_image {
     width: 24px;
 }
@@ -251,9 +265,9 @@ html, body {
 
 .lastsync_container {
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: center;
-    height: 36px;
+    height: 34px;
 }
 
 .lastsync_image {
@@ -265,12 +279,13 @@ html, body {
     font-weight: 500;
     margin-left: 8px;
     margin-right: 9px;
-    margin-top: 13px;
+    margin-top: 16px;
 }
 
 .logout_button {
     border: none;
     color: #ff4d4f;
+    margin-top: 2px;
 }
 
 .modal-title {

@@ -83,6 +83,10 @@ namespace Hublog.Desktop.Components.Pages
 
         protected override void OnInitialized()
         {
+            base.OnInitialized();
+            UpdateDateTime();
+            StartTimertwo();
+
             var claimsJson = Preferences.Default.Get("Claim", string.Empty);
             if (!string.IsNullOrEmpty(claimsJson))
             {
@@ -603,5 +607,23 @@ namespace Hublog.Desktop.Components.Pages
             return utcNow.Add(istOffset);
 
         }
-    }
+    private string CurrentDateTime { get; set; }
+        private System.Threading.Timer _timer;
+
+        private void UpdateDateTime()
+        {
+            CurrentDateTime = DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt");
+            InvokeAsync(StateHasChanged); // Refresh UI
+        }
+
+        private void StartTimertwo()
+        {
+            _timer = new Timer(_ => UpdateDateTime(), null, 0, 1000); // Update every second
+        }
+
+        public void Dispose()
+        {
+            _timer?.Dispose();
+        }
+}
 }

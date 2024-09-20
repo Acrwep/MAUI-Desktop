@@ -27,6 +27,7 @@
 
     <div class="dashboard_timerContainer">
         <p class="dashboard_timer">@elapsedTime</p>
+        <p class="dashboard_currentdateandtime">@CurrentDateTime</p>
 
         <div style="position:relative;">
             @if (buttonText == "Punch In")
@@ -87,30 +88,41 @@
             <div class="modal-content">
                 <div class="modal-header breaktimer_modalheader">
                     <p class="youron_text">Your on</p>
-                    @if (selectedBreakInfo!=null){
+                    @if (selectedBreakInfo != null)
+                    {
                         <p class="modal-title break_heading">@selectedBreakInfo.Name</p>
                     }
                 </div>
                 <div class="modal-body breaktimer_modalbody">
                     <p id="breakTimeDisplay" class="break_timer">@remainingTime</p>
-                        <button type="button" class="breakResume_button" @onclick="ResumeWorking">Resume Working</button>
+                    <button type="button" class="breakResume_button" @onclick="ResumeWorking">Resume Working</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="logoutrow_container">
-        <div class="row g-2">
-            <div class="col-5">
-                <div style="display:flex;justify-content:center;">
-                    <a href="https://hublog.org/userdetail" class="opendashboard_button">Open Dashboard</a>
+        <p class="dashboard_versionnumber">Version 1.0</p>
+        <div class="opendashboard_buttoncontainer">
+            <div class="row g-2">
+                <div class="col-5">
+                    <div style="display:flex;justify-content:center;">
+                        <a href="https://hublog.org/userdetail" class="opendashboard_button">Open Dashboard</a>
+                    </div>
                 </div>
-            </div>
-            <div class="col-7">
-                <div class="lastsync_container">
-                    <img src="/images/refresh-cw.svg" class="lastsync_image" />
-                    <p class="lastsync_text">last sync 0 min ago</p>
-                    <Hublog.Desktop.Components.Layout.LogoutButton/>
+                <div class="col-7">
+                    <div class="lastsync_container">
+                        <img src="/images/refresh-cw.svg" class="lastsync_image" />
+                        <p class="lastsync_text">last sync 0 min ago</p>
+                        @if (buttonText == "Punch In")
+                        {
+                            <Hublog.Desktop.Components.Layout.LogoutButton />
+                        }
+                        else
+                        {
+                            <img src="/images/log-out.svg" style="opacity:0.4" />
+                        }
+                    </div>
                 </div>
             </div>
         </div>

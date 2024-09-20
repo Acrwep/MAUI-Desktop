@@ -83,7 +83,7 @@ namespace Hublog.Desktop
 
         private bool IsUrl(string appOrUrl)
         {
-            return appOrUrl.Contains(".com") || appOrUrl.Contains(".net") || appOrUrl.Contains(".org") || appOrUrl.Contains(".ai") || appOrUrl.Contains(".in");
+            return appOrUrl.Contains(".com") || appOrUrl.Contains(".net") || appOrUrl.Contains(".org") || appOrUrl.Contains(".ai") || appOrUrl.Contains(".in") || appOrUrl.Contains("localhost");
         }
 
         public string GetActiveApplicationName()
