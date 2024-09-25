@@ -54,34 +54,7 @@ namespace Hublog.Desktop.Components.Pages
             };
         }
 
-        #region Track
-        private ApplicationMonitor _monitor;
-        private bool isTracking = false;
-        private string token;
-
-        private async Task StartTracking()
-        {
-            isTracking = true;
-
-            var httpClient = MauiProgram.CreateMauiApp().Services.GetRequiredService<HttpClient>();
-            httpClient.BaseAddress = new Uri(MauiProgram.OnlineURL);
-
-            _monitor = new ApplicationMonitor(httpClient);
-
-            while (isTracking)
-            {
-                await _monitor.UpdateApplicationOrUrlUsageAsync(token);
-                await Task.Delay(10000);
-            }
-        }
-
-        private void StopTracking()
-        {
-            isTracking = false;
-        }
-        #endregion
-
-        protected override void OnInitialized()
+        protected override async void OnInitialized()
         {
             base.OnInitialized();
             UpdateDateTime();
@@ -111,6 +84,117 @@ namespace Hublog.Desktop.Components.Pages
                 Console.WriteLine("No claims found in Preferences.");
             }
         }
+
+        private void ToggleTimer()
+        {
+            if (isTimerRunning)
+            {
+                StopTimer();
+                buttonText = "Punch In";
+            }
+            else
+            {
+                StartTimer();
+            }
+            InvokeAsync(StateHasChanged);
+        }
+        private void StartTimer()
+        {
+            isTimerRunning = true;
+            punchInTimer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
+            buttonText = "Punch Out";
+            currentType = 1;
+            PunchIn();
+            StartTracking();
+            StartScreenshotTimer();
+
+            var systemInfoService = new SystemInfoService();
+            var systemInfo = systemInfoService.GetSystemInfo();
+            Console.WriteLine($"System Info: {JsonConvert.SerializeObject(systemInfo)}");
+        }
+        private void StopTimer()
+        {
+            isTimerRunning = false;
+            punchInTimer?.Dispose();
+            timeSpan = TimeSpan.Zero;
+            elapsedTime = "00:00:00";
+
+            isOnBreak = false;
+            breakButtonText = "Break";
+
+            if (currentType == 1 || currentType == 2)
+            {
+                PunchOut();
+                StopTracking();
+                StopScreenshotTimer();
+            }
+            else
+            {
+                ChangeStatus();
+            }
+        }
+        private void TimerCallback(object state)
+        {
+            if (remainingTime.TotalSeconds > 0)
+            {
+                remainingTime = remainingTime.Subtract(TimeSpan.FromSeconds(1));
+                InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                isBreakActive = false;
+                breakTimer?.Dispose();
+                InvokeAsync(() =>
+                {
+                    StateHasChanged();
+                    JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
+                });
+            }
+        }
+        private void UpdateTimer(object state)
+        {
+            if (isTimerRunning)
+            {
+                timeSpan = timeSpan.Add(TimeSpan.FromSeconds(1));
+                elapsedTime = timeSpan.ToString(@"hh\:mm\:ss");
+                InvokeAsync(StateHasChanged);
+            }
+        }
+        private DateTime GetISTTime()
+        {
+            var utcNow = DateTime.UtcNow;
+            var istOffset = TimeSpan.FromHours(5.5);
+            return utcNow.Add(istOffset);
+
+        }
+
+        #region Track
+        private ApplicationMonitor _monitor;
+        private bool isTracking = false;
+        private string token;
+
+        private async Task StartTracking()
+        {
+            isTracking = true;
+
+            var httpClient = MauiProgram.CreateMauiApp().Services.GetRequiredService<HttpClient>();
+            httpClient.BaseAddress = new Uri(MauiProgram.OnlineURL);
+
+            _monitor = new ApplicationMonitor(httpClient);
+
+            while (isTracking)
+            {
+                await _monitor.UpdateApplicationOrUrlUsageAsync(token);
+                await Task.Delay(10000);
+            }
+        }
+
+        private void StopTracking()
+        {
+            isTracking = false;
+        }
+        #endregion
+
         private string GetInitials(string firstName, string lastName)
         {
             if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
@@ -529,85 +613,8 @@ namespace Hublog.Desktop.Components.Pages
                 }
             }
         }
-        private void ToggleTimer()
-        {
-            if (isTimerRunning)
-            {
-                StopTimer();
-                buttonText = "Punch In";
-            }
-            else
-            {
-                StartTimer();
-            }
-            InvokeAsync(StateHasChanged);
-        }
-        private void StartTimer()
-        {
-            isTimerRunning = true;
-            punchInTimer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
-            buttonText = "Punch Out";
-            currentType = 1;
-            PunchIn();
-            StartTracking();
-            StartScreenshotTimer();
-        }
-        private void StopTimer()
-        {
-            isTimerRunning = false;
-            punchInTimer?.Dispose();
-            timeSpan = TimeSpan.Zero;
-            elapsedTime = "00:00:00";
 
-            isOnBreak = false;
-            breakButtonText = "Break";
-
-            if (currentType == 1 || currentType == 2)
-            {
-                PunchOut();
-                StopTracking();
-                StopScreenshotTimer();
-            }
-            else
-            {
-                ChangeStatus();
-            }
-        }
-        private void TimerCallback(object state)
-        {
-            if (remainingTime.TotalSeconds > 0)
-            {
-                remainingTime = remainingTime.Subtract(TimeSpan.FromSeconds(1));
-                InvokeAsync(StateHasChanged);
-            }
-            else
-            {
-                isBreakActive = false;
-                breakTimer?.Dispose();
-                InvokeAsync(() =>
-                {
-                    StateHasChanged();
-                    JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
-                });
-            }
-        }
-        private void UpdateTimer(object state)
-        {
-            if (isTimerRunning)
-            {
-                timeSpan = timeSpan.Add(TimeSpan.FromSeconds(1));
-                elapsedTime = timeSpan.ToString(@"hh\:mm\:ss");
-                InvokeAsync(StateHasChanged);
-            }
-        }
-        private DateTime GetISTTime()
-        {
-            var utcNow = DateTime.UtcNow;
-            var istOffset = TimeSpan.FromHours(5.5);
-            return utcNow.Add(istOffset);
-
-        }
-    private string CurrentDateTime { get; set; }
+        private string CurrentDateTime { get; set; }
         private System.Threading.Timer _timer;
 
         private void UpdateDateTime()
