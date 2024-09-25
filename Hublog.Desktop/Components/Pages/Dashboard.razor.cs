@@ -110,7 +110,38 @@ namespace Hublog.Desktop.Components.Pages
 
             var systemInfoService = new SystemInfoService();
             var systemInfo = systemInfoService.GetSystemInfo();
-            Console.WriteLine($"System Info: {JsonConvert.SerializeObject(systemInfo)}");
+
+            var systemInfoModel = new SystemInfoModel
+            {
+                UserId = systemInfo.UserId,
+                DeviceId = systemInfo.DeviceId,
+                DeviceName = systemInfo.DeviceName,
+                Platform = systemInfo.Platform,
+                OSName = systemInfo.OSName,
+                OSBuild = systemInfo.OSBuild,
+                SystemType = systemInfo.SystemType,
+                IPAddress = systemInfo.IPAddress,
+                AppType = systemInfo.AppType,
+                HublogVersion = systemInfo.HublogVersion,
+                Status = 1
+            };
+
+            var jsonContent = JsonConvert.SerializeObject(systemInfoModel);
+
+            var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            var responseTask = HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/SystemInfo/InsertOrUpdateSystemInfo", httpContent);
+
+            var isSuccess = responseTask.GetAwaiter().GetResult(); 
+
+            if (isSuccess.IsSuccessStatusCode) 
+            {
+                Console.WriteLine("System info successfully inserted or updated.");
+            }
+            else
+            {
+                Console.WriteLine("Failed to insert or update system info.");
+            }
         }
         private void StopTimer()
         {
@@ -127,11 +158,50 @@ namespace Hublog.Desktop.Components.Pages
                 PunchOut();
                 StopTracking();
                 StopScreenshotTimer();
+
+                var systemInfoService = new SystemInfoService();
+                var systemInfo = systemInfoService.GetSystemInfo();
+
+                var systemInfoModel = new SystemInfoModel
+                {
+                    UserId = systemInfo.UserId,
+                    DeviceId = systemInfo.DeviceId,
+                    DeviceName = systemInfo.DeviceName,
+                    Platform = systemInfo.Platform,
+                    OSName = systemInfo.OSName,
+                    OSBuild = systemInfo.OSBuild,
+                    SystemType = systemInfo.SystemType,
+                    IPAddress = systemInfo.IPAddress,
+                    AppType = systemInfo.AppType,
+                    HublogVersion = systemInfo.HublogVersion,
+                    Status = 0
+                };
+
+                var systemInfoJson = JsonConvert.SerializeObject(systemInfoModel);
+                var systemInfoContent = new StringContent(systemInfoJson, Encoding.UTF8, "application/json");
+
+                var systemInfoResponseTask = HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/SystemInfo/InsertOrUpdateSystemInfo", systemInfoContent);
+
+                var systemInfoResponse = systemInfoResponseTask.GetAwaiter().GetResult(); 
+
+                var systemInfoResponseStringTask = systemInfoResponse.Content.ReadAsStringAsync();
+                var systemInfoResponseString = systemInfoResponseStringTask.GetAwaiter().GetResult();
+
+                if (systemInfoResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("System info status updated to offline successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error updating system info status: {systemInfoResponseString}");
+                }
             }
             else
             {
                 ChangeStatus();
             }
+
+
         }
         private void TimerCallback(object state)
         {

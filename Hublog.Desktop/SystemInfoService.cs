@@ -1,5 +1,7 @@
 ﻿using Hublog.Desktop.Entities;
+using Microsoft.Win32;
 using System.IdentityModel.Tokens.Jwt;
+using System.Management;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -15,7 +17,7 @@ namespace Hublog.Desktop
             {
                 UserId = userId,
                 DeviceName = GetDeviceName(),
-                DeviceID = DeviceInfo.Idiom.ToString(),
+                DeviceId = GetDeviceId(), //DeviceInfo.Idiom.ToString(),
                 Platform = GetPlatform(),
                 OSName = GetOSBuild(),
                 OSBuild = GetOSName(),
@@ -23,9 +25,32 @@ namespace Hublog.Desktop
                 IPAddress = GetIPAddress(),
                 AppType = GetAppType(),
                 HublogVersion = GetApplicationVersion()
-            };
+            }; 
 
             return systemInfo;
+        }
+
+        public string GetDeviceId()
+        {
+            string deviceId = "N/A";
+
+            try
+            {
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT UUID FROM Win32_ComputerSystemProduct"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        deviceId = obj["UUID"]?.ToString();
+                        break; 
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                deviceId = "Error: " + ex.Message;
+            }
+
+            return deviceId;
         }
 
         private int GetUserIdFromToken(string token)

@@ -95,6 +95,7 @@
         <PackageReference Include="Selenium.WebDriver.MicrosoftDriver" Version="17.17134.0" />
         <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" />
+        <PackageReference Include="System.Management" Version="8.0.0" />
         <PackageReference Include="System.Reactive.Windows.Forms" Version="6.0.1" />
     </ItemGroup>
 
