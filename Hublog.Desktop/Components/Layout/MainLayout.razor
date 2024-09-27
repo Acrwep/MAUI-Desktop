@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+using System.Text.Json;
 
 <div class="page">
     @*    <div class="sidebar">
@@ -13,6 +15,166 @@
         <LogoutButton />
     }
 </div>
+
+@* @code {
+    private bool _isRedirected = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isRedirected)
+        {
+            try
+            {
+                // Try to get the login token from localStorage
+                var token = await JSRuntime.InvokeAsync<string>("getToken");
+
+                // Check if the token is valid and navigate accordingly
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _isRedirected = true;
+                    Navigation.NavigateTo("/Dashboard", forceLoad: true);
+                }
+                else
+                {
+                    _isRedirected = true;
+                    Navigation.NavigateTo("/");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the error
+                Console.WriteLine($"Error during token retrieval or navigation: {ex.Message}");
+            }
+        }
+    }
+} *@
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if the login token exists in local storage
+        var token = await JSRuntime.InvokeAsync<string>("getToken");
+        if (!string.IsNullOrEmpty(token))
+        {
+            // If the token is not null or empty, check if it is expired
+            bool isExpired = IsTokenExpired(token);
+
+            if (!isExpired)
+            {
+                // Navigate to the dashboard if the token is not expired
+                Navigation.NavigateTo("/Dashboard");
+            }
+            else
+            {
+                // Navigate to the home page if the token is expired
+                Navigation.NavigateTo("/");
+            }
+        }
+        else
+        {
+            // Navigate to the home page if there is no token
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private bool IsTokenExpired(string token)
+    {
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3)
+            {
+                Console.WriteLine("Invalid token structure.");
+                return true; // Treat as expired
+            }
+
+            var payload = parts[1]; // Get the payload part (the second part of the JWT)
+            var jsonBytes = ParseBase64WithoutPadding(payload); // Decode the payload
+            var payloadJson = System.Text.Encoding.UTF8.GetString(jsonBytes);
+
+            var payloadData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(payloadJson);
+
+            // Check for the "exp" claim (expiration time)
+            if (payloadData.TryGetValue("exp", out var expObj))
+            {
+                long exp;
+
+                // Handle different data types for exp
+                if (expObj is double expDouble)
+                {
+                    exp = (long)expDouble; // Convert double to long
+                }
+                else if (expObj is long expLong)
+                {
+                    exp = expLong; // Directly use the long value
+                }
+                else if (expObj is string expString)
+                {
+                    // Trim whitespace and attempt to parse
+                    expString = expString.Trim();
+                    if (long.TryParse(expString, out long expParsed))
+                    {
+                        exp = expParsed; // Parse from string
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Unable to parse 'exp' value '{expString}'. Treating as expired.");
+                        return true; // Treat as expired
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Unexpected type for 'exp'. Treating as expired.");
+                    return true; // Treat as expired
+                }
+
+                // Convert the exp value to DateTime
+                var expirationDateTime = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
+
+                // Log the expiration DateTime and current time for debugging
+                Console.WriteLine($"Expiration DateTime (UTC): {expirationDateTime}");
+                Console.WriteLine($"Current UTC Time: {DateTime.UtcNow}");
+
+                // Return true if the token is expired
+                bool isExpired = expirationDateTime < DateTime.UtcNow;
+                if (isExpired)
+                {
+                    Console.WriteLine("Token is expired.");
+                }
+                else
+                {
+                    Console.WriteLine("Token is valid.");
+                }
+
+                return isExpired; // True if expired
+            }
+            else
+            {
+                // If the "exp" claim is missing, treat it as expired
+                Console.WriteLine("Expiration claim 'exp' is missing. Treating as expired.");
+                return true; // Treat as expired
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the error for debugging
+            Console.WriteLine($"Error checking token expiration: {ex.Message}");
+            // For security, treat it as expired
+            return true; // Treat as expired on error
+        }
+    }
+
+    private byte[] ParseBase64WithoutPadding(string base64)
+    {
+        switch (base64.Length % 4)
+        {
+            case 2: base64 += "=="; break;
+            case 3: base64 += "="; break;
+        }
+        return Convert.FromBase64String(base64);
+    }
+}
 
 @code {
     private bool IsHomePage()

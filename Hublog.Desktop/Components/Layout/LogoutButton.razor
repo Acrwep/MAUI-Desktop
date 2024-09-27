@@ -75,7 +75,7 @@
 
         var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "systemdata");
         var data = JsonSerializer.Serialize(MauiProgram.Loginlist);
-
+         await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
         Navigation.NavigateTo("/");
     }
 }

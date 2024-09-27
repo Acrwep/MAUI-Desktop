@@ -2,6 +2,7 @@ using Hublog.Desktop.Entities;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.JSInterop;
 
 namespace Hublog.Desktop.Components.Pages
 {
@@ -48,7 +49,8 @@ namespace Hublog.Desktop.Components.Pages
                         Preferences.Default.Set("Claim", claimsJson);
 
                         isLoggedIn = true;
-
+                        //store token
+                        await JSRuntime.InvokeVoidAsync("setItem", "loginToken", loginResult.token);
                         Navigation.NavigateTo("/Dashboard");
                     }
                 }
@@ -144,5 +146,11 @@ namespace Hublog.Desktop.Components.Pages
             generalError = "";
         }
         #endregion
-    }
+
+    private async Task PlayAlertSound()
+        {
+            await JSRuntime.InvokeVoidAsync("playAlertSound");
+        }
+
+}
 }
