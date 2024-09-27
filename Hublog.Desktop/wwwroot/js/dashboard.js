@@ -33,3 +33,11 @@ function changeResumeButtonColorToRed() {
         button.style.color = 'white';
     }
 }
+
+function resetResumeButtonColor() {
+    var button = document.querySelector('.breakResume_button');
+    if (button) {
+        button.style.backgroundColor = ''; 
+        button.style.color = ''; 
+    }
+}

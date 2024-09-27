@@ -229,6 +229,7 @@ namespace Hublog.Desktop.Components.Pages
             {
                 // Handle end of break
                 isBreakActive = false;
+                JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
                 // Possibly reset or stop the timer
             }
         }
@@ -503,6 +504,7 @@ namespace Hublog.Desktop.Components.Pages
         }
         private void OpenBreakTimerModal()
         {
+            JSRuntime.InvokeVoidAsync("resetResumeButtonColor");
             JSRuntime.InvokeVoidAsync("openBreakTimerModal");
             InvokeAsync(StateHasChanged);
         }
