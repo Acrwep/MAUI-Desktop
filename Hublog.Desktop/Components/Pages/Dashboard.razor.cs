@@ -205,20 +205,31 @@ namespace Hublog.Desktop.Components.Pages
         }
         private void TimerCallback(object state)
         {
-            if (remainingTime.TotalSeconds > 0)
+            //if (remainingTime.TotalSeconds > 0)
+            //{
+            //    remainingTime = remainingTime.Subtract(TimeSpan.FromSeconds(1));
+            //    InvokeAsync(StateHasChanged);
+            //}
+            //else
+            //{
+            //    isBreakActive = false;
+            //    breakTimer?.Dispose();
+            //    InvokeAsync(() =>
+            //    {
+            //        StateHasChanged();
+            //        JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
+            //    });
+            //}
+
+            if (isBreakActive && remainingTime.TotalSeconds > 0)
             {
                 remainingTime = remainingTime.Subtract(TimeSpan.FromSeconds(1));
-                InvokeAsync(StateHasChanged);
             }
             else
             {
+                // Handle end of break
                 isBreakActive = false;
-                breakTimer?.Dispose();
-                InvokeAsync(() =>
-                {
-                    StateHasChanged();
-                    JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
-                });
+                // Possibly reset or stop the timer
             }
         }
         private void UpdateTimer(object state)
@@ -529,6 +540,15 @@ namespace Hublog.Desktop.Components.Pages
         }
         private void StartBreakTimer(int breakDurationMinutes)
         {
+            //remainingTime = TimeSpan.FromMinutes(breakDurationMinutes);
+            //isBreakActive = true;
+            //breakTimer = new Timer(TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+
+            if (breakTimer != null)
+            {
+                breakTimer.Dispose(); 
+            }
+
             remainingTime = TimeSpan.FromMinutes(breakDurationMinutes);
             isBreakActive = true;
             breakTimer = new Timer(TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
