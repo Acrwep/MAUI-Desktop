@@ -153,6 +153,39 @@ namespace Hublog.Desktop
             return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
+        //private async Task SaveApplicationUsageDataAsync(int userId, string applicationName)
+        //{
+        //    try
+        //    {
+        //        string appName = ExtractApplicationName(applicationName);
+
+        //        if (appUsageTimes.TryGetValue(applicationName, out TimeSpan usageTime))
+        //        {
+        //            string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
+
+        //            var appUsage = new ApplicationUsage
+        //            {
+        //                UserId = userId,
+        //                ApplicationName = appName,
+        //                TotalUsage = totalUsage,
+        //                //UsageDate = DateTime.Now.Date,
+        //                UsageDate = DateTime.Now.ToString("yyyy-MM-dd"),
+        //                Details = $"User spent time on application: {appName}"
+        //            };
+
+        //            var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Application", appUsage);
+        //            if (!response.IsSuccessStatusCode)
+        //            {
+        //                Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex.Message);
+        //    }
+        //}
+
         private async Task SaveApplicationUsageDataAsync(int userId, string applicationName)
         {
             try
@@ -168,7 +201,7 @@ namespace Hublog.Desktop
                         UserId = userId,
                         ApplicationName = appName,
                         TotalUsage = totalUsage,
-                        UsageDate = DateTime.Now.Date,
+                        UsageDate = DateTime.Now.ToString("yyyy-MM-dd"), 
                         Details = $"User spent time on application: {appName}"
                     };
 
@@ -181,7 +214,7 @@ namespace Hublog.Desktop
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"An error occurred while saving application usage data: {ex.Message}");
             }
         }
 
