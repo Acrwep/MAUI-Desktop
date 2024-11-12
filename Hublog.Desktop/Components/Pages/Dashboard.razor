@@ -1,0 +1,132 @@
+﻿@page "/dashboard"
+@using Hublog.Desktop.Entities
+@using System.Text
+@using Microsoft.Maui.Controls.Shapes
+@using Newtonsoft.Json
+@using System.Net.Http.Headers
+@using System.IO
+@using System.Drawing
+@using System.Drawing.Imaging
+@using System.Threading.Tasks
+@using System.Threading
+@using System.Net.Http
+@inject IJSRuntime JSRuntime
+
+<div class="dashboard_mainContainer">
+    <div class="dashboard_headerContainer">
+        <img src="/images/crystal.jpg" class="dashboard_employeeimage" />
+        <img src="/images/wave.png" class="dashboard_waveimage" />
+        <div class="dashboard_profileContainer">
+            <p class="initial_text">@initials</p>
+        </div>
+    </div>
+
+    <div class="dashboard_namesContainer">
+        <p class="dashboard_fullname">@firstName @lastName</p>
+        <p class="dashboard_email">@userEmail</p>
+    </div>
+
+    <div class="dashboard_timerContainer">
+        <p class="dashboard_timer">@elapsedTime</p>
+        <p class="dashboard_currentdateandtime">@CurrentDateTime</p>
+
+        <div style="position:relative;">
+            @if (buttonText == "Punch In")
+            {
+                <div class="punchin_NonbuttonContainer" />
+                <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> In</button>
+            }
+            else
+            {
+                <div class="punchin_buttonContainer" />
+                <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> Out</button>
+            }
+        </div>
+        @if (buttonText == "Punch Out")
+        {
+            <div class="break_buttonContainer">
+                <button class="break_button" @onclick="TakeBreak">Break</button>
+            </div>
+        }
+    </div>
+
+    <!-- Modal Break Selection -->
+    <div class="modal fade" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="breakModalLabel">Choose a Break Option</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (availableBreaks != null && availableBreaks.Count > 0)
+                    {
+                        @foreach (var breakOption in availableBreaks)
+                        {
+                            <div class="break_checkboxContainer">
+                                <div class="form-check">
+                                    <input type="radio" class="form-check-input" id="@breakOption.Id" name="breakOption" value="@breakOption.Id" @onchange="OnBreakOptionChanged" />
+                                    <label class="form-check-label" for="@breakOption.Id">@breakOption.Name<br /></label>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No available breaks found.</p>
+                    }
+                    <div class="breakchoose_buttonContainer">
+                        <button type="button" class="breakchoose_button" @onclick="CloseModal">Choose</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Break Timer -->
+    <div class="modal fade" id="breakTimerModal" tabindex="-1" aria-labelledby="breakTimerModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header breaktimer_modalheader">
+                    <p class="youron_text">Your on</p>
+                    @if (selectedBreakInfo != null)
+                    {
+                        <p class="modal-title break_heading">@selectedBreakInfo.Name !</p>
+                    }
+                </div>
+                <div class="modal-body breaktimer_modalbody">
+                    <p id="breakTimeDisplay" class="break_timer">@remainingTime</p>
+                    <button type="button" class="breakResume_button" @onclick="ResumeWorking">Resume Working</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="logoutrow_container">
+        <p class="dashboard_versionnumber">Version 1.1</p>
+        <div class="opendashboard_buttoncontainer">
+            <div class="row g-2">
+                <div class="col-5">
+                    <div style="display:flex;justify-content:center;">
+                        <a href="https://hublog.org/userdetail" class="opendashboard_button">Open Dashboard</a>
+                    </div>
+                </div>
+                <div class="col-7">
+                    <div class="lastsync_container">
+                        <img src="/images/refresh-cw.svg" class="lastsync_image" />
+                        <p class="lastsync_text">last sync 0 min ago</p>
+                        @if (buttonText == "Punch In")
+                        {
+                            <Hublog.Desktop.Components.Layout.LogoutButton />
+                        }
+                        else
+                        {
+                            <img src="/images/log-out.svg" style="opacity:0.4" />
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

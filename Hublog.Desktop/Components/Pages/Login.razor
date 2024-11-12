@@ -1,0 +1,98 @@
+﻿@page "/"
+@using Hublog.Desktop.Entities
+@using System.Text.Json
+@using Hublog.Desktop.Components
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+<link href="/css/home.css" rel="stylesheet" />
+
+<div>
+    @if (isLoggedIn)
+    {
+        <button @onclick="Logout">Logout</button>
+        <p>Welcome, @loginModel.UserName</p>
+    }
+    else
+    {
+        <div class="login-container">
+            <div class="login_formcontainer">
+
+                <div class="home_logindiv">
+                    <img src="/images/logo-re-3.png" class="home_logo" />
+                </div>
+                <p class="signin_text">Sign in to your account</p>
+
+                <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label for="username" class="loginform_labels">Email</label>
+                        <InputText id="username" class="form-control signin_emailtextinput" @bind-Value="loginModel.UserName" />
+                        <ValidationMessage For="@(() => loginModel.UserName)" />
+                    </div>
+
+                    <div class="form-group" style="margin-top: 12px; position:relative; margin-bottom:30px;">
+                        <label for="password" class="loginform_labels">Password</label>
+                        <div style="position: relative;">
+                            <InputText id="password" type="@passwordInputType" autocomplete="off" class="form-control signin_passwordtextinput" @bind-Value="loginModel.Password" />
+                            <button type="button" @onclick="TogglePasswordVisibility" class="login_passwordvisibilitybutton">
+                                @if (isPasswordVisible)
+                                {
+                                    <img src="/images/visible.png" style="width:20px;opacity:0.7;" />
+                                }
+                                else
+                                {
+                                    <img src="/images/eyeoff.png" style="width:20px;opacity:0.7;" />
+                                }
+                            </button>
+                        </div>
+                        <ValidationMessage For="@(() => loginModel.Password)" />
+
+                        @if (string.IsNullOrEmpty(userNameError))
+                        {
+                            <div class="loginerroemessage">
+                                <p>@userNameError</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="login_activeerroemessage">
+                                <p style="color:red;margin-top:3px;">@userNameError</p>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="login_button">Login</button>
+                    </div>
+                </EditForm>
+
+                @*  <div class="form-group">
+            <button class="login_button" @onclick="PlayAlertSound">Play</button>
+            </div> *@
+            </div>
+        </div>
+    }
+</div>
+@* <audio controls="controls">
+    <source src="c:\users\admin%20prakash\documents\github\maui-desktop\hublog.desktop\wwwroot\audio\water%20packet.mp3" type="audio/mpeg" />
+</audio> *@
+<script>
+    function playAlertSound() {
+        var audio = new Audio('/audio/WaterPacket.mp3');  // Provide the correct path to your sound file
+        audio.play();
+    }
+
+</script>
+
+@code {
+    private bool isPasswordVisible = false;
+    private string passwordInputType => isPasswordVisible ? "text" : "password";
+
+    private void TogglePasswordVisibility()
+    {
+        isPasswordVisible = !isPasswordVisible;
+    }
+}
