@@ -11,6 +11,7 @@
 @using System.Threading
 @using System.Net.Http
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 
 <div class="dashboard_mainContainer">
     <div class="dashboard_headerContainer">
@@ -130,3 +131,10 @@
     </div>
 </div>
 
+@code {
+    private void RefreshPage()
+    {
+        // Refresh the page using the NavigationManager
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+}

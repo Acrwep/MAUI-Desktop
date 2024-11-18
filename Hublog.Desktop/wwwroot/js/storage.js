@@ -19,3 +19,12 @@ function getToken() {
 function getuserDetails() {
     return localStorage.getItem('userDetails');
 }
+function getelapsedTime() {
+    return localStorage.getItem('elapsedTime' || "00:00:00");
+}
+function getpunchInTime() {
+    return localStorage.getItem('punchInTime' || null);
+}
+function getAppCloseTime() {
+    return localStorage.getItem('appCloseTime' || null);
+}

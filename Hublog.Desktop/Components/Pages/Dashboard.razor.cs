@@ -4,13 +4,189 @@ using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
+using Microsoft.Maui.Storage;
+using Microsoft.Maui.Platform;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Hublog.Desktop.Components.Pages
 {
     public partial class Dashboard
     {
+        private const int InactivityThreshold = 10000; // 10 seconds
+        private Timer autoInactivityTimer;  // Renamed timer
+        private uint _lastInputTime;
+
+        [DllImport("user32.dll")]
+        private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct LASTINPUTINFO
+        {
+            public uint cbSize;
+            public uint dwTime;
+        }
+
+        // Event to handle inactivity
+        public event Action OnInactivityDetected;
+        public class AttendanceDetails
+        {
+            public string FirstName { get; set; }
+            public string Email { get; set; }
+            public string EmployeeId { get; set; }
+            public bool Active { get; set; }
+            public DateTime AttendanceDate { get; set; }
+            public DateTime Start_Time { get; set; }
+            public DateTime End_Time { get; set; }
+            public DateTime Total_Time { get; set; }
+            public DateTime Late_Time { get; set; }
+            public int Status { get; set; }
+        }
+
+        public class AttendanceSummary
+        {
+            public int DaysPresent { get; set; }
+            public int DaysLeave { get; set; }
+        }
+
+        public class AttendanceResponse
+        {
+            public List<AttendanceDetails> AttendanceDetails { get; set; }
+            public AttendanceSummary AttendanceSummary { get; set; }
+        }
+
         #region Declares
         private string elapsedTime = "00:00:00";
+
+        protected override async Task OnInitializedAsync()
+        {
+            try
+            {
+                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
+           + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
+           + $"&UserId={MauiProgram.Loginlist.Id}"
+           + $"&startDate={DateTime.Today:yyyy-MM-dd}"
+           + $"&endDate={DateTime.Today:yyyy-MM-dd}";
+
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                var response = await HttpClient.GetAsync(URL);
+                Console.WriteLine("Response Data: " + response);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize JSON response
+                    var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
+
+                    if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
+                    {
+                        // Filter entries with today's date
+                        var today = DateTime.Today;
+
+                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time;
+                        Console.WriteLine("Start Time (First Entry): " + lastStartTime.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                        DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
+                        Console.WriteLine("End Time (First Entry): " + lastEndTime.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                        DateTime currentTime = DateTime.Now;
+                        Console.WriteLine("currentTime " + currentTime.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                        var todayEntries = attendanceResponse.AttendanceDetails
+                                            .Where(entry => entry.AttendanceDate.Date == today)
+                                            .ToList();
+
+                        // Sum total_Time for entries matching today's date
+                        var totalDuration = new TimeSpan();
+                        foreach (var entry in todayEntries)
+                        {
+                            if (entry.Total_Time != DateTime.MinValue)
+                            {
+                                totalDuration += entry.Total_Time.TimeOfDay;
+                            }
+                        }
+
+                        // Format total duration to "hh:mm:ss"
+                        string totalDurationString = totalDuration.ToString(@"hh\:mm\:ss");
+
+                        Console.WriteLine("Total Time for Today's Entries: " + totalDurationString);
+                        string savedElapsedTime = await JSRuntime.InvokeAsync<string>("getelapsedTime");
+
+                        // Parse the saved elapsed time, if it exists
+                        // Parse the saved elapsed time, if it exists
+                        if (!string.IsNullOrEmpty(savedElapsedTime) && TimeSpan.TryParse(savedElapsedTime, out var parsedTime))
+                        {
+                            timeSpan = parsedTime;  // Initialize timeSpan with the stored elapsed time
+                            var abcTime = timeSpan.ToString(@"hh\:mm\:ss"); // Display the initial elapsed time
+                            Console.WriteLine("Saved Elapsed Time: " + abcTime);
+
+                            // Check if abcTime is "00:00:00"
+                            if (abcTime == "00:00:00")
+                            {
+                                // If abcTime is 00:00:00, just use the totalDurationString
+                                elapsedTime = totalDurationString;
+                            }
+                            else
+                            {
+                                // Calculate the difference between current time and lastStartTime
+                                TimeSpan timeDifference = currentTime - lastStartTime;
+
+                                // Format the time difference as "hh:mm:ss"
+                                string timeDifferenceString = timeDifference.ToString(@"hh\:mm\:ss");
+
+                                // Output the formatted time difference
+                                Console.WriteLine("Time Difference: " + timeDifferenceString);
+
+                                // Parse totalDurationString into a TimeSpan object (assuming it's in "hh:mm:ss" format)
+                                TimeSpan totalDurationParsed = TimeSpan.Parse(totalDurationString);
+
+                                // Add timeDifference to totalDurationParsed
+                                TimeSpan elapsedTimee = totalDurationParsed + timeDifference;
+
+                                // Format elapsedTime as "hh:mm:ss"
+                                string elapsedTimeString = elapsedTimee.ToString(@"hh\:mm\:ss");
+
+                                // Output the final elapsed time
+                                Console.WriteLine("Elapsed Time: " + elapsedTimeString);
+                                elapsedTime = elapsedTimeString;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No attendance entries found for today.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error: " + response.StatusCode);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching breaks: {ex.Message}");
+            }
+            var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+            Console.WriteLine(punchIntimefromLocalStorage);
+
+            if (!string.IsNullOrEmpty(punchIntimefromLocalStorage) && punchIntimefromLocalStorage != "null")
+            {
+                // Parse elapsedTime as TimeSpan to start the timer from this value
+                if (TimeSpan.TryParse(elapsedTime, out var parsedTimeSpan))
+                {
+                    timeSpan = parsedTimeSpan;
+                }
+                StartTimer();
+            }
+            else
+            {
+                Console.WriteLine("Condition not met: hii is null or elapsedTime is '00:00:00'. Timer not started.");
+            }
+        }
+
         private bool isTimerRunning = false;
         private bool isOnBreak = false;
         private TimeSpan timeSpan = TimeSpan.Zero;
@@ -50,13 +226,14 @@ namespace Hublog.Desktop.Components.Pages
         {
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri(MauiProgram.OnlineURL)  
+                BaseAddress = new Uri(MauiProgram.OnlineURL)
             };
         }
 
         protected override async void OnInitialized()
         {
             base.OnInitialized();
+            autoInactivityTimer = new Timer(CheckInactivity, null, TimeSpan.Zero, TimeSpan.FromSeconds(1)); //for auto punchout implementation
             UpdateDateTime();
             StartTimertwo();
 
@@ -94,17 +271,27 @@ namespace Hublog.Desktop.Components.Pages
             }
             else
             {
+                if (TimeSpan.TryParse(elapsedTime, out var parsedTimeSpan))
+                {
+                    timeSpan = parsedTimeSpan;
+                }
                 StartTimer();
             }
             InvokeAsync(StateHasChanged);
         }
-        private void StartTimer()
+        private async void StartTimer()
         {
             isTimerRunning = true;
             punchInTimer = new System.Threading.Timer(UpdateTimer, null, 0, 1000);
             buttonText = "Punch Out";
             currentType = 1;
-            PunchIn();
+            var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+            Console.WriteLine(punchIntimefromLocalStorage);
+
+            if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null")
+            {
+                PunchIn();
+            }
             StartTracking();
             StartScreenshotTimer();
 
@@ -132,9 +319,9 @@ namespace Hublog.Desktop.Components.Pages
 
             var responseTask = HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/SystemInfo/InsertOrUpdateSystemInfo", httpContent);
 
-            var isSuccess = responseTask.GetAwaiter().GetResult(); 
+            var isSuccess = responseTask.GetAwaiter().GetResult();
 
-            if (isSuccess.IsSuccessStatusCode) 
+            if (isSuccess.IsSuccessStatusCode)
             {
                 Console.WriteLine("System info successfully inserted or updated.");
             }
@@ -182,7 +369,7 @@ namespace Hublog.Desktop.Components.Pages
 
                 var systemInfoResponseTask = HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/SystemInfo/InsertOrUpdateSystemInfo", systemInfoContent);
 
-                var systemInfoResponse = systemInfoResponseTask.GetAwaiter().GetResult(); 
+                var systemInfoResponse = systemInfoResponseTask.GetAwaiter().GetResult();
 
                 var systemInfoResponseStringTask = systemInfoResponse.Content.ReadAsStringAsync();
                 var systemInfoResponseString = systemInfoResponseStringTask.GetAwaiter().GetResult();
@@ -233,12 +420,13 @@ namespace Hublog.Desktop.Components.Pages
                 // Possibly reset or stop the timer
             }
         }
-        private void UpdateTimer(object state)
+        private async void UpdateTimer(object state)
         {
             if (isTimerRunning)
             {
                 timeSpan = timeSpan.Add(TimeSpan.FromSeconds(1));
                 elapsedTime = timeSpan.ToString(@"hh\:mm\:ss");
+                await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", elapsedTime);
                 InvokeAsync(StateHasChanged);
             }
         }
@@ -550,7 +738,7 @@ namespace Hublog.Desktop.Components.Pages
 
             if (breakTimer != null)
             {
-                breakTimer.Dispose(); 
+                breakTimer.Dispose();
             }
 
             remainingTime = TimeSpan.FromMinutes(breakDurationMinutes);
@@ -563,6 +751,8 @@ namespace Hublog.Desktop.Components.Pages
         private async void PunchIn()
         {
             DateTime istTime = GetISTTime();
+            await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", istTime);
+            Console.WriteLine("punchin timeee", istTime);
             var attendanceModels = new List<UserAttendanceModel>
         {
             new UserAttendanceModel
@@ -603,6 +793,22 @@ namespace Hublog.Desktop.Components.Pages
             }
             currentType = 1;
             DateTime istTime = GetISTTime();
+            await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+            var punchIntime = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+            Console.WriteLine("punchIn time: " + punchIntime);
+
+            // Attempt to parse punchIntime to DateTime
+            DateTime? parsedPunchInTime = null;
+            if (DateTime.TryParse(punchIntime, out var punchInDateTime))
+            {
+                // Convert to UTC if necessary
+                parsedPunchInTime = punchInDateTime.ToUniversalTime();
+            }
+            else
+            {
+                Console.WriteLine("Failed to parse punchIn time.");
+            }
+
             var attendanceModels = new List<UserAttendanceModel>
         {
             new UserAttendanceModel
@@ -611,7 +817,7 @@ namespace Hublog.Desktop.Components.Pages
                 UserId = MauiProgram.Loginlist.Id,
                 OrganizationId = MauiProgram.Loginlist.OrganizationId,
                 AttendanceDate = istTime.Date,
-                Start_Time = null,
+                Start_Time = parsedPunchInTime,
                 End_Time = istTime,
                 Late_Time = null,
                 Total_Time = null,
@@ -632,12 +838,66 @@ namespace Hublog.Desktop.Components.Pages
                 buttonText = "Punch In";
                 breakButtonText = "Break";
                 isOnBreak = false;
+                isTimerRunning = false;
                 punchInTimer?.Dispose();
+                await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
+
+                try
+                {
+                    string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
+                                 + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
+                                 + $"&UserId={MauiProgram.Loginlist.Id}"
+                                 + $"&startDate={DateTime.Today:yyyy-MM-dd}"
+                                 + $"&endDate={DateTime.Today:yyyy-MM-dd}";
+
+                    HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                    var responses = await HttpClient.GetAsync(URL);
+                    Console.WriteLine("Response Data: " + responses);
+
+                    if (responses.IsSuccessStatusCode)
+                    {
+                        var responseData = await responses.Content.ReadAsStringAsync();
+
+                        // Deserialize JSON response
+                        var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
+
+                        if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
+                        {
+                            // Filter entries with today's date
+                            var today = DateTime.Today;
+                            var todayEntries = attendanceResponse.AttendanceDetails
+                                                 .Where(entry => entry.AttendanceDate.Date == today)
+                                                 .ToList();
+
+                            // Sum total_Time for entries matching today's date
+                            var totalDuration = new TimeSpan();
+                            foreach (var entry in todayEntries)
+                            {
+                                if (entry.Total_Time != DateTime.MinValue)
+                                {
+                                    totalDuration += entry.Total_Time.TimeOfDay;
+                                }
+                            }
+
+                            // Format total duration to "hh:mm:ss"
+                            string totalDurationString = totalDuration.ToString(@"hh\:mm\:ss");
+
+                            Console.WriteLine("Total Time for Today's Entries: " + totalDurationString);
+                            elapsedTime = totalDurationString;
+                        }
+                    }
+                    else
+                    {
+                        var errorResponse = await responses.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Error: {errorResponse}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error fetching attendance details: {ex.Message}");
+                }
             }
-            else
-            {
-                Console.WriteLine($"Error: {responseString}");
-            }
+
         }
         #endregion
 
@@ -726,5 +986,44 @@ namespace Hublog.Desktop.Components.Pages
         {
             _timer?.Dispose();
         }
-}
+
+        //Auto Punchout implementaion
+        public async Task HandleInactivity()
+        {
+            Console.WriteLine("User has been inactive for 10 seconds.");
+            //Check user is during punchin or not
+            var punchIntime = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+
+            if (string.IsNullOrEmpty(punchIntime))
+            {
+                Console.WriteLine("punchIn time is null or empty.");
+            }
+            else
+            {
+                // Call the PunchOut function
+                PunchOut();
+            }
+        }
+        private async void CheckInactivity(object state)
+        {
+            var lastInputInfo = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+            if (GetLastInputInfo(ref lastInputInfo))
+            {
+                var idleTime = Environment.TickCount - lastInputInfo.dwTime;
+                if (idleTime > InactivityThreshold)
+                {
+                    // Trigger inactivity event and handle navigation
+                    OnInactivityDetected?.Invoke();
+                  await HandleInactivity();
+
+                }
+            }
+        }
+
+        // Dispose of the timer when the component is disposed
+        public void autoInactivityDispose()  // Renamed Dispose method
+        {
+            autoInactivityTimer?.Dispose();
+        }
+    }
 }

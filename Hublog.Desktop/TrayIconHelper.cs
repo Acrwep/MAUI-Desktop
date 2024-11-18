@@ -79,11 +79,17 @@ namespace Hublog.Desktop
             }
         }
 
-        private static void ConfirmQuit()
+        private async static void ConfirmQuit()
         {
             var result = MessageBox.Show("Are you sure you want to punch out?", "Confirm Quit", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes && _dashboardInstance != null)
             {
+                string closeTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                Console.WriteLine($"App closing time: {closeTime}");
+                
+        // Store the close time using Preferences
+        Preferences.Set("closeTime", closeTime);
+
                 _dashboardInstance.PunchOut();
                 DisposeTrayIcon();
                 Microsoft.Maui.Controls.Application.Current.Quit();
