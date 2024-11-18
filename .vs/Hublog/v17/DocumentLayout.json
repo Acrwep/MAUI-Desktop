@@ -1,50 +1,26 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\",
+  "WorkspaceRootPath": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\components\\pages\\dashboard.razor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\components\\pages\\dashboard.razor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin\\documents\\github\\maui-desktop\\hublog.desktop\\components\\layout\\logoutbutton.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\components\\layout\\logoutbutton.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\mainpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\mainpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\components\\pages\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin\\documents\\github\\maui-desktop\\hublog.desktop\\components\\pages\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\components\\pages\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\platforms\\windows\\systemactivitytracker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\platforms\\windows\\systemactivitytracker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin\\documents\\github\\maui-desktop\\hublog.desktop\\components\\pages\\dashboard.razor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\components\\pages\\dashboard.razor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\components\\pages\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\components\\pages\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\mauiprogram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin\\documents\\github\\maui-desktop\\hublog.desktop\\mauiprogram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\mauiprogram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\components\\pages\\login.razor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\components\\pages\\login.razor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\platforms\\windows\\windowsscreencaptureservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\platforms\\windows\\windowsscreencaptureservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\wwwroot\\js\\storage.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\wwwroot\\js\\storage.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\entities\\getmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\entities\\getmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin prakash\\documents\\github\\maui-desktop\\hublog.desktop\\components\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\components\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|c:\\users\\admin\\documents\\github\\maui-desktop\\hublog.desktop\\applicationmonitor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D270760A-5458-46F3-9A67-C7735A6138B4}|Hublog.Desktop\\Hublog.Desktop.csproj|solutionrelative:hublog.desktop\\applicationmonitor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -54,150 +30,71 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "MainPage.xaml",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\MainPage.xaml",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\MainPage.xaml",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\MainPage.xaml",
-              "RelativeToolTip": "Hublog.Desktop\\MainPage.xaml",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2024-11-18T06:43:38.599Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "MauiProgram.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\MauiProgram.cs",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\MauiProgram.cs",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\MauiProgram.cs",
-              "RelativeToolTip": "Hublog.Desktop\\MauiProgram.cs",
-              "ViewState": "AQIAAA0AAAAAAAAAAAAQwB0AAAAnAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-18T05:59:13.926Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Login.razor",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Login.razor",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Pages\\Login.razor",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Login.razor",
-              "RelativeToolTip": "Hublog.Desktop\\Components\\Pages\\Login.razor",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAAFAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2024-11-16T12:44:10.351Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Dashboard.razor.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
-              "RelativeToolTip": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
-              "ViewState": "AQIAAEkDAAAAAAAAAAAgwFoDAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-13T08:42:17.988Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "Dashboard.razor",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
-              "RelativeToolTip": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
-              "ViewState": "AQIAAG8AAAAAAAAAAAAAAIUAAAAHAAAA",
+              "Title": "LogoutButton.razor",
+              "DocumentMoniker": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Layout\\LogoutButton.razor",
+              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Layout\\LogoutButton.razor",
+              "ToolTip": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Layout\\LogoutButton.razor",
+              "RelativeToolTip": "Hublog.Desktop\\Components\\Layout\\LogoutButton.razor",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABgAAAAsAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2024-10-08T11:26:02.117Z",
+              "WhenOpened": "2024-11-18T05:13:30.854Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "SystemActivityTracker.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Platforms\\Windows\\SystemActivityTracker.cs",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Platforms\\Windows\\SystemActivityTracker.cs",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Platforms\\Windows\\SystemActivityTracker.cs",
-              "RelativeToolTip": "Hublog.Desktop\\Platforms\\Windows\\SystemActivityTracker.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAEAAAAlAAAA",
+              "Title": "MauiProgram.cs",
+              "DocumentMoniker": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\MauiProgram.cs",
+              "RelativeDocumentMoniker": "Hublog.Desktop\\MauiProgram.cs",
+              "ToolTip": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\MauiProgram.cs",
+              "RelativeToolTip": "Hublog.Desktop\\MauiProgram.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-15T05:53:05.466Z",
+              "WhenOpened": "2024-11-18T05:12:24.251Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "Login.razor.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Login.razor.cs",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Pages\\Login.razor.cs",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Login.razor.cs",
-              "RelativeToolTip": "Hublog.Desktop\\Components\\Pages\\Login.razor.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAADYAAAA8AAAA",
+              "DocumentIndex": 4,
+              "Title": "ApplicationMonitor.cs",
+              "DocumentMoniker": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\ApplicationMonitor.cs",
+              "RelativeDocumentMoniker": "Hublog.Desktop\\ApplicationMonitor.cs",
+              "ToolTip": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\ApplicationMonitor.cs",
+              "RelativeToolTip": "Hublog.Desktop\\ApplicationMonitor.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAAwAAAAYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-16T12:44:18.92Z",
+              "WhenOpened": "2024-11-16T11:45:40.536Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Dashboard.razor.cs",
+              "DocumentMoniker": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
+              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
+              "ToolTip": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
+              "RelativeToolTip": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor.cs",
+              "ViewState": "AgIAADwBAAAAAAAAAAAmwEkBAABNAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-11-16T08:43:11.2Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "WindowsScreenCaptureService.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Platforms\\Windows\\WindowsScreenCaptureService.cs",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Platforms\\Windows\\WindowsScreenCaptureService.cs",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Platforms\\Windows\\WindowsScreenCaptureService.cs",
-              "RelativeToolTip": "Hublog.Desktop\\Platforms\\Windows\\WindowsScreenCaptureService.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA8AAAA4AAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-15T06:11:35.994Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "GetModels.cs",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Entities\\GetModels.cs",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Entities\\GetModels.cs",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Entities\\GetModels.cs",
-              "RelativeToolTip": "Hublog.Desktop\\Entities\\GetModels.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA8AAAAFAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-13T08:53:41.64Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "storage.js",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\wwwroot\\js\\storage.js",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\wwwroot\\js\\storage.js",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\wwwroot\\js\\storage.js",
-              "RelativeToolTip": "Hublog.Desktop\\wwwroot\\js\\storage.js",
-              "ViewState": "AQIAAAcAAAAAAAAAAAAgwBYAAAA9AAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2024-11-13T08:40:16.668Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "MainLayout.razor",
-              "DocumentMoniker": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Layout\\MainLayout.razor",
-              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Layout\\MainLayout.razor",
-              "ToolTip": "C:\\Users\\ADMIN PRAKASH\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Layout\\MainLayout.razor",
-              "RelativeToolTip": "Hublog.Desktop\\Components\\Layout\\MainLayout.razor",
-              "ViewState": "AQIAAC0AAAAAAAAAAIBJwDoAAABQAAAA",
+              "DocumentIndex": 1,
+              "Title": "Dashboard.razor",
+              "DocumentMoniker": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
+              "RelativeDocumentMoniker": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
+              "ToolTip": "C:\\Users\\admin\\Documents\\GitHub\\MAUI-Desktop\\Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
+              "RelativeToolTip": "Hublog.Desktop\\Components\\Pages\\Dashboard.razor",
+              "ViewState": "AgIAAGoAAAAAAAAAAAAAAHgAAABKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2024-09-27T05:05:14.637Z"
+              "WhenOpened": "2024-11-16T08:22:52.803Z",
+              "EditorCaption": ""
             }
           ]
         }

@@ -14,7 +14,7 @@ namespace Hublog.Desktop.Components.Pages
 {
     public partial class Dashboard
     {
-        private const int InactivityThreshold = 10000; // 10 seconds
+        private const int InactivityThreshold = 7200000; // 2 hrs in milliseconds
         private Timer autoInactivityTimer;  // Renamed timer
         private uint _lastInputTime;
 
