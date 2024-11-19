@@ -14,7 +14,8 @@ namespace Hublog.Desktop.Components.Pages
 {
     public partial class Dashboard
     {
-        private const int InactivityThreshold = 7200000; // 2 hrs in milliseconds
+        private const int InactivityThreshold = 1800000; // 30 min in milliseconds
+        private const int InactivityAlertThreshold = 600000; // 10 min in milliseconds
         private const int ShutdownThreshold = 10000; // 10 seconds of inactivity before considering a shutdown
         private Timer autoInactivityTimer;  // Renamed timer
         private uint _lastInputTime;
@@ -62,6 +63,7 @@ namespace Hublog.Desktop.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
             try
             {
                 string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
@@ -206,6 +208,7 @@ namespace Hublog.Desktop.Components.Pages
 
         private TimeSpan screenshotInterval = TimeSpan.FromMinutes(5);
         private bool isTimerActive = false;
+        private bool triggerInactivealert = true;
 
         private List<BreakMaster> availableBreaks = new List<BreakMaster>();
         private int selectedBreakId;
@@ -414,6 +417,7 @@ namespace Hublog.Desktop.Components.Pages
             if (isBreakActive && remainingTime.TotalSeconds > 0)
             {
                 remainingTime = remainingTime.Subtract(TimeSpan.FromSeconds(1));
+                await JSRuntime.InvokeVoidAsync("setItem", "breakStatus", "isBreaktime");
             }
             else
             {
@@ -433,7 +437,7 @@ namespace Hublog.Desktop.Components.Pages
         private void StartAudioPlaybackLoop()
         {
             // Start a new periodic timer
-            breakAlerttimer = new PeriodicTimer(TimeSpan.FromSeconds(20));
+            breakAlerttimer = new PeriodicTimer(TimeSpan.FromSeconds(30));
 
             // Run the playback loop
             _ = PlayAudioLoopAsync();
@@ -670,6 +674,7 @@ namespace Hublog.Desktop.Components.Pages
                 return;
             }
             StopAudioPlaybackLoop();
+            await JSRuntime.InvokeVoidAsync("setItem", "breakStatus", null);
             DateTime istTime = GetISTTime();
             var breakEndDetails = new List<UserBreakModel>
         {
@@ -789,7 +794,7 @@ namespace Hublog.Desktop.Components.Pages
 
             JSRuntime.InvokeVoidAsync("closeBreakModal");
         }
-        private void StartBreakTimer(int breakDurationMinutes)
+        private async void StartBreakTimer(int breakDurationMinutes)
         {
             //remainingTime = TimeSpan.FromMinutes(breakDurationMinutes);
             //isBreakActive = true;
@@ -1069,19 +1074,43 @@ namespace Hublog.Desktop.Components.Pages
             if (GetLastInputInfo(ref lastInputInfo))
             {
                 var idleTime = Environment.TickCount - lastInputInfo.dwTime;
+                var getBreakstatus = await JSRuntime.InvokeAsync<string>("getbreakStatus");
+                Console.WriteLine(getBreakstatus);
+
                 if (idleTime > InactivityThreshold)
                 {
                     // Trigger inactivity event and handle navigation
-                    OnInactivityDetected?.Invoke();
-                    await HandleInactivity();
+                    if (getBreakstatus == "isBreaktime")
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        OnInactivityDetected?.Invoke();
+                        StopAudioPlaybackLoop();
+                        await HandleInactivity();
+                    }
 
                 }
-                // Check if the system has been idle for more than 10 seconds (Shutdown threshold)
-                if (idleTime > ShutdownThreshold)
+                // Check if the system has been inactive more than
+                if (idleTime > InactivityAlertThreshold)
                 {
-                    // Assuming system shutdown or restart
-                    Console.WriteLine("System shutdown or restart detected (no input for more than 10 seconds).");
-                    //await HandleInactivity();
+
+                    Console.WriteLine("System inactive detected (no input for more than 10 seconds).");
+                    if (triggerInactivealert == true && getBreakstatus != "isBreaktime")
+                    {
+                        await PlayAudio();
+                        triggerInactivealert = false;
+                        StartAudioPlaybackLoop();
+                    }
+                }
+                else
+                {
+                    if (getBreakstatus != "isBreaktime")
+                    {
+                        triggerInactivealert = true;
+                        StopAudioPlaybackLoop();
+                    }
                 }
             }
         }
