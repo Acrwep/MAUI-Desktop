@@ -15,7 +15,6 @@ namespace Hublog.Desktop
         {
             InitializeComponent();
             MainPage = new MainPage();
-            _dashboard = new Dashboard();
 
 #if WINDOWS
             Microsoft.Maui.Handlers.WindowHandler.Mapper.AppendToMapping(nameof(IWindow), (handler, view) =>

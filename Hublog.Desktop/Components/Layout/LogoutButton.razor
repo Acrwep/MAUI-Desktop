@@ -78,6 +78,7 @@
          await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
         await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
         await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime","00:00:00");
+        await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
         Navigation.NavigateTo("/");
     }
 }

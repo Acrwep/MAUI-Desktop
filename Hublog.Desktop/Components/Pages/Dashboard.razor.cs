@@ -15,6 +15,7 @@ namespace Hublog.Desktop.Components.Pages
     public partial class Dashboard
     {
         private const int InactivityThreshold = 7200000; // 2 hrs in milliseconds
+        private const int ShutdownThreshold = 10000; // 10 seconds of inactivity before considering a shutdown
         private Timer autoInactivityTimer;  // Renamed timer
         private uint _lastInputTime;
 
@@ -390,7 +391,9 @@ namespace Hublog.Desktop.Components.Pages
 
 
         }
-        private void TimerCallback(object state)
+
+        private PeriodicTimer? breakAlerttimer; // Timer for audio playback
+        private async void TimerCallback(object state)
         {
             //if (remainingTime.TotalSeconds > 0)
             //{
@@ -415,11 +418,67 @@ namespace Hublog.Desktop.Components.Pages
             else
             {
                 // Handle end of break
-                isBreakActive = false;
-                JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
+                if (isBreakActive)
+                {
+                    isBreakActive = false;
+                    await JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
+                    await PlayAudio();
+                    StartAudioPlaybackLoop();
+                }
                 // Possibly reset or stop the timer
             }
         }
+
+        //Break alert timer logic. the alert should play every 20sec
+        private void StartAudioPlaybackLoop()
+        {
+            // Start a new periodic timer
+            breakAlerttimer = new PeriodicTimer(TimeSpan.FromSeconds(20));
+
+            // Run the playback loop
+            _ = PlayAudioLoopAsync();
+        }
+
+        private async void StopAudioPlaybackLoop()
+        {
+            // Dispose of the timer if it exists
+            breakAlerttimer?.Dispose();
+            breakAlerttimer = null;
+            await PauseAudio();
+        }
+
+        private async Task PlayAudioLoopAsync()
+        {
+            if (breakAlerttimer == null)
+                return;
+
+            try
+            {
+                while (await breakAlerttimer.WaitForNextTickAsync())
+                {
+                    await PlayAudio();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Timer was stopped
+            }
+            finally
+            {
+                StopAudioPlaybackLoop(); // Clean up
+            }
+        }
+        public async Task PlayAudio()
+        {
+            await JSRuntime.InvokeVoidAsync("playAudio");
+
+        }
+
+        public async Task PauseAudio()
+        {
+            await JSRuntime.InvokeVoidAsync("pauseAudio");
+        }
+
         private async void UpdateTimer(object state)
         {
             if (isTimerRunning)
@@ -610,7 +669,7 @@ namespace Hublog.Desktop.Components.Pages
                 Console.WriteLine("No active break found.");
                 return;
             }
-
+            StopAudioPlaybackLoop();
             DateTime istTime = GetISTTime();
             var breakEndDetails = new List<UserBreakModel>
         {
@@ -1014,8 +1073,15 @@ namespace Hublog.Desktop.Components.Pages
                 {
                     // Trigger inactivity event and handle navigation
                     OnInactivityDetected?.Invoke();
-                  await HandleInactivity();
+                    await HandleInactivity();
 
+                }
+                // Check if the system has been idle for more than 10 seconds (Shutdown threshold)
+                if (idleTime > ShutdownThreshold)
+                {
+                    // Assuming system shutdown or restart
+                    Console.WriteLine("System shutdown or restart detected (no input for more than 10 seconds).");
+                    //await HandleInactivity();
                 }
             }
         }

@@ -36,6 +36,17 @@
     <script src="js/dashboard.js"></script>
     <script src="_framework/blazor.webview.js" autostart="false"></script>
     <script src="js/storage.js"></script>
+    <script>
+        function playAudio() {
+            const audio = document.getElementById('audioPlayer');
+            if (audio) {
+                audio.play();
+            } else {
+                console.error('Audio element not found');
+            }
+        }
+    </script>
+
 </body>
 
 </html>

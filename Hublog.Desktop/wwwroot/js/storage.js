@@ -28,3 +28,6 @@ function getpunchInTime() {
 function getAppCloseTime() {
     return localStorage.getItem('appCloseTime' || null);
 }
+function getbreakStatus() {
+    return localStorage.getItem('breakStatus' || null);
+}
