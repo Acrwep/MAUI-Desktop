@@ -16,7 +16,6 @@ namespace Hublog.Desktop.Components.Pages
     {
         private const int InactivityThreshold = 1800000; // 30 min in milliseconds
         private const int InactivityAlertThreshold = 600000; // 10 min in milliseconds
-        private const int ShutdownThreshold = 10000; // 10 seconds of inactivity before considering a shutdown
         private Timer autoInactivityTimer;  // Renamed timer
         private uint _lastInputTime;
 
@@ -1076,6 +1075,11 @@ namespace Hublog.Desktop.Components.Pages
                 var idleTime = Environment.TickCount - lastInputInfo.dwTime;
                 var getBreakstatus = await JSRuntime.InvokeAsync<string>("getbreakStatus");
                 Console.WriteLine(getBreakstatus);
+
+                var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+
+                if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null") return;
+                
 
                 if (idleTime > InactivityThreshold)
                 {
