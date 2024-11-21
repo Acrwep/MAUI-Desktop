@@ -48,19 +48,22 @@ namespace Hublog.Desktop
                     Text = "Hublog"
                 };
 
-                _trayIcon.DoubleClick += (sender, e) =>
+                _trayIcon.MouseClick += (sender, e) =>
                 {
-                    ShowMainWindow();
+                    if (e.Button == MouseButtons.Left || e.Button==MouseButtons.Right)
+                    {
+                        ShowMainWindow();
+                    }
                 };
 
                 var contextMenu = new ContextMenuStrip();
-                var quitMenuItem = new ToolStripMenuItem("Quit");
-                quitMenuItem.Click += (s, e) =>
-                {
-                    ConfirmQuit();
-                };
+                //var quitMenuItem = new ToolStripMenuItem("Quit");
+                //quitMenuItem.Click += (s, e) =>
+                //{
+                //    ConfirmQuit();
+                //};
 
-                contextMenu.Items.Add(quitMenuItem);
+                //contextMenu.Items.Add(quitMenuItem);
                 _trayIcon.ContextMenuStrip = contextMenu;
             }
         }

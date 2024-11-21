@@ -1,5 +1,6 @@
 ﻿using Hublog.Desktop.Entities;
 using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace Hublog.Desktop
 {
@@ -10,9 +11,19 @@ namespace Hublog.Desktop
 
         public static Users Loginlist = new Users();
         public static string token = "";
+        public static Mutex mutex = new Mutex(true, "HublogAppUniqueMutex");
 
         public static MauiApp CreateMauiApp()
         {
+            if (!mutex.WaitOne(TimeSpan.Zero, true))
+            {
+                // Application is already running, exit the program
+#if WINDOWS
+                Microsoft.UI.Xaml.Application.Current.Exit();
+#endif
+                Environment.Exit(0);
+            }
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()

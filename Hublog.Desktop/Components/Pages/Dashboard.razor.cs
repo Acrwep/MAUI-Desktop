@@ -117,7 +117,6 @@ namespace Hublog.Desktop.Components.Pages
                         string savedElapsedTime = await JSRuntime.InvokeAsync<string>("getelapsedTime");
 
                         // Parse the saved elapsed time, if it exists
-                        // Parse the saved elapsed time, if it exists
                         if (!string.IsNullOrEmpty(savedElapsedTime) && TimeSpan.TryParse(savedElapsedTime, out var parsedTime))
                         {
                             timeSpan = parsedTime;  // Initialize timeSpan with the stored elapsed time
@@ -154,6 +153,10 @@ namespace Hublog.Desktop.Components.Pages
                                 Console.WriteLine("Elapsed Time: " + elapsedTimeString);
                                 elapsedTime = elapsedTimeString;
                             }
+                        }
+                        else
+                        {
+                            elapsedTime = totalDurationString;
                         }
                     }
                     else
@@ -427,6 +430,7 @@ namespace Hublog.Desktop.Components.Pages
                     await JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
                     await PlayAudio();
                     StartAudioPlaybackLoop();
+                    HandleAlertTrigger("Break Time Exceeded");
                 }
                 // Possibly reset or stop the timer
             }
@@ -1079,7 +1083,7 @@ namespace Hublog.Desktop.Components.Pages
                 var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
 
                 if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null") return;
-                
+
 
                 if (idleTime > InactivityThreshold)
                 {
@@ -1123,6 +1127,44 @@ namespace Hublog.Desktop.Components.Pages
         public void autoInactivityDispose()  // Renamed Dispose method
         {
             autoInactivityTimer?.Dispose();
+        }
+
+        //Alert trigger api handing
+        private async Task HandleAlertTrigger(string value)
+        {
+
+            DateTime istTime = GetISTTime();
+
+            var alertTriggerDetails = new List<AlertModel>
+        {
+            new AlertModel
+            {
+                UserId = MauiProgram.Loginlist.Id,
+                Triggered = value,
+                TriggeredTime= istTime
+            }
+        };
+
+            var json = JsonConvert.SerializeObject(alertTriggerDetails);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Alert/InsertAlert", content);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            //var jsonString = JsonConvert.SerializeObject(alertTriggerDetails);
+            //var apiUrl = MauiProgram.OnlineURL + "api/Alert/InsertAlert";
+
+            //var httpContent = new StringContent(jsonString, Encoding.UTF8, "application/json");
+            //HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+
+             if (response.IsSuccessStatusCode)
+            {
+                // Handle success if needed
+            }
+            else
+            {
+                Console.WriteLine($"Error: {responseString}");
+            }
         }
     }
 }

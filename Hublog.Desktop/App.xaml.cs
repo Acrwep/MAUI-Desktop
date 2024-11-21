@@ -3,12 +3,22 @@ using Hublog.Desktop.Components.Pages;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using System.Runtime.InteropServices;
+using System.Threading;
 using WinRT.Interop;
 
 namespace Hublog.Desktop
 {
     public partial class App : Application
     {
+        public static void ReleaseMutex()
+        {
+            if (MauiProgram.mutex != null)
+            {
+                MauiProgram.mutex.ReleaseMutex();
+                MauiProgram.mutex.Dispose();
+                MauiProgram.mutex = null;
+            }
+        }
         private Dashboard _dashboard;
 
         public App()
