@@ -1,4 +1,16 @@
-﻿function openBreakTimerModal() {
+﻿function openPunchoutConfirmationModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('punchoutConfirmationModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closePunchoutConfirmationModal() {
+    var modal = bootstrap.Modal.getInstance(document.getElementById('punchoutConfirmationModal'));
+    modal.hide();
+}
+
+function openBreakTimerModal() {
     console.log("openBreakModal called");
     const modalElement = new bootstrap.Modal(document.getElementById('breakTimerModal'), {
         backdrop: 'static',

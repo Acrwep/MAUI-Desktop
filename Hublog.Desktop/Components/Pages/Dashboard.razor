@@ -40,7 +40,7 @@
             else
             {
                 <div class="punchin_buttonContainer" />
-                <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> Out</button>
+                <button class="punchin_button" @onclick="PunchOutModal"> Punch <br /> Out</button>
             }
         </div>
         @if (buttonText == "Punch Out")
@@ -107,6 +107,33 @@
         </div>
     </div>
 
+    <!-- Modal Punchout Confirmation -->
+    <div class="modal fade" id="punchoutConfirmationModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content punchout_confirmationmodal_content">
+                <div class="modal-header punchout_modalheader">
+                    <div class="punchoutmodal_logoContainer">
+                        <img src="/images/hublog.ico" class="punchoutmodal_headericon" />
+                        <p>Punchout requested!</p>
+                    </div>
+                    <div class="punchoutmodal_closebuttonContainer" @onclick="ClosePunchoutModal">
+                        <img src="/images/closeicon.png" class="punchoutmodal_closeimage" />
+                    </div>
+                </div>
+                <div class="modal-body punchout_modalbody">
+                    <div style="display:flex">
+                        <img src="/images/question.png" class="punchoutmodal_image" />
+                        <p class="punchout_confirmation_modaltext">Are you sure you want to punch out on this device</p>
+                    </div>
+                    <div style="display:flex">
+                        <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="ToggleTimer">Yes</button>
+                        <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ClosePunchoutModal">No</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="logoutrow_container">
         <p class="dashboard_versionnumber">Version 1.1</p>
         <div class="opendashboard_buttoncontainer">
@@ -136,14 +163,9 @@
 </div>
 
 
-@* @code {
-    private async Task PlayAudio()
+@code {
+    private async Task ClosePunchoutModal()
     {
-        await JSRuntime.InvokeVoidAsync("playAudio");
+        await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
     }
-
-    private async Task PauseAudio()
-    {
-        await JSRuntime.InvokeVoidAsync("pauseAudio");
-    }
-} *@
+}

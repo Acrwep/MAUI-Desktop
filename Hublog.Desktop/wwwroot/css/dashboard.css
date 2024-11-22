@@ -22,6 +22,7 @@ html, body {
     opacity: 0.3;
     top: 0%;
 }
+
 .dashboard_waveimage {
     position: absolute;
     width: 100%;
@@ -95,12 +96,14 @@ html, body {
     flex-direction: column;
     padding: 0px 12px;
 }
+
 .dashboard_currentdateandtime {
     font-size: 10.5px;
     font-weight: 600;
     margin-top: -12px;
     letter-spacing: 0.4px;
 }
+
 .dashboard_timerContainer {
     display: flex;
     justify-content: center;
@@ -115,7 +118,7 @@ html, body {
     letter-spacing: 4px;
     margin: 0 !important;
     margin-bottom: 4px !important;
-    width:210px;
+    width: 210px;
 }
 
 .punchin_buttonContainer {
@@ -247,18 +250,21 @@ html, body {
     padding: 0px 0px;
     width: 100%;
 }
-.dashboard_versionnumber{
-    text-align:center;
-    font-size:12px;
-    margin:0 !important;
-    margin-bottom:2px !important;
-    font-weight:500 !important;
+
+.dashboard_versionnumber {
+    text-align: center;
+    font-size: 12px;
+    margin: 0 !important;
+    margin-bottom: 2px !important;
+    font-weight: 500 !important;
 }
+
 .opendashboard_buttoncontainer {
     background: #F0F1F1;
-    width:100%;
-    padding:6px 12px;
+    width: 100%;
+    padding: 6px 12px;
 }
+
 .logout_image {
     width: 24px;
 }
@@ -391,6 +397,7 @@ html, body {
     outline: none;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Adjust the color and transparency */
 }
+
 .breaktimer_modalheader {
     border-bottom: none !important;
     display: flex;
@@ -398,23 +405,27 @@ html, body {
     flex-direction: column;
     margin: 0 !important;
 }
+
 .youron_text {
     margin: 0 !important;
-    font-weight:500;
+    font-weight: 500;
 }
+
 .break_heading {
     margin: 0 !important;
     font-weight: 700;
     font-size: 22px;
     color: #d32f2f;
 }
+
 .breaktimer_modalbody {
     margin-top: -23px;
     display: flex;
     flex-direction: column;
     justify-content: center !important;
-    align-items:center;
+    align-items: center;
 }
+
 .break_timer {
     margin: 0 !important;
     font-size: 42px;
@@ -424,8 +435,9 @@ html, body {
     white-space: nowrap;
     text-align: center;
     margin-top: -10px !important;
-    margin-right:24px !important;
+    margin-right: 24px !important;
 }
+
 .breakResume_button {
     color: #fff;
     background-color: #25a17d;
@@ -443,11 +455,96 @@ html, body {
     cursor: pointer;
     margin-top: 7px;
 }
+
     .breakResume_button:hover {
         background-color: #009737;
     }
 
     .breakResume_button:active {
+        transform: scale(0.9);
+        box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
+    }
+
+.punchout_confirmationmodal_content {
+    padding: 4px 0px !important;
+}
+
+.punchout_modalbody {
+    margin-top: -6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center !important;
+    align-items: center;
+}
+
+.punchout_modalheader {
+    border-bottom: none !important;
+    display: flex;
+    align-items: center !important;
+    margin: 0 !important;
+    height: 20px;
+}
+
+.punchoutmodal_headericon {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    margin-right: 4px;
+}
+
+.punchoutmodal_logoContainer {
+    margin-top: 12px;
+    display: flex;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.punchoutmodal_closebuttonContainer {
+    display: flex;
+    cursor: pointer;
+    width: 35px;
+    justify-content: flex-end;
+}
+
+    .punchoutmodal_closebuttonContainer:hover {
+    }
+
+.punchoutmodal_closeimage {
+    width: 13px;
+    height: 13px;
+    margin-top: -6px;
+}
+
+.punchoutmodal_image {
+    width: 26px;
+    height: 26px;
+    margin-right: 7px;
+}
+
+.punchout_confirmation_modaltext {
+    font-size: 13.5px;
+}
+
+.punchoutConfirmationModal_buttons {
+    background: #ffffff;
+    color: rgba(0, 0, 0, 0.88);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
+    outline: 0 !important;
+    border: 1px solid #d9d9d9 !important;
+    font-size: 14px;
+    line-height: 1.5714285714285714;
+    width: 80px;
+    height: 25px;
+    padding: 0px 15px;
+    border-radius: 6px;
+}
+
+    .punchoutConfirmationModal_buttons:hover {
+        border: 1px solid #25a17d !important;
+        color: #25a17d;
+    }
+
+    .punchoutConfirmationModal_buttons:active {
         transform: scale(0.9);
         box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
     }

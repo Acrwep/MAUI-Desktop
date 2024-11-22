@@ -430,7 +430,7 @@ namespace Hublog.Desktop.Components.Pages
                     await JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
                     await PlayAudio();
                     StartAudioPlaybackLoop();
-                    HandleAlertTrigger("Break Time Exceeded");
+                    await HandleAlertTrigger("Break Time Exceeded");
                 }
                 // Possibly reset or stop the timer
             }
@@ -851,6 +851,11 @@ namespace Hublog.Desktop.Components.Pages
                 Console.WriteLine($"Error: {responseString}");
             }
         }
+
+        public void PunchOutModal()
+        {
+            JSRuntime.InvokeVoidAsync("openPunchoutConfirmationModal");
+        }
         public async void PunchOut()
         {
             if (currentType == 2)
@@ -860,6 +865,7 @@ namespace Hublog.Desktop.Components.Pages
             }
             currentType = 1;
             DateTime istTime = GetISTTime();
+            await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
             await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
             var punchIntime = await JSRuntime.InvokeAsync<string>("getpunchInTime");
             Console.WriteLine("punchIn time: " + punchIntime);
@@ -1110,6 +1116,7 @@ namespace Hublog.Desktop.Components.Pages
                         await PlayAudio();
                         triggerInactivealert = false;
                         StartAudioPlaybackLoop();
+                        await HandleAlertTrigger("Inactivity exceeded");
                     }
                 }
                 else
@@ -1151,13 +1158,7 @@ namespace Hublog.Desktop.Components.Pages
             var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Alert/InsertAlert", content);
             var responseString = await response.Content.ReadAsStringAsync();
 
-            //var jsonString = JsonConvert.SerializeObject(alertTriggerDetails);
-            //var apiUrl = MauiProgram.OnlineURL + "api/Alert/InsertAlert";
-
-            //var httpContent = new StringContent(jsonString, Encoding.UTF8, "application/json");
-            //HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
-
-             if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
                 // Handle success if needed
             }
