@@ -6,8 +6,13 @@
     modalElement.show();
 }
 function closePunchoutConfirmationModal() {
-    var modal = bootstrap.Modal.getInstance(document.getElementById('punchoutConfirmationModal'));
-    modal.hide();
+    var modalElement = document.getElementById('punchoutConfirmationModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        modal.hide();
+    } else {
+        console.error("Modal element not found");
+    }
 }
 
 function openBreakTimerModal() {
@@ -51,6 +56,23 @@ function resetResumeButtonColor() {
     if (button) {
         button.style.backgroundColor = ''; 
         button.style.color = ''; 
+    }
+}
+
+function openInactiveModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('inactiveModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeInactiveModal() {
+    var modalElement = document.getElementById('inactiveModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        modal.hide();
+    } else {
+        console.error("Modal element not found");
     }
 }
 // wwwroot/js/audioControl.js

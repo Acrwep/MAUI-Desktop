@@ -548,3 +548,11 @@ html, body {
         transform: scale(0.9);
         box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
     }
+.inactivitymodal_bodyContainer{
+    display:flex;
+}
+.inactivitymodal_image {
+    width: 29px;
+    height: 28px;
+    margin-right: 7px;
+}

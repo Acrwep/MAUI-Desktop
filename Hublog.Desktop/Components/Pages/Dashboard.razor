@@ -123,11 +123,38 @@
                 <div class="modal-body punchout_modalbody">
                     <div style="display:flex">
                         <img src="/images/question.png" class="punchoutmodal_image" />
-                        <p class="punchout_confirmation_modaltext">Are you sure you want to punch out on this device</p>
+                        <p class="punchout_confirmation_modaltext">Are you sure you want to punch out on this device?</p>
                     </div>
                     <div style="display:flex">
                         <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="ToggleTimer">Yes</button>
                         <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ClosePunchoutModal">No</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Inactive Alert -->
+    <div class="modal fade" id="inactiveModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content punchout_confirmationmodal_content">
+                <div class="modal-header punchout_modalheader">
+                    <div class="punchoutmodal_logoContainer">
+                        <img src="/images/hublog.ico" class="punchoutmodal_headericon" />
+                        <p>Inactivity Alert!</p>
+                    </div>
+                    <div class="punchoutmodal_closebuttonContainer" @onclick="InactivityModalClose">
+                        <img src="/images/closeicon.png" class="punchoutmodal_closeimage" />
+                    </div>
+                </div>
+                <div class="modal-body punchout_modalbody">
+                    <div style="display:flex">
+                        <img src="/images/warning.png" class="inactivitymodal_image" />
+                        <p class="punchout_confirmation_modaltext" style="margin-top:4px">Are you still working?</p>
+                    </div>
+                    <div style="display:flex;margin-top:6px">
+                        <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="InactivityModalClose">Yes</button>
+                        <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ToggleTimer">No</button>
                     </div>
                 </div>
             </div>

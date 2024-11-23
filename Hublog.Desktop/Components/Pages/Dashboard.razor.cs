@@ -865,7 +865,14 @@ namespace Hublog.Desktop.Components.Pages
             }
             currentType = 1;
             DateTime istTime = GetISTTime();
+
+            // handle modals
             await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
+            await JSRuntime.InvokeVoidAsync("closeInactiveModal");
+            triggerInactivealert = true;
+            StopAudioPlaybackLoop();
+            //
+
             await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
             var punchIntime = await JSRuntime.InvokeAsync<string>("getpunchInTime");
             Console.WriteLine("punchIn time: " + punchIntime);
@@ -1116,18 +1123,26 @@ namespace Hublog.Desktop.Components.Pages
                         await PlayAudio();
                         triggerInactivealert = false;
                         StartAudioPlaybackLoop();
+                        await JSRuntime.InvokeVoidAsync("openInactiveModal");
                         await HandleAlertTrigger("Inactivity exceeded");
                     }
                 }
-                else
-                {
-                    if (getBreakstatus != "isBreaktime")
-                    {
-                        triggerInactivealert = true;
-                        StopAudioPlaybackLoop();
-                    }
-                }
+                //else
+                //{
+                //    if (getBreakstatus != "isBreaktime")
+                //    {
+                //        triggerInactivealert = true;
+                //        StopAudioPlaybackLoop();
+                //    }
+                //}
             }
+        }
+
+        public void InactivityModalClose()
+        {
+            JSRuntime.InvokeVoidAsync("closeInactiveModal");
+            triggerInactivealert = true;
+            StopAudioPlaybackLoop();
         }
 
         // Dispose of the timer when the component is disposed
