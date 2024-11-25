@@ -9,6 +9,7 @@ using Microsoft.Maui.Platform;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Microsoft.Maui.Networking;
 
 namespace Hublog.Desktop.Components.Pages
 {
@@ -63,6 +64,10 @@ namespace Hublog.Desktop.Components.Pages
         protected override async Task OnInitializedAsync()
         {
             await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
+            Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
+
+            // Initial network check (optional)
+            CheckNetworkStatus();
             try
             {
                 string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
@@ -1124,7 +1129,7 @@ namespace Hublog.Desktop.Components.Pages
                         triggerInactivealert = false;
                         StartAudioPlaybackLoop();
                         await JSRuntime.InvokeVoidAsync("openInactiveModal");
-                        await HandleAlertTrigger("Inactivity exceeded");
+                        await HandleAlertTrigger("Inactivity Exceeded");
                     }
                 }
                 //else
@@ -1180,6 +1185,29 @@ namespace Hublog.Desktop.Components.Pages
             else
             {
                 Console.WriteLine($"Error: {responseString}");
+            }
+        }
+
+        //Network checking
+        private void Connectivity_ConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
+        {
+            // This is where you can handle network changes
+            CheckNetworkStatus();
+        }
+
+        private async void CheckNetworkStatus()
+        {
+            var currentNetworkStatus = Connectivity.NetworkAccess;
+
+            if (currentNetworkStatus == NetworkAccess.Internet)
+            {
+                Console.WriteLine("Device is connected to the internet.");
+                await JSRuntime.InvokeVoidAsync("closeNetworkModal");
+            }
+            else
+            {
+                Console.WriteLine("Device is not connected to the internet.");
+                await JSRuntime.InvokeVoidAsync("openNetworkModal");
             }
         }
     }

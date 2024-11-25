@@ -75,7 +75,23 @@ function closeInactiveModal() {
         console.error("Modal element not found");
     }
 }
-// wwwroot/js/audioControl.js
+function openNetworkModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('networkModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeNetworkModal() {
+    var modalElement = document.getElementById('networkModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        modal.hide();
+    } else {
+        console.error("Modal element not found");
+    }
+}
+
 function playAudio() {
     var audioElement = document.getElementById("audioPlayer");
     if (audioElement) {
