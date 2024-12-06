@@ -15,8 +15,6 @@ namespace Hublog.Desktop.Components.Pages
 {
     public partial class Dashboard
     {
-        private const int InactivityThreshold = 1800000; // 30 min in milliseconds
-        private const int InactivityAlertThreshold = 600000; // 10 min in milliseconds
         private Timer autoInactivityTimer;  // Renamed timer
         private uint _lastInputTime;
 
@@ -46,6 +44,27 @@ namespace Hublog.Desktop.Components.Pages
             public int Status { get; set; }
         }
 
+        public class BreakDetails
+        {
+            public string FirstName { get; set; }
+            public string Email { get; set; }
+            public string breakType { get; set; }
+            public DateTime BreakDate { get; set; }
+            public DateTime Start_Time { get; set; }
+            public DateTime End_Time { get; set; }
+            public DateTime? breakDuration { get; set; }
+        }
+
+        public class AlertRulesdatas
+        {
+            public int Id { get; set; }
+            public bool break_alert_status { get; set; }
+            public int AlertThreshold { get; set; }
+            public int PunchoutThreshold { get; set; }
+            public bool Status { get; set; }
+            public int OrganizationId { get; set; }
+        }
+
         public class AttendanceSummary
         {
             public int DaysPresent { get; set; }
@@ -58,16 +77,30 @@ namespace Hublog.Desktop.Components.Pages
             public AttendanceSummary AttendanceSummary { get; set; }
         }
 
+        public class BreakResponse
+        {
+            public List<BreakDetails> BreakDetails { get; set; }
+        }
+
+        public class AlertRulesResponse
+        {
+            public List<AlertRulesdatas> AlertRulesdatas { get; set; }
+        }
+
         #region Declares
         private string elapsedTime = "00:00:00";
 
         protected override async Task OnInitializedAsync()
         {
             await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
+            await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
             Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
 
             // Initial network check (optional)
             CheckNetworkStatus();
+            DateTime currentDate = DateTime.Now; // Get the current date and time
+            DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
+
             try
             {
                 string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
@@ -92,11 +125,8 @@ namespace Hublog.Desktop.Components.Pages
                         // Filter entries with today's date
                         var today = DateTime.Today;
 
-                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time;
+                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time; // take last index item
                         Console.WriteLine("Start Time (First Entry): " + lastStartTime.ToString("yyyy-MM-dd HH:mm:ss"));
-
-                        DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
-                        Console.WriteLine("End Time (First Entry): " + lastEndTime.ToString("yyyy-MM-dd HH:mm:ss"));
 
                         DateTime currentTime = DateTime.Now;
                         Console.WriteLine("currentTime " + currentTime.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -179,6 +209,10 @@ namespace Hublog.Desktop.Components.Pages
             {
                 Console.WriteLine($"Error fetching breaks: {ex.Message}");
             }
+            finally
+            {
+                HandlegetBreakData();
+            }
             var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
             Console.WriteLine(punchIntimefromLocalStorage);
 
@@ -215,7 +249,10 @@ namespace Hublog.Desktop.Components.Pages
 
         private TimeSpan screenshotInterval = TimeSpan.FromMinutes(5);
         private bool isTimerActive = false;
-        private bool triggerInactivealert = true;
+        private bool InactivealertStatus;
+        private long InactivityThreshold = 1800000; // 30 min in milliseconds
+        private long InactivityAlertThreshold = 600000; // 10 min in milliseconds
+        private DateTime lastActiveLogTime = DateTime.MinValue; // Tracks last log time
 
         private List<BreakMaster> availableBreaks = new List<BreakMaster>();
         private int selectedBreakId;
@@ -433,9 +470,13 @@ namespace Hublog.Desktop.Components.Pages
                 {
                     isBreakActive = false;
                     await JSRuntime.InvokeVoidAsync("changeResumeButtonColorToRed");
-                    await PlayAudio();
-                    StartAudioPlaybackLoop();
-                    await HandleAlertTrigger("Break Time Exceeded");
+                    var getBreakAlertstatus = await JSRuntime.InvokeAsync<string>("getbreakAlertStatus");
+                    if (getBreakAlertstatus == "true")
+                    {
+                        await PlayAudio();
+                        StartAudioPlaybackLoop();
+                        await HandleAlertTrigger("Break Time Exceeded");
+                    }
                 }
                 // Possibly reset or stop the timer
             }
@@ -777,7 +818,7 @@ namespace Hublog.Desktop.Components.Pages
                 selectedBreakId = breakId;
             }
         }
-        private void CloseModal()
+        private async void CloseModal()
         {
             var selectedBreak = availableBreaks.FirstOrDefault(b => b.Id == selectedBreakId);
 
@@ -789,11 +830,11 @@ namespace Hublog.Desktop.Components.Pages
                     Name = selectedBreak.Name,
                     Max_Break_Time = selectedBreak.Max_Break_Time
                 };
-
-                PunchBreakIn(selectedBreak.Id).ContinueWith(_ =>
-                {
-                    InvokeAsync(StateHasChanged);
-                });
+                await JSRuntime.InvokeVoidAsync("setItem", "activeBreakId", selectedBreak.Id);
+                await PunchBreakIn(selectedBreak.Id).ContinueWith(_ =>
+                  {
+                      InvokeAsync(StateHasChanged);
+                  });
             }
             else
             {
@@ -874,7 +915,7 @@ namespace Hublog.Desktop.Components.Pages
             // handle modals
             await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
             await JSRuntime.InvokeVoidAsync("closeInactiveModal");
-            triggerInactivealert = true;
+            await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
             StopAudioPlaybackLoop();
             //
 
@@ -1075,7 +1116,7 @@ namespace Hublog.Desktop.Components.Pages
         //Auto Punchout implementaion
         public async Task HandleInactivity()
         {
-            Console.WriteLine("User has been inactive for 10 seconds.");
+            Console.WriteLine("User has been inactive for 10 min.");
             //Check user is during punchin or not
             var punchIntime = await JSRuntime.InvokeAsync<string>("getpunchInTime");
 
@@ -1095,8 +1136,15 @@ namespace Hublog.Desktop.Components.Pages
             if (GetLastInputInfo(ref lastInputInfo))
             {
                 var idleTime = Environment.TickCount - lastInputInfo.dwTime;
+                Console.WriteLine($"Idle time: {idleTime} ms");
                 var getBreakstatus = await JSRuntime.InvokeAsync<string>("getbreakStatus");
                 Console.WriteLine(getBreakstatus);
+
+                var getInactivityAlertstatus = await JSRuntime.InvokeAsync<string>("getInactivityAlertStatus");
+                Console.WriteLine(getInactivityAlertstatus);
+
+                var gettriggerInactiveAlert = await JSRuntime.InvokeAsync<string>("getTriggerInactiveAlert");
+                Console.WriteLine(gettriggerInactiveAlert);
 
                 var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
 
@@ -1106,7 +1154,7 @@ namespace Hublog.Desktop.Components.Pages
                 if (idleTime > InactivityThreshold)
                 {
                     // Trigger inactivity event and handle navigation
-                    if (getBreakstatus == "isBreaktime")
+                    if (getBreakstatus == "isBreaktime" || getInactivityAlertstatus != "true")
                     {
                         return;
                     }
@@ -1122,31 +1170,34 @@ namespace Hublog.Desktop.Components.Pages
                 if (idleTime > InactivityAlertThreshold)
                 {
 
-                    Console.WriteLine("System inactive detected (no input for more than 10 seconds).");
-                    if (triggerInactivealert == true && getBreakstatus != "isBreaktime")
+                    Console.WriteLine("System inactive detected (no input for more than 10 min).");
+                    if (gettriggerInactiveAlert == "true" && getInactivityAlertstatus == "true" && getBreakstatus != "isBreaktime")
                     {
                         await PlayAudio();
-                        triggerInactivealert = false;
+                        await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "false");
                         StartAudioPlaybackLoop();
                         await JSRuntime.InvokeVoidAsync("openInactiveModal");
                         await HandleAlertTrigger("Inactivity Exceeded");
                     }
                 }
-                //else
-                //{
-                //    if (getBreakstatus != "isBreaktime")
-                //    {
-                //        triggerInactivealert = true;
-                //        StopAudioPlaybackLoop();
-                //    }
-                //}
+
+                if (idleTime < InactivityAlertThreshold)
+                {
+                    // Log active status every 2 minutes
+                    if ((DateTime.Now - lastActiveLogTime).TotalMinutes >= 2)
+                    {
+                        Console.WriteLine("System is active.");
+                        lastActiveLogTime = DateTime.Now; // Update last log time
+                    }
+                }
             }
         }
 
-        public void InactivityModalClose()
+
+        public async void InactivityModalClose()
         {
             JSRuntime.InvokeVoidAsync("closeInactiveModal");
-            triggerInactivealert = true;
+            await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
             StopAudioPlaybackLoop();
         }
 
@@ -1188,6 +1239,178 @@ namespace Hublog.Desktop.Components.Pages
             }
         }
 
+
+        //getbreak api handleing
+        private async void HandlegetBreakData()
+        {
+            DateTime currentDate = DateTime.Now; // Get the current date and time
+            DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
+            try
+            {
+                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserBreakRecordDetails"
+           + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
+           + $"&UserId={MauiProgram.Loginlist.Id}"
+           + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
+           + $"&endDate={DateTime.Today:yyyy-MM-dd}";
+
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                var response = await HttpClient.GetAsync(URL);
+                Console.WriteLine("Response Data: " + response);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize JSON response
+                    var breakDetailsList = JsonConvert.DeserializeObject<List<BreakDetails>>(responseData);
+                    if (breakDetailsList != null && breakDetailsList.Count > 0)
+                    {
+                        // Get the last item in the list
+                        var lastBreakDetail = breakDetailsList[^1]; // C# 8.0 index from the end operator
+
+                        // Use the last item
+                        Console.WriteLine(lastBreakDetail);
+
+                        if (lastBreakDetail.breakDuration == null)
+                        {
+                            // Calculate elapsed time
+                            var startTime = lastBreakDetail.Start_Time;
+                            var currentTime = DateTime.Now;
+                            var res = currentTime - startTime;
+
+                            // get break details
+                            var breakIdString = await JSRuntime.InvokeAsync<string>("getactiveBreakId");
+                            int breakId;
+                            if (int.TryParse(breakIdString, out breakId))
+                            {
+                                // Successfully converted to an integer
+                                Console.WriteLine($"The break ID is: {breakId}");
+                            }
+                            var breakDetails = await GetBreakDetails(breakId);
+
+                            var morningBreakDuration = TimeSpan.FromMinutes(breakDetails.Max_Break_Time);
+
+                            // Subtract morning break duration
+                            var resulttime = morningBreakDuration - res;
+
+                            // Check if elapsed time exceeds 15 minutes
+                            if (res >= morningBreakDuration)
+                            {
+                                resulttime = TimeSpan.Zero; // Display 00:00:00
+                            }
+
+                            // Ensure the time is never negative
+                            if (resulttime < TimeSpan.Zero)
+                            {
+                                resulttime = TimeSpan.Zero;
+                            }
+                            remainingTime = resulttime < TimeSpan.Zero ? TimeSpan.Zero : resulttime;
+                            // Calculate the remaining time in minutes
+                            int remainingMinutes = (int)Math.Ceiling(remainingTime.TotalMinutes); // Round up to the nearest whole number
+
+                            // Ensure remaining minutes is not negative
+                            if (remainingMinutes < 0)
+                            {
+                                remainingMinutes = 0;
+                            }
+                            if (breakDetails != null)
+                            {
+                                _currentBreakEntryId = breakDetails.Id;
+                                selectedBreakInfo = breakDetails;
+                                StartBreakTimer(remainingMinutes);
+                                OpenBreakTimerModal();
+                            }
+                            else
+                            {
+                                Console.WriteLine("Failed to retrieve break details.");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error: " + response.StatusCode);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching breaks: {ex.Message}");
+            }
+            finally
+            {
+                getAlertRuleData();
+            }
+        }
+
+        //Alert rule api handleing
+        private async void getAlertRuleData()
+        {
+            try
+            {
+                string URL = $"{MauiProgram.OnlineURL}api/Alert/GetAlertRule"
+           + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}";
+
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                var response = await HttpClient.GetAsync(URL);
+                Console.WriteLine("Response Data: " + response);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize JSON response
+                    var alertrulesList = JsonConvert.DeserializeObject<List<AlertRulesdatas>>(responseData);
+                    Console.WriteLine(alertrulesList);
+                    if (alertrulesList == null || alertrulesList.Count == 0)
+                    {
+                        Console.WriteLine("No data found for alert rules.");
+                        await JSRuntime.InvokeVoidAsync("setItem", "inactivityAlertStatus", "false");
+                    }
+                    else
+                    {
+                        foreach (var rule in alertrulesList)
+                        {
+                            // Convert punchoutThreshold from minutes to milliseconds
+                            long alertThresholdInMilliseconds = rule.AlertThreshold * 60 * 1000;
+                            long punchoutThresholdInMilliseconds = rule.PunchoutThreshold * 60 * 1000;
+
+                            Console.WriteLine(alertThresholdInMilliseconds);
+                            Console.WriteLine(punchoutThresholdInMilliseconds);
+                            InactivityAlertThreshold = alertThresholdInMilliseconds;
+                            InactivityThreshold = punchoutThresholdInMilliseconds;
+                            if (rule.Status == true)
+                            {
+                                await JSRuntime.InvokeVoidAsync("setItem", "inactivityAlertStatus", "true");
+                                InactivealertStatus = true;
+                            }
+                            else
+                            {
+                                InactivealertStatus = false;
+                                await JSRuntime.InvokeVoidAsync("setItem", "inactivityAlertStatus", "false");
+                            }
+                            if (rule.break_alert_status == true)
+                            {
+                                await JSRuntime.InvokeVoidAsync("setItem", "breakAlertStatus", "true");
+                            }
+                            else
+                            {
+                                await JSRuntime.InvokeVoidAsync("setItem", "breakAlertStatus", "false");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error: " + response.StatusCode);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching breaks: {ex.Message}");
+            }
+        }
         //Network checking
         private void Connectivity_ConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
         {

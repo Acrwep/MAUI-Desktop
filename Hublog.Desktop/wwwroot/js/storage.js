@@ -31,3 +31,15 @@ function getAppCloseTime() {
 function getbreakStatus() {
     return localStorage.getItem('breakStatus' || null);
 }
+function getbreakAlertStatus() {
+    return localStorage.getItem('breakAlertStatus' || null);
+}
+function getactiveBreakId() {
+    return localStorage.getItem('activeBreakId' || null);
+}
+function getTriggerInactiveAlert() {
+    return localStorage.getItem('triggerInactiveAlert' || null);
+}
+function getInactivityAlertStatus() {
+    return localStorage.getItem('inactivityAlertStatus' || null);
+}
