@@ -15,6 +15,7 @@ namespace Hublog.Desktop.Components.Pages
 {
     public partial class Dashboard
     {
+        private const int IdleApiTriggerThreshold = 120000; // 2 min in milliseconds
         private Timer autoInactivityTimer;  // Renamed timer
         private uint _lastInputTime;
 
@@ -65,6 +66,13 @@ namespace Hublog.Desktop.Components.Pages
             public int OrganizationId { get; set; }
         }
 
+        public class UserActivitydatas
+        {
+            public int Id { get; set; }
+            public int UserId { get; set; }
+            public DateTime TriggeredTime { get; set; }
+        }
+
         public class AttendanceSummary
         {
             public int DaysPresent { get; set; }
@@ -94,13 +102,15 @@ namespace Hublog.Desktop.Components.Pages
         {
             await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
             await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+            await JSRuntime.InvokeVoidAsync("closeInactiveModal");
+            StopAudioPlaybackLoop();
             Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
 
             // Initial network check (optional)
             CheckNetworkStatus();
             DateTime currentDate = DateTime.Now; // Get the current date and time
             DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
-
+            isLoading = true;
             try
             {
                 string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
@@ -252,7 +262,7 @@ namespace Hublog.Desktop.Components.Pages
         private bool InactivealertStatus;
         private long InactivityThreshold = 1800000; // 30 min in milliseconds
         private long InactivityAlertThreshold = 600000; // 10 min in milliseconds
-        private DateTime lastActiveLogTime = DateTime.MinValue; // Tracks last log time
+        private bool isLoading = false;
 
         private List<BreakMaster> availableBreaks = new List<BreakMaster>();
         private int selectedBreakId;
@@ -262,6 +272,7 @@ namespace Hublog.Desktop.Components.Pages
         private TimeSpan remainingTime;
         private bool isBreakActive = false;
         private int _currentBreakEntryId;
+        private Timer _userActivitytimer;
 
         [Inject]
         public IScreenCaptureService ScreenCaptureService { get; set; }
@@ -866,6 +877,8 @@ namespace Hublog.Desktop.Components.Pages
             DateTime istTime = GetISTTime();
             await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", istTime);
             Console.WriteLine("punchin timeee", istTime);
+            _userActivitytimer = new Timer(OnTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
+
             var attendanceModels = new List<UserAttendanceModel>
         {
             new UserAttendanceModel
@@ -967,7 +980,10 @@ namespace Hublog.Desktop.Components.Pages
                 isTimerRunning = false;
                 punchInTimer?.Dispose();
                 await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
-
+                if (_userActivitytimer != null)
+                {
+                    _userActivitytimer.Dispose();
+                }
                 try
                 {
                     string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
@@ -1146,6 +1162,8 @@ namespace Hublog.Desktop.Components.Pages
                 var gettriggerInactiveAlert = await JSRuntime.InvokeAsync<string>("getTriggerInactiveAlert");
                 Console.WriteLine(gettriggerInactiveAlert);
 
+                var userActivityTriggerStatus = await JSRuntime.InvokeAsync<string>("getUserActivityTrigger");
+
                 var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
 
                 if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null") return;
@@ -1181,14 +1199,9 @@ namespace Hublog.Desktop.Components.Pages
                     }
                 }
 
-                if (idleTime < InactivityAlertThreshold)
+                if (idleTime > IdleApiTriggerThreshold)
                 {
-                    // Log active status every 2 minutes
-                    if ((DateTime.Now - lastActiveLogTime).TotalMinutes >= 2)
-                    {
-                        Console.WriteLine("System is active.");
-                        lastActiveLogTime = DateTime.Now; // Update last log time
-                    }
+                    await HandleIdletimeApi();
                 }
             }
         }
@@ -1196,7 +1209,7 @@ namespace Hublog.Desktop.Components.Pages
 
         public async void InactivityModalClose()
         {
-            JSRuntime.InvokeVoidAsync("closeInactiveModal");
+            await JSRuntime.InvokeVoidAsync("closeInactiveModal");
             await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
             StopAudioPlaybackLoop();
         }
@@ -1239,6 +1252,94 @@ namespace Hublog.Desktop.Components.Pages
             }
         }
 
+        //user activity api handleing call this api every 2 mins during punchin
+        private async void OnTimerElapsed(object state)
+        {
+            // Call the function here
+            var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+
+            if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null") return;
+            await HandleUserActivetime();
+        }
+
+        private async Task HandleUserActivetime()
+        {
+            DateTime istTime = GetISTTime();
+
+            // Create a single object instead of a list
+            var userActivetimeDetails = new UserActivityModal
+            {
+                UserId = MauiProgram.Loginlist.Id,
+                TriggeredTime = istTime
+            };
+
+            // Serialize the object directly
+            var json = JsonConvert.SerializeObject(userActivetimeDetails);
+            Console.WriteLine($"JSON Payload: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            Console.WriteLine($"API URL: {MauiProgram.OnlineURL}api/Users/Insert_Active_Time");
+
+            try
+            {
+                var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/Insert_Active_Time", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine($"Response Status: {response.StatusCode}");
+                Console.WriteLine($"Response Body: {responseString}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("User activity logged successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {responseString}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
+        }
+
+        //send idle time to api handling
+        private async Task HandleIdletimeApi()
+        {
+
+            var idleTimeDetails = new IdletimeModal
+            {
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                IdealTime = 2
+            };
+            var json = JsonConvert.SerializeObject(idleTimeDetails);
+            Console.WriteLine($"JSON Payload: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            Console.WriteLine($"API URL: {MauiProgram.OnlineURL}api/Users/Insert_IdealActivity");
+
+            try
+            {
+                var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/Insert_IdealActivity", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine($"Response Status: {response.StatusCode}");
+                Console.WriteLine($"Response Body: {responseString}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {responseString}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
+        }
 
         //getbreak api handleing
         private async void HandlegetBreakData()
@@ -1343,7 +1444,7 @@ namespace Hublog.Desktop.Components.Pages
             }
         }
 
-        //Alert rule api handleing
+        //Alert rule api handling
         private async void getAlertRuleData()
         {
             try
@@ -1410,6 +1511,10 @@ namespace Hublog.Desktop.Components.Pages
             {
                 Console.WriteLine($"Error fetching breaks: {ex.Message}");
             }
+            finally
+            {
+                HandlePreviousAttendance();
+            }
         }
         //Network checking
         private void Connectivity_ConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
@@ -1431,6 +1536,154 @@ namespace Hublog.Desktop.Components.Pages
             {
                 Console.WriteLine("Device is not connected to the internet.");
                 await JSRuntime.InvokeVoidAsync("openNetworkModal");
+            }
+        }
+
+        private async void HandlePreviousAttendance()
+        {
+            DateTime currentDate = DateTime.Now; // Get the current date and time
+            DateTime dateOneDaysBefore = currentDate.AddDays(-1); // Subtract 1 days
+            DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
+            try
+            {
+                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
+           + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
+           + $"&UserId={MauiProgram.Loginlist.Id}"
+           + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
+           + $"&endDate={dateOneDaysBefore:yyyy-MM-dd}";
+
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                var response = await HttpClient.GetAsync(URL);
+                Console.WriteLine("Response Data: " + response);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize JSON response
+                    var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
+
+                    if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
+                    {
+                        DateTime lastAttendanceDate = attendanceResponse.AttendanceDetails[^1].AttendanceDate;
+                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time;
+                        DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
+
+                        // Check if End_Time is "0001-01-01T00:00:00" (DateTime.MinValue)
+                        if (lastEndTime == DateTime.MinValue)
+                        {
+                            Console.WriteLine("End_Time is the default value: 0001-01-01T00:00:00");
+                            try
+                            {
+                                string apiUrl = $"{MauiProgram.OnlineURL}api/Users/Get_Active_Time"
+                             + $"?userid={MauiProgram.Loginlist.Id}"
+                             + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
+                             + $"&endDate={dateOneDaysBefore:yyyy-MM-dd}";
+
+                                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                                var activityresponse = await HttpClient.GetAsync(apiUrl);
+                                Console.WriteLine("Response Data: " + activityresponse);
+
+                                if (activityresponse.IsSuccessStatusCode)
+                                {
+                                    var activityresponseData = await activityresponse.Content.ReadAsStringAsync();
+
+                                    // Deserialize JSON response
+                                    var useractivityList = JsonConvert.DeserializeObject<List<UserActivitydatas>>(activityresponseData);
+                                    if (useractivityList != null && useractivityList.Count >= 1)
+                                    {
+                                        DateTime lastActiveTime = useractivityList[^1].TriggeredTime;
+                                        Console.WriteLine(lastActiveTime);
+
+
+                                        var attendanceModels = new List<UserAttendanceModel>
+        {
+            new UserAttendanceModel
+            {
+                Id = 0,
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                AttendanceDate = lastAttendanceDate,
+                Start_Time = lastStartTime,
+                End_Time = lastActiveTime,
+                Late_Time = null,
+                Total_Time = null,
+                Status = 1
+            }
+        };
+
+                                        var json = JsonConvert.SerializeObject(attendanceModels);
+                                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                        //var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
+                                        var punchoutresponse = await _httpClient.PostAsync($"api/Users/InsertAttendance", content);
+                                        var responseString = await punchoutresponse.Content.ReadAsStringAsync();
+
+                                        if (punchoutresponse.IsSuccessStatusCode)
+                                        {
+                                            // handle modals
+                                            await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
+                                            await JSRuntime.InvokeVoidAsync("closeInactiveModal");
+                                            await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+                                            StopAudioPlaybackLoop();
+                                            //
+
+                                            await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+                                            await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
+                                            if (_userActivitytimer != null)
+                                            {
+                                                _userActivitytimer.Dispose();
+                                            }
+
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Error: " + activityresponse.StatusCode);
+                                    }
+
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error fetching breaks: {ex.Message}");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Last End_Time: " + lastEndTime.ToString("yyyy-MM-dd HH:mm:ss"));
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No attendance entries found.");
+                        // handle modals
+                        await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
+                        await JSRuntime.InvokeVoidAsync("closeInactiveModal");
+                        await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+                        StopAudioPlaybackLoop();
+                        //
+
+                        await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+                        await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
+
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error: " + response.StatusCode);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching breaks: {ex.Message}");
+            }
+            finally
+            {
+                await Task.Delay(1000);
+                isLoading = false;
+                await InvokeAsync(StateHasChanged); // Refresh UI
             }
         }
     }

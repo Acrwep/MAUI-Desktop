@@ -13,6 +13,11 @@
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 
+<!-- Loader -->
+<div class="loader-overlay" style="@(isLoading ? "display: flex;" : "display: none;")">
+    <div class="loader"></div>
+</div>
+
 <div class="dashboard_mainContainer">
     <div class="dashboard_headerContainer">
         <img src="/images/crystal.jpg" class="dashboard_employeeimage" />
@@ -50,7 +55,7 @@
             </div>
         }
     </div>
-
+   
     <!-- Modal Break Selection -->
     <div class="modal fade" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
