@@ -1162,8 +1162,6 @@ namespace Hublog.Desktop.Components.Pages
                 var gettriggerInactiveAlert = await JSRuntime.InvokeAsync<string>("getTriggerInactiveAlert");
                 Console.WriteLine(gettriggerInactiveAlert);
 
-                var userActivityTriggerStatus = await JSRuntime.InvokeAsync<string>("getUserActivityTrigger");
-
                 var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
 
                 if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null") return;
