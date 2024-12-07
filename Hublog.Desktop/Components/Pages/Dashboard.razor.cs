@@ -1255,8 +1255,10 @@ namespace Hublog.Desktop.Components.Pages
         {
             // Call the function here
             var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+            var getBreakstatus = await JSRuntime.InvokeAsync<string>("getbreakStatus");
 
             if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null") return;
+            if (getBreakstatus == "isBreaktime") return;
             await HandleUserActivetime();
         }
 
