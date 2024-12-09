@@ -108,16 +108,18 @@ namespace Hublog.Desktop.Components.Pages
 
             // Initial network check (optional)
             CheckNetworkStatus();
-            DateTime currentDate = DateTime.Now; // Get the current date and time
-            DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
             isLoading = true;
+            // handle previous day attendance
+            DateTime currentDate = DateTime.Now; // Get the current date and time
+            DateTime dateOneDaysBefore = currentDate.AddDays(-1); // Subtract 1 days
+            DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
             try
             {
                 string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
            + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
            + $"&UserId={MauiProgram.Loginlist.Id}"
-           + $"&startDate={DateTime.Today:yyyy-MM-dd}"
-           + $"&endDate={DateTime.Today:yyyy-MM-dd}";
+           + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
+           + $"&endDate={dateOneDaysBefore:yyyy-MM-dd}";
 
                 HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
                 var response = await HttpClient.GetAsync(URL);
@@ -132,81 +134,110 @@ namespace Hublog.Desktop.Components.Pages
 
                     if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
                     {
-                        // Filter entries with today's date
-                        var today = DateTime.Today;
+                        DateTime lastAttendanceDate = attendanceResponse.AttendanceDetails[^1].AttendanceDate;
+                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time;
+                        DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
 
-                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time; // take last index item
-                        Console.WriteLine("Start Time (First Entry): " + lastStartTime.ToString("yyyy-MM-dd HH:mm:ss"));
-
-                        DateTime currentTime = DateTime.Now;
-                        Console.WriteLine("currentTime " + currentTime.ToString("yyyy-MM-dd HH:mm:ss"));
-
-                        var todayEntries = attendanceResponse.AttendanceDetails
-                                            .Where(entry => entry.AttendanceDate.Date == today)
-                                            .ToList();
-
-                        // Sum total_Time for entries matching today's date
-                        var totalDuration = new TimeSpan();
-                        foreach (var entry in todayEntries)
+                        // Check if End_Time is "0001-01-01T00:00:00" (DateTime.MinValue)
+                        if (lastEndTime == DateTime.MinValue)
                         {
-                            if (entry.Total_Time != DateTime.MinValue)
+                            Console.WriteLine("End_Time is the default value: 0001-01-01T00:00:00");
+                            try
                             {
-                                totalDuration += entry.Total_Time.TimeOfDay;
+                                string apiUrl = $"{MauiProgram.OnlineURL}api/Users/Get_Active_Time"
+                             + $"?userid={MauiProgram.Loginlist.Id}"
+                             + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
+                             + $"&endDate={dateOneDaysBefore:yyyy-MM-dd}";
+
+                                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                                var activityresponse = await HttpClient.GetAsync(apiUrl);
+                                Console.WriteLine("Response Data: " + activityresponse);
+
+                                if (activityresponse.IsSuccessStatusCode)
+                                {
+                                    var activityresponseData = await activityresponse.Content.ReadAsStringAsync();
+
+                                    // Deserialize JSON response
+                                    var useractivityList = JsonConvert.DeserializeObject<List<UserActivitydatas>>(activityresponseData);
+                                    if (useractivityList != null && useractivityList.Count >= 1)
+                                    {
+                                        DateTime lastActiveTime = useractivityList[^1].TriggeredTime;
+                                        Console.WriteLine(lastActiveTime);
+
+
+                                        var attendanceModels = new List<UserAttendanceModel>
+        {
+            new UserAttendanceModel
+            {
+                Id = 0,
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                AttendanceDate = lastAttendanceDate,
+                Start_Time = lastStartTime,
+                End_Time = lastActiveTime,
+                Late_Time = null,
+                Total_Time = null,
+                Status = 1
+            }
+        };
+
+                                        var json = JsonConvert.SerializeObject(attendanceModels);
+                                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                                        //var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
+                                        var punchoutresponse = await _httpClient.PostAsync($"api/Users/InsertAttendance", content);
+                                        var responseString = await punchoutresponse.Content.ReadAsStringAsync();
+
+                                        if (punchoutresponse.IsSuccessStatusCode)
+                                        {
+                                            buttonText = "Punch In";
+                                            punchInTimer?.Dispose();
+                                            // handle modals
+                                            await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
+                                            await JSRuntime.InvokeVoidAsync("closeInactiveModal");
+                                            await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+                                            StopAudioPlaybackLoop();
+                                            //
+
+                                            await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+                                            await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
+                                            if (_userActivitytimer != null)
+                                            {
+                                                _userActivitytimer.Dispose();
+                                            }
+
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Error: " + activityresponse.StatusCode);
+                                    }
+
+                                }
                             }
-                        }
-
-                        // Format total duration to "hh:mm:ss"
-                        string totalDurationString = totalDuration.ToString(@"hh\:mm\:ss");
-
-                        Console.WriteLine("Total Time for Today's Entries: " + totalDurationString);
-                        string savedElapsedTime = await JSRuntime.InvokeAsync<string>("getelapsedTime");
-
-                        // Parse the saved elapsed time, if it exists
-                        if (!string.IsNullOrEmpty(savedElapsedTime) && TimeSpan.TryParse(savedElapsedTime, out var parsedTime))
-                        {
-                            timeSpan = parsedTime;  // Initialize timeSpan with the stored elapsed time
-                            var abcTime = timeSpan.ToString(@"hh\:mm\:ss"); // Display the initial elapsed time
-                            Console.WriteLine("Saved Elapsed Time: " + abcTime);
-
-                            // Check if abcTime is "00:00:00"
-                            if (abcTime == "00:00:00")
+                            catch (Exception ex)
                             {
-                                // If abcTime is 00:00:00, just use the totalDurationString
-                                elapsedTime = totalDurationString;
-                            }
-                            else
-                            {
-                                // Calculate the difference between current time and lastStartTime
-                                TimeSpan timeDifference = currentTime - lastStartTime;
-
-                                // Format the time difference as "hh:mm:ss"
-                                string timeDifferenceString = timeDifference.ToString(@"hh\:mm\:ss");
-
-                                // Output the formatted time difference
-                                Console.WriteLine("Time Difference: " + timeDifferenceString);
-
-                                // Parse totalDurationString into a TimeSpan object (assuming it's in "hh:mm:ss" format)
-                                TimeSpan totalDurationParsed = TimeSpan.Parse(totalDurationString);
-
-                                // Add timeDifference to totalDurationParsed
-                                TimeSpan elapsedTimee = totalDurationParsed + timeDifference;
-
-                                // Format elapsedTime as "hh:mm:ss"
-                                string elapsedTimeString = elapsedTimee.ToString(@"hh\:mm\:ss");
-
-                                // Output the final elapsed time
-                                Console.WriteLine("Elapsed Time: " + elapsedTimeString);
-                                elapsedTime = elapsedTimeString;
+                                Console.WriteLine($"Error fetching breaks: {ex.Message}");
                             }
                         }
                         else
                         {
-                            elapsedTime = totalDurationString;
+                            Console.WriteLine("Last End_Time: " + lastEndTime.ToString("yyyy-MM-dd HH:mm:ss"));
                         }
                     }
                     else
                     {
-                        Console.WriteLine("No attendance entries found for today.");
+                        Console.WriteLine("No attendance entries found.");
+                        // handle modals
+                        await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
+                        await JSRuntime.InvokeVoidAsync("closeInactiveModal");
+                        await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+                        StopAudioPlaybackLoop();
+                        //
+
+                        await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+                        await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
+
                     }
                 }
                 else
@@ -221,23 +252,7 @@ namespace Hublog.Desktop.Components.Pages
             }
             finally
             {
-                HandlegetBreakData();
-            }
-            var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
-            Console.WriteLine(punchIntimefromLocalStorage);
-
-            if (!string.IsNullOrEmpty(punchIntimefromLocalStorage) && punchIntimefromLocalStorage != "null")
-            {
-                // Parse elapsedTime as TimeSpan to start the timer from this value
-                if (TimeSpan.TryParse(elapsedTime, out var parsedTimeSpan))
-                {
-                    timeSpan = parsedTimeSpan;
-                }
-                StartTimer();
-            }
-            else
-            {
-                Console.WriteLine("Condition not met: hii is null or elapsedTime is '00:00:00'. Timer not started.");
+                HandleCurrentAttendance();
             }
         }
 
@@ -273,6 +288,7 @@ namespace Hublog.Desktop.Components.Pages
         private bool isBreakActive = false;
         private int _currentBreakEntryId;
         private Timer _userActivitytimer;
+        private DateTime _lastApiCallTime = DateTime.MinValue;  // Variable to track the last API call time
 
         [Inject]
         public IScreenCaptureService ScreenCaptureService { get; set; }
@@ -1199,7 +1215,12 @@ namespace Hublog.Desktop.Components.Pages
 
                 if (idleTime > IdleApiTriggerThreshold)
                 {
-                    await HandleIdletimeApi();
+                    // Ensure HandleIdletimeApi is called only once every 2 minutes
+                    if (_lastApiCallTime == DateTime.MinValue || DateTime.Now.Subtract(_lastApiCallTime).TotalMinutes >= 2)
+                    {
+                        await HandleIdletimeApi();
+                        _lastApiCallTime = DateTime.Now;  // Update the last call time to now
+                    }
                 }
             }
         }
@@ -1339,6 +1360,138 @@ namespace Hublog.Desktop.Components.Pages
             {
                 Console.WriteLine($"Exception: {ex.Message}");
             }
+        }    
+        private async void HandleCurrentAttendance()
+        {
+            try
+            {
+                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
+           + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
+           + $"&UserId={MauiProgram.Loginlist.Id}"
+           + $"&startDate={DateTime.Today:yyyy-MM-dd}"
+           + $"&endDate={DateTime.Today:yyyy-MM-dd}";
+
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                var response = await HttpClient.GetAsync(URL);
+                Console.WriteLine("Response Data: " + response);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize JSON response
+                    var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
+
+                    if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
+                    {
+                        // Filter entries with today's date
+                        var today = DateTime.Today;
+
+                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time; // take last index item
+                        Console.WriteLine("Start Time (First Entry): " + lastStartTime.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                        DateTime currentTime = DateTime.Now;
+                        Console.WriteLine("currentTime " + currentTime.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                        var todayEntries = attendanceResponse.AttendanceDetails
+                                            .Where(entry => entry.AttendanceDate.Date == today)
+                                            .ToList();
+
+                        // Sum total_Time for entries matching today's date
+                        var totalDuration = new TimeSpan();
+                        foreach (var entry in todayEntries)
+                        {
+                            if (entry.Total_Time != DateTime.MinValue)
+                            {
+                                totalDuration += entry.Total_Time.TimeOfDay;
+                            }
+                        }
+
+                        // Format total duration to "hh:mm:ss"
+                        string totalDurationString = totalDuration.ToString(@"hh\:mm\:ss");
+
+                        Console.WriteLine("Total Time for Today's Entries: " + totalDurationString);
+                        string savedElapsedTime = await JSRuntime.InvokeAsync<string>("getelapsedTime");
+
+                        // Parse the saved elapsed time, if it exists
+                        if (!string.IsNullOrEmpty(savedElapsedTime) && TimeSpan.TryParse(savedElapsedTime, out var parsedTime))
+                        {
+                            timeSpan = parsedTime;  // Initialize timeSpan with the stored elapsed time
+                            var abcTime = timeSpan.ToString(@"hh\:mm\:ss"); // Display the initial elapsed time
+                            Console.WriteLine("Saved Elapsed Time: " + abcTime);
+
+                            // Check if abcTime is "00:00:00"
+                            if (abcTime == "00:00:00")
+                            {
+                                // If abcTime is 00:00:00, just use the totalDurationString
+                                elapsedTime = totalDurationString;
+                            }
+                            else
+                            {
+                                // Calculate the difference between current time and lastStartTime
+                                TimeSpan timeDifference = currentTime - lastStartTime;
+
+                                // Format the time difference as "hh:mm:ss"
+                                string timeDifferenceString = timeDifference.ToString(@"hh\:mm\:ss");
+
+                                // Output the formatted time difference
+                                Console.WriteLine("Time Difference: " + timeDifferenceString);
+
+                                // Parse totalDurationString into a TimeSpan object (assuming it's in "hh:mm:ss" format)
+                                TimeSpan totalDurationParsed = TimeSpan.Parse(totalDurationString);
+
+                                // Add timeDifference to totalDurationParsed
+                                TimeSpan elapsedTimee = totalDurationParsed + timeDifference;
+
+                                // Format elapsedTime as "hh:mm:ss"
+                                string elapsedTimeString = elapsedTimee.ToString(@"hh\:mm\:ss");
+
+                                // Output the final elapsed time
+                                Console.WriteLine("Elapsed Time: " + elapsedTimeString);
+                                elapsedTime = elapsedTimeString;
+                            }
+                        }
+                        else
+                        {
+                            elapsedTime = totalDurationString;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No attendance entries found for today.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error: " + response.StatusCode);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching breaks: {ex.Message}");
+            }
+            finally
+            {
+                HandlegetBreakData();
+            }
+            var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
+            Console.WriteLine(punchIntimefromLocalStorage);
+
+            if (!string.IsNullOrEmpty(punchIntimefromLocalStorage) && punchIntimefromLocalStorage != "null")
+            {
+                // Parse elapsedTime as TimeSpan to start the timer from this value
+                if (TimeSpan.TryParse(elapsedTime, out var parsedTimeSpan))
+                {
+                    timeSpan = parsedTimeSpan;
+                }
+                StartTimer();
+            }
+            else
+            {
+                Console.WriteLine("Condition not met: hii is null or elapsedTime is '00:00:00'. Timer not started.");
+            }
+
         }
 
         //getbreak api handleing
@@ -1513,7 +1666,9 @@ namespace Hublog.Desktop.Components.Pages
             }
             finally
             {
-                HandlePreviousAttendance();
+                await Task.Delay(1000);
+                isLoading = false;
+                await InvokeAsync(StateHasChanged); // Refresh UI
             }
         }
         //Network checking
@@ -1536,154 +1691,6 @@ namespace Hublog.Desktop.Components.Pages
             {
                 Console.WriteLine("Device is not connected to the internet.");
                 await JSRuntime.InvokeVoidAsync("openNetworkModal");
-            }
-        }
-
-        private async void HandlePreviousAttendance()
-        {
-            DateTime currentDate = DateTime.Now; // Get the current date and time
-            DateTime dateOneDaysBefore = currentDate.AddDays(-1); // Subtract 1 days
-            DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
-            try
-            {
-                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
-           + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
-           + $"&UserId={MauiProgram.Loginlist.Id}"
-           + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
-           + $"&endDate={dateOneDaysBefore:yyyy-MM-dd}";
-
-                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
-                var response = await HttpClient.GetAsync(URL);
-                Console.WriteLine("Response Data: " + response);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseData = await response.Content.ReadAsStringAsync();
-
-                    // Deserialize JSON response
-                    var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
-
-                    if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
-                    {
-                        DateTime lastAttendanceDate = attendanceResponse.AttendanceDetails[^1].AttendanceDate;
-                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time;
-                        DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
-
-                        // Check if End_Time is "0001-01-01T00:00:00" (DateTime.MinValue)
-                        if (lastEndTime == DateTime.MinValue)
-                        {
-                            Console.WriteLine("End_Time is the default value: 0001-01-01T00:00:00");
-                            try
-                            {
-                                string apiUrl = $"{MauiProgram.OnlineURL}api/Users/Get_Active_Time"
-                             + $"?userid={MauiProgram.Loginlist.Id}"
-                             + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
-                             + $"&endDate={dateOneDaysBefore:yyyy-MM-dd}";
-
-                                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
-                                var activityresponse = await HttpClient.GetAsync(apiUrl);
-                                Console.WriteLine("Response Data: " + activityresponse);
-
-                                if (activityresponse.IsSuccessStatusCode)
-                                {
-                                    var activityresponseData = await activityresponse.Content.ReadAsStringAsync();
-
-                                    // Deserialize JSON response
-                                    var useractivityList = JsonConvert.DeserializeObject<List<UserActivitydatas>>(activityresponseData);
-                                    if (useractivityList != null && useractivityList.Count >= 1)
-                                    {
-                                        DateTime lastActiveTime = useractivityList[^1].TriggeredTime;
-                                        Console.WriteLine(lastActiveTime);
-
-
-                                        var attendanceModels = new List<UserAttendanceModel>
-        {
-            new UserAttendanceModel
-            {
-                Id = 0,
-                UserId = MauiProgram.Loginlist.Id,
-                OrganizationId = MauiProgram.Loginlist.OrganizationId,
-                AttendanceDate = lastAttendanceDate,
-                Start_Time = lastStartTime,
-                End_Time = lastActiveTime,
-                Late_Time = null,
-                Total_Time = null,
-                Status = 1
-            }
-        };
-
-                                        var json = JsonConvert.SerializeObject(attendanceModels);
-                                        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                                        //var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
-                                        var punchoutresponse = await _httpClient.PostAsync($"api/Users/InsertAttendance", content);
-                                        var responseString = await punchoutresponse.Content.ReadAsStringAsync();
-
-                                        if (punchoutresponse.IsSuccessStatusCode)
-                                        {
-                                            // handle modals
-                                            await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
-                                            await JSRuntime.InvokeVoidAsync("closeInactiveModal");
-                                            await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
-                                            StopAudioPlaybackLoop();
-                                            //
-
-                                            await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
-                                            await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
-                                            if (_userActivitytimer != null)
-                                            {
-                                                _userActivitytimer.Dispose();
-                                            }
-
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Error: " + activityresponse.StatusCode);
-                                    }
-
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error fetching breaks: {ex.Message}");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Last End_Time: " + lastEndTime.ToString("yyyy-MM-dd HH:mm:ss"));
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("No attendance entries found.");
-                        // handle modals
-                        await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
-                        await JSRuntime.InvokeVoidAsync("closeInactiveModal");
-                        await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
-                        StopAudioPlaybackLoop();
-                        //
-
-                        await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
-                        await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
-
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Error: " + response.StatusCode);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error fetching breaks: {ex.Message}");
-            }
-            finally
-            {
-                await Task.Delay(1000);
-                isLoading = false;
-                await InvokeAsync(StateHasChanged); // Refresh UI
             }
         }
     }
