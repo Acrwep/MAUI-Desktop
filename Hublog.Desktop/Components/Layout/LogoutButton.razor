@@ -5,14 +5,16 @@
 @inject IJSRuntime JSRuntime
 <link href="/css/dashboard.css" rel="stylesheet" />
 
-<button @onclick="Logout" class="logout_button">
+@* <button @onclick="Logout" class="logout_button">
     <img src="/images/log-out.svg" class="logout_image" />
-</button>
+</button> *@
+<button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="Logout">Yes</button>
 
 @code {
     private async Task Logout()
     {
         Navigation.NavigateTo("/");
+        await JSRuntime.InvokeVoidAsync("closeLogoutModal");
         await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
         await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
         await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");

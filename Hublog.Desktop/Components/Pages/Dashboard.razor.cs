@@ -177,7 +177,8 @@ namespace Hublog.Desktop.Components.Pages
                 End_Time = lastActiveTime,
                 Late_Time = null,
                 Total_Time = null,
-                Status = 1
+                Status = 1,
+                Punchout_type="system"
             }
         };
 
@@ -417,7 +418,7 @@ namespace Hublog.Desktop.Components.Pages
 
             if (currentType == 1 || currentType == 2)
             {
-                PunchOut();
+                PunchOut("user");
                 StopTracking();
                 StopScreenshotTimer();
 
@@ -931,7 +932,7 @@ namespace Hublog.Desktop.Components.Pages
         {
             JSRuntime.InvokeVoidAsync("openPunchoutConfirmationModal");
         }
-        public async void PunchOut()
+        public async void PunchOut(string punchoutType)
         {
             if (currentType == 2)
             {
@@ -976,7 +977,8 @@ namespace Hublog.Desktop.Components.Pages
                 End_Time = istTime,
                 Late_Time = null,
                 Total_Time = null,
-                Status = currentType
+                Status = currentType,
+                Punchout_type= punchoutType
             }
         };
 
@@ -1159,7 +1161,7 @@ namespace Hublog.Desktop.Components.Pages
             else
             {
                 // Call the PunchOut function
-                PunchOut();
+                PunchOut("system");
             }
         }
         private async void CheckInactivity(object state)

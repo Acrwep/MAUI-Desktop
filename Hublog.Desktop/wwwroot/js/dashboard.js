@@ -93,6 +93,32 @@ function closeInactiveModal() {
         console.error("Modal element not found");
     }
 }
+
+function openLogoutModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('logoutModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeLogoutModal() {
+    var modalElement = document.getElementById('logoutModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+
+        // Ensure backdrop is removed
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+
+        // Remove "modal-open" class from body
+        document.body.classList.remove('modal-open');
+    } else {
+        console.error("Modal element not found");
+    }
+}
 function openNetworkModal() {
     const modalElement = new bootstrap.Modal(document.getElementById('networkModal'), {
         backdrop: 'static',

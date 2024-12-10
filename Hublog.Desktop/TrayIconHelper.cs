@@ -93,7 +93,7 @@ namespace Hublog.Desktop
         // Store the close time using Preferences
         Preferences.Set("closeTime", closeTime);
 
-                _dashboardInstance.PunchOut();
+                _dashboardInstance.PunchOut("user");
                 DisposeTrayIcon();
                 Microsoft.Maui.Controls.Application.Current.Quit();
             }
