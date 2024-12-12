@@ -43,6 +43,6 @@ function getTriggerInactiveAlert() {
 function getInactivityAlertStatus() {
     return localStorage.getItem('inactivityAlertStatus' || null);
 }
-function getIdletimetriggerStatus() {
-    return localStorage.getItem('idletimeTriggerStatus' || null);
+function getLastsynctime() {
+    return localStorage.getItem('lastsyncTime' || null);
 }

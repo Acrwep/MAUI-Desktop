@@ -37,10 +37,15 @@
         <p class="dashboard_currentdateandtime">@CurrentDateTime</p>
 
         <div style="position:relative;">
-            @if (buttonText == "Punch In")
+            @if (buttonText == "Punch In" && isPunchButtonLoading==true)
             {
                 <div class="punchin_NonbuttonContainer" />
-                <button class="punchin_button" @onclick="ToggleTimer"> Punch <br /> In</button>
+                <button class="punchin_disablebutton"> Punch <br /> In</button>
+            }
+            else if (buttonText == "Punch In" && isPunchButtonLoading == false)
+            {
+                <div class="punchin_NonbuttonContainer" />
+                <button class="punchin_button" @onclick="PunchIn"> Punch <br /> In</button>
             }
             else
             {
@@ -193,6 +198,25 @@
         </div>
     </div>
 
+     <!-- Modal Error -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content punchout_confirmationmodal_content">
+                <div class="modal-header dashboard_errormodalheader">
+                </div>
+                <div class="modal-body dashboard_errormodalbody">
+                    <div>
+                        <img src="/images/errorimage.png" class="dashboard_errorimage" />
+                    </div>
+                    <div style="display:flex;margin-top:16px;justify-content:center;align-items:center;flex-direction:column">
+                        <p class="dashboard_errormodaltext">Internal Server Error. Please try again later.</p>
+                        <button class="dashboard_errormodal_okbutton" @onclick=CloseErrorModal>Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Network -->
     <div class="modal fade" id="networkModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
@@ -224,7 +248,8 @@
                 <div class="col-7">
                     <div class="lastsync_container">
                         <img src="/images/refresh-cw.svg" class="lastsync_image" />
-                        <p class="lastsync_text">last sync 0 min ago</p>
+                        <p class="lastsync_text">last sync @lastSynctime</p>
+                                                @* <p class="lastsync_text">last sync 1 hr ago</p> *@
                         @if (buttonText == "Punch In")
                         {
                             <img src="/images/log-out.svg" class="logout_button" @onclick="OpenLogoutModal" />
@@ -253,5 +278,18 @@
     private async Task CloseLogoutModal()
     {
         await JSRuntime.InvokeVoidAsync("closeLogoutModal");
+    }
+    private async Task OpenErrorModal()
+    {
+        await JSRuntime.InvokeVoidAsync("openErrorModal");
+    }
+    private async Task CloseErrorModal()
+    {
+        await JSRuntime.InvokeVoidAsync("closeErrorModal");
+        Navigation.NavigateTo("/");
+        await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
+        await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
+        await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+        await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
     }
 }

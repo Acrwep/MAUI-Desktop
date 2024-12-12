@@ -179,6 +179,24 @@ html, body {
         box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
     }
 
+.punchin_disablebutton {
+    color: #fff;
+    background-color: #25a17d;
+    box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
+    font-size: 22px;
+    height: 132px;
+    width: 132px;
+    font-weight: 700;
+    border-radius: 50%;
+    border-color: #25a17d;
+    border: none;
+    position: absolute;
+    top: 10%;
+    right: 14px;
+    cursor: none;
+    opacity:0.9;
+}
+
 .punchout_button {
     color: #fff;
     background-color: rgba(255,77,79,0.90);
@@ -196,7 +214,7 @@ html, body {
 }
 
     .punchout_button:hover {
-       opacity:0.9;
+        opacity: 0.9;
     }
 
     .punchout_button:active {
@@ -325,9 +343,11 @@ html, body {
     color: #ff4d4f;
     margin-top: 2px;
 }
-.logout_button:hover {
-   cursor:pointer;
-}
+
+    .logout_button:hover {
+        cursor: pointer;
+    }
+
 .modal-title {
     font-size: 16px;
     font-weight: 600;
@@ -575,22 +595,27 @@ html, body {
         transform: scale(0.9);
         box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
     }
-.inactivitymodal_bodyContainer{
-    display:flex;
+
+.inactivitymodal_bodyContainer {
+    display: flex;
 }
+
 .inactivitymodal_image {
     width: 29px;
     height: 28px;
     margin-right: 7px;
 }
+
 .offline_image {
     margin-top: -12px !important;
 }
+
 .oops_text {
     font-weight: 700;
     font-size: 19px !important;
     margin: 0 !important;
 }
+
 .nonetwork_text {
     font-size: 12px;
     margin: 0 !important;
@@ -598,6 +623,54 @@ html, body {
     margin-top: 4px !important;
     color: gray;
 }
+.dashboard_errormodalbody {
+    margin-top: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center !important;
+    align-items: center;
+}
+
+.dashboard_errormodalheader {
+    display: none;
+}
+.dashboard_errorimage {
+    width: 60px;
+    height: 60px;
+    margin-top:12px;
+}
+.dashboard_errormodaltext {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.dashboard_errormodal_okbutton {
+    color: #fff;
+    background-color: #e04f5f;
+    box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
+    font-size: 14px;
+    height: 32px;
+    width: 70px;
+    font-weight: 600;
+    border-radius: 5px;
+    border-color: #e04f5f;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin-top:2px;
+}
+
+    .dashboard_errormodal_okbutton:hover {
+      opacity:0.9;
+    }
+
+    .dashboard_errormodal_okbutton:active {
+        transform: scale(0.9);
+        box-shadow: 3px 2px 22px 1px rgba(224, 79, 95, 0.6);
+    }
+
 .loader-overlay {
     position: fixed;
     top: 0;

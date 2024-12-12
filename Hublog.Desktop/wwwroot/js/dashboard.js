@@ -145,6 +145,33 @@ function closeNetworkModal() {
     }
 }
 
+function openErrorModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('errorModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeErrorModal() {
+    var modalElement = document.getElementById('errorModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+
+        // Ensure backdrop is removed
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+
+        // Remove "modal-open" class from body
+        document.body.classList.remove('modal-open');
+    } else {
+        console.error("Modal element not found");
+    }
+}
+
+
 function playAudio() {
     var audioElement = document.getElementById("audioPlayer");
     if (audioElement) {

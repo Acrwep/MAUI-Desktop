@@ -76,6 +76,7 @@ namespace Hublog.Desktop.Components.Pages
             }
             catch (Exception ex)
             {
+                userNameError = "Something went wrong. Please try again later";
                 generalError = $"An unexpected error occurred: {ex.Message}";
             }
         }
