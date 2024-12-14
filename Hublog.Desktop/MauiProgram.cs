@@ -15,6 +15,16 @@ namespace Hublog.Desktop
 
         public static MauiApp CreateMauiApp()
         {
+            //Cleaning the cache .uncommand and run once before taking build.
+            //string userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Hublog");
+            //if (Directory.Exists(userDataPath))
+            //{
+            //    Directory.Delete(userDataPath, true); // Delete all data in the folder
+            //}
+
+            // Set the environment variable for the WebView2 user data folder
+            Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER",
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Hublog"));
             if (!mutex.WaitOne(TimeSpan.Zero, true))
             {
                 // Application is already running, exit the program

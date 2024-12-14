@@ -388,6 +388,23 @@ html, body {
     pointer-events: auto;
     padding: 0px 24px;
 }
+.modal {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out; /* Controls the fade-in/fade-out speed */
+}
+
+    .modal.show {
+        opacity: 1;
+    }
+
+.modal-backdrop {
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out; /* Backdrop fade effect */
+}
+
+    .modal-backdrop.show {
+        opacity: 0.5; /* Adjust this for how dark you want the backdrop */
+    }
 
 .break_checkboxContainer {
     margin-bottom: 12px;
@@ -595,7 +612,9 @@ html, body {
         transform: scale(0.9);
         box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
     }
+.punchoutConfirmationModal_disablebutton{
 
+}
 .inactivitymodal_bodyContainer {
     display: flex;
 }

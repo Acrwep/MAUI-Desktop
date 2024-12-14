@@ -62,7 +62,7 @@
     </div>
 
     <!-- Modal Break Selection -->
-    <div class="modal fade" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -95,7 +95,7 @@
     </div>
 
     <!-- Modal Break Timer -->
-    <div class="modal fade" id="breakTimerModal" tabindex="-1" aria-labelledby="breakTimerModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal" id="breakTimerModal" tabindex="-1" aria-labelledby="breakTimerModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header breaktimer_modalheader">
@@ -109,16 +109,16 @@
                     <p id="breakTimeDisplay" class="break_timer">@remainingTime</p>
                     <button type="button" class="breakResume_button" @onclick="ResumeWorking">Resume Working</button>
                 </div>
-                <!-- Audio player with controls -->
-                <audio controls="controls" id="audioPlayer" style="display:none">
-                    <source src="/audio/resumeworknotify.mp3" type="audio/mpeg" />
-                </audio>
+               
             </div>
         </div>
     </div>
-
+    <!-- Audio player with controls -->
+    <audio controls="controls" id="audioPlayer" style="display:none">
+        <source src="/audio/resumeworknotify.mp3" type="audio/mpeg" />
+    </audio>
     <!-- Modal Punchout Confirmation -->
-    <div class="modal fade" id="punchoutConfirmationModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal" id="punchoutConfirmationModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content punchout_confirmationmodal_content">
                 <div class="modal-header punchout_modalheader">
@@ -136,8 +136,8 @@
                         <p class="punchout_confirmation_modaltext">Are you sure you want to punch out on this device?</p>
                     </div>
                     <div style="display:flex">
-                        <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="ToggleTimer">Yes</button>
-                        <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ClosePunchoutModal">No</button>
+                        <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="ToggleTimer" disabled="@isPunchButtonLoading">Yes</button>
+                            <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ClosePunchoutModal">No</button>
                     </div>
                 </div>
             </div>
@@ -145,7 +145,7 @@
     </div>
 
     <!-- Modal Inactive Alert -->
-    <div class="modal fade" id="inactiveModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal" id="inactiveModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content punchout_confirmationmodal_content">
                 <div class="modal-header punchout_modalheader">
@@ -172,7 +172,7 @@
     </div>
 
     <!-- Modal Logout -->
-    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal" id="logoutModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content punchout_confirmationmodal_content">
                 <div class="modal-header punchout_modalheader">
@@ -199,7 +199,7 @@
     </div>
 
      <!-- Modal Error -->
-    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal" id="errorModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content punchout_confirmationmodal_content">
                 <div class="modal-header dashboard_errormodalheader">
@@ -218,7 +218,7 @@
     </div>
 
     <!-- Modal Network -->
-    <div class="modal fade" id="networkModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal" id="networkModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content punchout_confirmationmodal_content">
                 <div class="modal-header punchout_modalheader">
