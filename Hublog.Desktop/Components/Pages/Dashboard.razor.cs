@@ -720,11 +720,13 @@ namespace Hublog.Desktop.Components.Pages
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Error: {response.StatusCode} - {responseContent}");
+                    await JSRuntime.InvokeVoidAsync("openErrorModal");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception occurred: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("openErrorModal");
             }
         }
         private async Task PunchBreakOut()
@@ -732,6 +734,9 @@ namespace Hublog.Desktop.Components.Pages
             if (_currentBreakEntryId == 0)
             {
                 Console.WriteLine("No active break found.");
+                StopAudioPlaybackLoop();
+                await JSRuntime.InvokeVoidAsync("closeBreakTimerModal");
+                await JSRuntime.InvokeVoidAsync("setItem", "breakStatus", null);
                 return;
             }
             StopAudioPlaybackLoop();
@@ -766,17 +771,20 @@ namespace Hublog.Desktop.Components.Pages
                 {
                     Console.WriteLine("Break ended successfully.");
                     isBreakActive = false;
+                    _currentBreakEntryId = 0;
                     await JSRuntime.InvokeVoidAsync("closeBreakTimerModal");
                 }
                 else
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Error: {response.StatusCode} - {responseContent}");
+                    await JSRuntime.InvokeVoidAsync("openErrorModal");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception occurred: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("openErrorModal");
             }
         }
         private async Task ResumeWorking()
@@ -800,12 +808,14 @@ namespace Hublog.Desktop.Components.Pages
                 else
                 {
                     Console.WriteLine($"Failed to retrieve break details: {response.StatusCode}");
+                    await JSRuntime.InvokeVoidAsync("openErrorModal");
                     return null;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving break details: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("openErrorModal");
                 return null;
             }
         }
@@ -1454,12 +1464,14 @@ namespace Hublog.Desktop.Components.Pages
         //send idle time to api handling
         private async Task HandleIdletimeApi()
         {
+            DateTime istTime = GetISTTime();
 
             var idleTimeDetails = new IdletimeModal
             {
                 UserId = MauiProgram.Loginlist.Id,
                 OrganizationId = MauiProgram.Loginlist.OrganizationId,
-                IdealTime = 2
+                Ideal_duration = 2,
+                Ideal_DateTime= istTime
             };
             var json = JsonConvert.SerializeObject(idleTimeDetails);
             Console.WriteLine($"JSON Payload: {json}");

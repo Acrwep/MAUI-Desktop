@@ -49,19 +49,23 @@ function openBreakModal() {
 function closeBreakModal() {
     var modal = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
     modal.hide();
+    modal.hide();
 
     setTimeout(() => {
         modal.hide();
-    },2000)
+        modal.hide();
+    },1000)
 }
 
 function closeBreakTimerModal() {
     var modal = bootstrap.Modal.getInstance(document.getElementById('breakTimerModal'));
     modal.hide();
+    modal.hide();
 
     setTimeout(() => {
         modal.hide();
-    }, 2000)
+        modal.hide();
+    }, 1000)
 }
 
 function changeResumeButtonColorToRed() {
@@ -93,10 +97,11 @@ function closeInactiveModal() {
         var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         if (modal) {
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
-            }, 2000)
+            }, 1000)
         }
 
         // Ensure backdrop is removed
@@ -123,10 +128,11 @@ function closeLogoutModal() {
         var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         if (modal) {
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
-            }, 2000)
+            }, 1000)
         }
 
         // Ensure backdrop is removed
@@ -152,10 +158,11 @@ function closeNetworkModal() {
         var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         if (modal) {
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
-            }, 2000)
+            }, 1000)
         }
 
         // Ensure backdrop is removed
@@ -182,10 +189,11 @@ function closeErrorModal() {
         var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         if (modal) {
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
-            }, 2000)
+            }, 1000)
         }
 
         // Ensure backdrop is removed
