@@ -15,6 +15,7 @@ namespace Hublog.Desktop
     public class ApplicationMonitor
     {
         private readonly HttpClient _httpClient;
+        private string _previousAppOrUrl = string.Empty;
         private Dictionary<string, DateTime> appStartTimes = new();
         private Dictionary<string, TimeSpan> appUsageTimes = new();
 
@@ -27,47 +28,82 @@ namespace Hublog.Desktop
         {
             int userId = GetUserIdFromToken(MauiProgram.token);
             string activeAppOrUrl = GetActiveApplicationName();
-            string activeApplicationName = activeAppOrUrl;
 
             if (!string.IsNullOrEmpty(activeAppOrUrl))
             {
-                if (!appStartTimes.ContainsKey(activeAppOrUrl))
+                // Check if the active app/URL has changed since the last check
+                if (_previousAppOrUrl != activeAppOrUrl)
                 {
-                    appStartTimes[activeAppOrUrl] = DateTime.Now;
+                    // If there was a previous app/URL, log its usage before switching
+                    if (!string.IsNullOrEmpty(_previousAppOrUrl) && appStartTimes.ContainsKey(_previousAppOrUrl))
+                    {
+                        var usageTime = DateTime.Now - appStartTimes[_previousAppOrUrl];
+
+                        if (appUsageTimes.ContainsKey(_previousAppOrUrl))
+                        {
+                            appUsageTimes[_previousAppOrUrl] += usageTime;
+                        }
+                        else
+                        {
+                            appUsageTimes[_previousAppOrUrl] = usageTime;
+                        }
+
+                        // Save usage for the previous application/URL
+                        if (IsUrl(_previousAppOrUrl))
+                        {
+                            await SaveUrlUsageDataAsync(userId, _previousAppOrUrl);
+                            await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
+                        }
+                        else
+                        {
+                            await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
+                        }
+
+                        // Remove the previous app/URL from start times to avoid reusing old start times
+                        appStartTimes.Remove(_previousAppOrUrl);
+                    }
+
+                    // Now start tracking the new app/URL
+                    if (!appStartTimes.ContainsKey(activeAppOrUrl))
+                    {
+                        appStartTimes[activeAppOrUrl] = DateTime.Now;
+                    }
+
+                    // Update the previous app/URL to the current one
+                    _previousAppOrUrl = activeAppOrUrl;
                 }
             }
             else
             {
-                if (appStartTimes.Any())
+                // If no active application is found, log all active app usages
+                if (!string.IsNullOrEmpty(_previousAppOrUrl) && appStartTimes.ContainsKey(_previousAppOrUrl))
                 {
-                    foreach (var appOrUrl in appStartTimes.Keys.ToList())
+                    var usageTime = DateTime.Now - appStartTimes[_previousAppOrUrl];
+
+                    if (appUsageTimes.ContainsKey(_previousAppOrUrl))
                     {
-                        if (appUsageTimes.ContainsKey(appOrUrl))
-                        {
-                            appUsageTimes[appOrUrl] += DateTime.Now - appStartTimes[appOrUrl];
-                        }
-                        else
-                        {
-                            appUsageTimes[appOrUrl] = DateTime.Now - appStartTimes[appOrUrl];
-                        }
-
-                        if (IsUrl(appOrUrl))
-                        {
-                            await SaveUrlUsageDataAsync(userId, appOrUrl);
-                            await SaveApplicationUsageDataAsync(userId, appOrUrl);
-                        }
-                        else
-                        {
-                            await SaveApplicationUsageDataAsync(userId, appOrUrl);
-                        }
-
-                        appStartTimes.Remove(appOrUrl);
+                        appUsageTimes[_previousAppOrUrl] += usageTime;
                     }
+                    else
+                    {
+                        appUsageTimes[_previousAppOrUrl] = usageTime;
+                    }
+
+                    if (IsUrl(_previousAppOrUrl))
+                    {
+                        await SaveUrlUsageDataAsync(userId, _previousAppOrUrl);
+                        await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
+                    }
+                    else
+                    {
+                        await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
+                    }
+
+                    appStartTimes.Remove(_previousAppOrUrl);
+                    _previousAppOrUrl = string.Empty; // No active app or URL
                 }
             }
         }
-
-
 
         private string ExtractApplicationName(string appOrUrl)
         {

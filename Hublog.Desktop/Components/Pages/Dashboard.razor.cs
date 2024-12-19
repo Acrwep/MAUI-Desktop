@@ -383,7 +383,7 @@ namespace Hublog.Desktop.Components.Pages
             var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
             Console.WriteLine(punchIntimefromLocalStorage);
 
-            StartTracking();
+           await StartTracking();
             StartScreenshotTimer();
         }
         private async void StopTimer()
