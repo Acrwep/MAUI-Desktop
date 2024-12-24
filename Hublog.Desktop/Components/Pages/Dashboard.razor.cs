@@ -937,6 +937,7 @@ namespace Hublog.Desktop.Components.Pages
                     }
                     _userActivitytimer = new Timer(OnTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
                     StartTimer();
+                    await JSRuntime.InvokeVoidAsync("playPunchAudio");
                     await InvokeAsync(StateHasChanged);
 
                     var systemInfoService = new SystemInfoService();
@@ -1107,6 +1108,7 @@ namespace Hublog.Desktop.Components.Pages
                     timeSpan = TimeSpan.Zero;
                     StopTracking();
                     StopScreenshotTimer();
+                    await JSRuntime.InvokeVoidAsync("playPunchAudio");
                     await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
                     await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
                     if (_userActivitytimer != null)

@@ -19,8 +19,17 @@
 </div>
 
 <div class="dashboard_mainContainer">
+      <div class="dashboard_titlebar">
+        <div class="dashboard_titlebarlogoContainer">
+            <img src="/images/hublog.ico" class="dashboard_titlebarlogo" />
+        </div>
+        <div class="dashboard_titlebarcloseContainer" @onclick="CloseApplication">
+            <img src="/images/close-window.png" class="dashboard_titlebarcloseicon" />
+        </div>
+    </div>
+
     <div class="dashboard_headerContainer">
-        <img src="/images/crystal.jpg" class="dashboard_employeeimage" />
+        <img src="/images/crystal.jpg" class="dashboard_crysatalimage" />
         <img src="/images/wave.png" class="dashboard_waveimage" />
         <div class="dashboard_profileContainer">
             <p class="initial_text">@initials</p>
@@ -116,6 +125,9 @@
     <!-- Audio player with controls -->
     <audio controls="controls" id="audioPlayer" style="display:none">
         <source src="/audio/resumeworknotify.mp3" type="audio/mpeg" />
+    </audio>
+    <audio controls="controls" id="punchPlayer" style="display:none">
+        <source src="/audio/punch_audio.mp3" type="audio/mpeg" />
     </audio>
     <!-- Modal Punchout Confirmation -->
     <div class="modal" id="punchoutConfirmationModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -291,5 +303,12 @@
         await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
         await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
         await JSRuntime.InvokeVoidAsync("setItem", "breakStatus", null);
+    }
+    private void CloseApplication()
+    {
+        // Exit the application
+#if WINDOWS
+    Hublog.Desktop.TrayIconHelper.MinimizeToTray();
+#endif
     }
 }

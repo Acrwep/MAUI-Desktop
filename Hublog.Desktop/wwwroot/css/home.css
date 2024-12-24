@@ -1,27 +1,75 @@
 ﻿html, body {
     background: linear-gradient(#73c8f7, #63f097);
-    margin: 0px 9px;
+    margin: 0px 0px;
     overflow: hidden;
 }
-
+.homepage_mainContainer {
+    position: relative;
+    width: 100%;
+    border: 1px solid rgba(138,140,140,0.71);
+}
 .login-container {
     display: flex;
     justify-content: center;
     height: 100vh;
     width: 100%;
     flex-direction: column;
-    padding: 0px;
+    padding: 0px 19px;
     overflow: hidden;
     overflow-y: hidden;
 }
-
-.login_formcontainer {
+.loginpage_titlebar {
+    position: absolute;
+    top: 0%;
+    width: 100%;
+    display: flex;
     background-color: white;
-    padding: 29px 16px;
-    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
-    border-radius: 9px;
-    z-index: 1;
+    justify-content: space-between; /* Adds space between logo and close icon */
+    -webkit-tap-highlight-color: none;
+    outline: none !important;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
 }
+.loginpage_titlebarlogoContainer {
+    padding: 3px 6px;
+}
+.loginpage_titlebarlogo {
+    width: 19px;
+}
+.loginpage_titlebarcloseContainer {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0px 4px;
+    width: 40px;
+    justify-content: center;
+}
+
+    .loginpage_titlebarcloseContainer:hover {
+        background-color: #e81123;
+    }
+
+    .loginpage_titlebarcloseContainer img {
+        transition: all 0.3s ease; /* Smooth transition for image change */
+    }
+
+    .loginpage_titlebarcloseContainer:hover img {
+        content: url('/images/white-close-window.png'); /* Change image source on hover */
+        width: 26px;
+    }
+.loginpage_titlebarcloseicon {
+    width: 26px;
+}
+    .login_formcontainer {
+        background-color: white;
+        padding: 29px 16px;
+        box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+        border-radius: 9px;
+        z-index: 1;
+    }
 
 .login_heading {
     font-weight: 600;
@@ -51,7 +99,6 @@
     background-color: #ffffff;
     background-image: none;
     border-width: 1px;
-    border-style: solid;
     border-color: #d9d9d9;
     border-radius: 6px;
     transition: all 0.2s;
@@ -59,10 +106,12 @@
     margin-top: 3px;
     margin-bottom: 14px;
 }
-
-    .signin_emailtextinput:focus {
-        border-color: #5cb3fd;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    .signin_emailtextinput:hover {
+        border-color: #25a17d !important;
+    }
+    .signin_emailtextinput:focus-within {
+        border-color: #25a17d !important;
+        box-shadow: 0 0 0 3px #25a17e17;
     }
 
 .signin_passwordtextinput {
@@ -77,12 +126,14 @@
     width: 100%;
     margin-top: 3px;
 }
-
-    .signin_passwordtextinput:focus {
-        border-color: #5cb3fd;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    .signin_passwordtextinput:hover {
+        border-color: #25a17d !important;
     }
 
+    .signin_passwordtextinput:focus-within {
+        border-color: #25a17d !important;
+        box-shadow: 0 0 0 3px #25a17e17;
+    }
 .loginform_labels {
     font-weight: 500;
     font-size: 14px;

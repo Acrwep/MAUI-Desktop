@@ -1,5 +1,7 @@
 ﻿using Hublog.Desktop.Entities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.LifecycleEvents;
+using Microsoft.Maui.Platform;
 using System.Threading;
 
 namespace Hublog.Desktop
@@ -41,7 +43,29 @@ namespace Hublog.Desktop
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
-
+#if WINDOWS
+            builder.ConfigureLifecycleEvents(events =>
+            {
+                events.AddWindows(windowsLifecycleBuilder =>
+                {
+                    windowsLifecycleBuilder.OnWindowCreated(window =>
+                    {
+                        var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+                        var id = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
+                        var appWindow =
+                        Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
+                        var titleBar = appWindow.TitleBar;
+                        titleBar.ExtendsContentIntoTitleBar = false; //hide default title bar
+                        if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
+                        {
+                            presenter.IsResizable = false;
+                            presenter.SetBorderAndTitleBar(false, false);
+                            presenter.IsMaximizable = false; // Prevent maximizing
+                        }
+                    });
+                });
+            });
+#endif
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddHttpClient();
 

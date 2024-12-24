@@ -222,3 +222,18 @@ function pauseAudio() {
         audioElement.currentTime = 0; // Reset the audio to the start
     }
 };
+
+function playPunchAudio() {
+    var audioElement = document.getElementById("punchPlayer");
+    if (audioElement) {
+        audioElement.play();
+    }
+};
+
+function pausePunchAudio() {
+    var audioElement = document.getElementById("punchPlayer");
+    if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0; // Reset the audio to the start
+    }
+};

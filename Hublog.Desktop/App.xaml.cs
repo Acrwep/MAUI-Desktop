@@ -5,6 +5,8 @@ using Microsoft.UI.Windowing;
 using System.Runtime.InteropServices;
 using System.Threading;
 using WinRT.Interop;
+using Windows.Graphics;
+using Microsoft.UI.Windowing;
 
 namespace Hublog.Desktop
 {
@@ -33,6 +35,9 @@ namespace Hublog.Desktop
                 var windowHandle = WindowNative.GetWindowHandle(nativeWindow);
                 var windowId = Win32Interop.GetWindowIdFromWindow(windowHandle);
                 var appWindow = AppWindow.GetFromWindowId(windowId);
+
+                 // Center the app window
+                CenterWindow(appWindow);
 
                 TrayIconHelper.InitializeTrayIcon(_dashboard);
 
@@ -85,6 +90,17 @@ namespace Hublog.Desktop
             style &= ~WS_MAXIMIZEBOX; 
             style &= ~WS_MINIMIZEBOX; 
             SetWindowLong(hWnd, GWL_STYLE, style);
+        }
+
+           private void CenterWindow(AppWindow appWindow)
+        {
+            // Get the display area and calculate the center position
+            var displayArea = DisplayArea.GetFromWindowId(appWindow.Id, DisplayAreaFallback.Primary);
+            var centerX = (displayArea.WorkArea.Width - appWindow.Size.Width) / 2;
+            var centerY = (displayArea.WorkArea.Height - appWindow.Size.Height) / 2;
+
+            // Move the window to the center
+            appWindow.Move(new PointInt32(centerX, centerY));
         }
 #endif
 

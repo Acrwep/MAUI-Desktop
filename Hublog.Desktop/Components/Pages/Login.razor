@@ -7,7 +7,15 @@
 @inject IJSRuntime JSRuntime
 <link href="/css/home.css" rel="stylesheet" />
 
-<div>
+<div class="homepage_mainContainer">
+    <div class="loginpage_titlebar">
+        <div class="loginpage_titlebarlogoContainer">
+            <img src="/images/hublog.ico" class="loginpage_titlebarlogo" />
+        </div>
+        <div class="loginpage_titlebarcloseContainer" @onclick="CloseApplication">
+            <img src="/images/close-window.png" class="loginpage_titlebarcloseicon" />
+        </div>
+    </div>
     @if (isLoggedIn)
     {
         <button @onclick="Logout">Logout</button>
@@ -94,5 +102,10 @@
     private void TogglePasswordVisibility()
     {
         isPasswordVisible = !isPasswordVisible;
+    }
+    private void CloseApplication()
+    {
+        // Exit the application
+        Microsoft.Maui.Controls.Application.Current.Quit();
     }
 }
