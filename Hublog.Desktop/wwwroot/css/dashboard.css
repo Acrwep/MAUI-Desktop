@@ -265,7 +265,11 @@ html, body {
         transform: scale(0.9);
         box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
     }
-
+.punchin_button,
+.punchout_button,
+.punchin_disablebutton {
+    transition: all 0.3s ease-in-out; /* Smooth transition for all properties */
+}
 .break_buttonContainer {
     margin-top: 20px;
     position: relative;
@@ -350,7 +354,7 @@ html, body {
     background: #F0F1F1;
     width: 100%;
     padding: 9px 12px;
-    border-top: 1px solid rgba(138,140,140,0.25);
+    border-top: 1px solid rgba(138,140,140,0.26);
 }
 
 .logout_image {

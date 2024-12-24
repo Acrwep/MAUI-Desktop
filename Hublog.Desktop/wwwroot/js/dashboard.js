@@ -14,7 +14,7 @@ function closePunchoutConfirmationModal() {
 
             setTimeout(() => {
                 modal.hide();
-            }, 2000)
+            }, 1000)
         }
 
         // Ensure backdrop is removed
@@ -223,17 +223,16 @@ function pauseAudio() {
     }
 };
 
-function playPunchAudio() {
-    var audioElement = document.getElementById("punchPlayer");
+function PunchInAudio() {
+    var audioElement = document.getElementById("punchInPlayer");
     if (audioElement) {
         audioElement.play();
     }
 };
 
-function pausePunchAudio() {
-    var audioElement = document.getElementById("punchPlayer");
+function PunchOutAudio() {
+    var audioElement = document.getElementById("punchOutPlayer");
     if (audioElement) {
-        audioElement.pause();
-        audioElement.currentTime = 0; // Reset the audio to the start
+        audioElement.play();
     }
 };
