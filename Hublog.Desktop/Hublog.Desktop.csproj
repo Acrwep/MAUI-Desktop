@@ -19,7 +19,9 @@
         <SingleProject>true</SingleProject>
         <ImplicitUsings>enable</ImplicitUsings>
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
-        <Nullable>disable</Nullable>
+		<OutputName>Hublog</OutputName>
+		<AssemblyName>Hublog</AssemblyName>
+		<Nullable>disable</Nullable>
 		
         <!-- Display name -->
         <ApplicationTitle>Hublog.Desktop</ApplicationTitle>

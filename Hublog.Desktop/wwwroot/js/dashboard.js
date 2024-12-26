@@ -176,6 +176,39 @@ function closeNetworkModal() {
     }
 }
 
+//login networkmodal
+function openLoginNetworkModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('loginNetworkModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeLoginNetworkModal() {
+    var modalElement = document.getElementById('loginNetworkModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        if (modal) {
+            modal.hide();
+            modal.hide();
+
+            setTimeout(() => {
+                modal.hide();
+            }, 1000)
+        }
+
+        // Ensure backdrop is removed
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+
+        // Remove "modal-open" class from body
+        document.body.classList.remove('modal-open');
+    } else {
+        console.error("Modal element not found");
+    }
+}
+
+//audio handling
 function openErrorModal() {
     const modalElement = new bootstrap.Modal(document.getElementById('errorModal'), {
         backdrop: 'static',

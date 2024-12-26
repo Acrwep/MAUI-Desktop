@@ -1,8 +1,8 @@
 using Hublog.Desktop.Entities;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.JSInterop;
 
 namespace Hublog.Desktop.Components.Pages
 {
@@ -16,6 +16,11 @@ namespace Hublog.Desktop.Components.Pages
         private string passwordError = "";
         private string generalError = "";
 
+        protected override async Task OnInitializedAsync()
+        {
+            Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
+            CheckNetworkStatus();
+        }
         #region HandleLogin
         private async Task HandleLogin()
         {
@@ -145,10 +150,33 @@ namespace Hublog.Desktop.Components.Pages
         }
         #endregion
 
-    private async Task PlayAlertSound()
+        private void Connectivity_ConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
         {
-            await JSRuntime.InvokeVoidAsync("playAlertSound");
+            // This is where you can handle network changes
+            CheckNetworkStatus();
         }
+        [Inject] private NavigationManager NavigationManager { get; set; }
+        private async void CheckNetworkStatus()
+        {
+            var currentNetworkStatus = Connectivity.NetworkAccess;
 
+            var currentUri = NavigationManager?.Uri;
+
+            // Check if the current page is the home page
+            if (currentUri != null && currentUri.EndsWith("/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (currentNetworkStatus == NetworkAccess.Internet)
+                {
+                    Console.WriteLine("Device is connected to the internet.");
+                    await JSRuntime.InvokeVoidAsync("closeLoginNetworkModal");
+                }
+                else
+                {
+                    Console.WriteLine("Device is not connected to the internet.");
+                    await Task.Delay(500); // Ensure DOM is rendered
+                    await JSRuntime.InvokeVoidAsync("openLoginNetworkModal");
+                }
+            }
+        }
 }
 }

@@ -1818,20 +1818,27 @@ namespace Hublog.Desktop.Components.Pages
             // This is where you can handle network changes
             CheckNetworkStatus();
         }
-
+        [Inject] private NavigationManager NavigationManager { get; set; }
         private async void CheckNetworkStatus()
         {
             var currentNetworkStatus = Connectivity.NetworkAccess;
 
-            if (currentNetworkStatus == NetworkAccess.Internet)
+            var currentUri = NavigationManager?.Uri;
+
+            // Check if the current page is the home page
+            if (currentUri != null && currentUri.EndsWith("/Dashboard", StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine("Device is connected to the internet.");
-                await JSRuntime.InvokeVoidAsync("closeNetworkModal");
-            }
-            else
-            {
-                Console.WriteLine("Device is not connected to the internet.");
-                await JSRuntime.InvokeVoidAsync("openNetworkModal");
+                if (currentNetworkStatus == NetworkAccess.Internet)
+                {
+                    Console.WriteLine("Device is connected to the internet.");
+                    await JSRuntime.InvokeVoidAsync("closeNetworkModal");
+                }
+                else
+                {
+                    Console.WriteLine("Device is not connected to the internet.");
+                    await Task.Delay(500); // Ensure DOM is rendered
+                    await JSRuntime.InvokeVoidAsync("openNetworkModal");
+                }
             }
         }
     }

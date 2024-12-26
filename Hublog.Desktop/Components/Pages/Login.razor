@@ -76,13 +76,28 @@
                         <button type="submit" class="login_button">Login</button>
                     </div>
                 </EditForm>
-
-                @*  <div class="form-group">
-            <button class="login_button" @onclick="PlayAlertSound">Play</button>
-            </div> *@
             </div>
         </div>
     }
+
+    <!-- Modal Network -->
+    <div class="modal" id="loginNetworkModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content loginNetworkmodalmodal_content">
+                <div class="modal-header punchout_modalheader">
+                    <div class="loginNetworkmodalmodal_logoContainer">
+                        <img src="/images/hublog.ico" class="loginNetworkmodalmodal_headericon" />
+                        <p>Network Error!</p>
+                    </div>
+                </div>
+                <div class="modal-body loginNetworkmodalmodal_modalbody">
+                    <img src="/images/offline.png" class="offline_image" />
+                    <p class="oops_text">Oops!</p>
+                    <p class="nonetwork_text">No internet connection found. Check your connection or try again.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
