@@ -139,7 +139,7 @@ namespace Hublog.Desktop.Components.Pages
                         DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
 
                         // Check if End_Time is "0001-01-01T00:00:00" (DateTime.MinValue)
-                        if (lastEndTime == DateTime.MinValue)
+                        if (lastStartTime!= DateTime.MinValue && lastEndTime == DateTime.MinValue)
                         {
                             Console.WriteLine("End_Time is the default value: 0001-01-01T00:00:00");
                             try
@@ -1547,7 +1547,7 @@ namespace Hublog.Desktop.Components.Pages
                         // Format total duration to "hh:mm:ss"
                         string totalDurationString = totalDuration.ToString(@"hh\:mm\:ss");
 
-                        if (lastEndTime == DateTime.MinValue) //check end is null or not
+                        if (lastStartTime != DateTime.MinValue && lastEndTime == DateTime.MinValue) //check end is null or not
                         {
                             await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", lastStartTime);
                             if (_userActivitytimer != null)
