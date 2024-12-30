@@ -139,7 +139,7 @@ namespace Hublog.Desktop.Components.Pages
                         DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
 
                         // Check if End_Time is "0001-01-01T00:00:00" (DateTime.MinValue)
-                        if (lastStartTime!= DateTime.MinValue && lastEndTime == DateTime.MinValue)
+                        if (lastStartTime != DateTime.MinValue && lastEndTime == DateTime.MinValue)
                         {
                             Console.WriteLine("End_Time is the default value: 0001-01-01T00:00:00");
                             try
@@ -579,7 +579,7 @@ namespace Hublog.Desktop.Components.Pages
             while (isTracking)
             {
                 await _monitor.UpdateApplicationOrUrlUsageAsync(token);
-                await Task.Delay(10000);
+                await Task.Delay(5000);
             }
         }
 
@@ -935,7 +935,7 @@ namespace Hublog.Desktop.Components.Pages
                     {
                         timeSpan = parsedTimeSpan;
                     }
-                    _userActivitytimer = new Timer(OnTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
+                    _userActivitytimer = new Timer(OnTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
                     StartTimer();
                     await JSRuntime.InvokeVoidAsync("PunchInAudio");
                     await InvokeAsync(StateHasChanged);
@@ -1461,8 +1461,50 @@ namespace Hublog.Desktop.Components.Pages
             {
                 Console.WriteLine($"Exception: {ex.Message}");
             }
+            finally
+            {
+              await  UpdateUserAttendance();
+            }
         }
 
+        private async Task UpdateUserAttendance()
+        {
+            DateTime istTime = GetISTTime();
+
+            var updateUserAttendanceDetails = new UpdateUserAttendanceModal
+            {
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                Date = istTime
+            };
+            var json = JsonConvert.SerializeObject(updateUserAttendanceDetails);
+            Console.WriteLine($"JSON Payload: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            Console.WriteLine($"API URL: {MauiProgram.OnlineURL}api/Users/UpdateUserAttendanceDetails");
+
+            try
+            {
+                var response = await HttpClient.PutAsync($"{MauiProgram.OnlineURL}api/Users/UpdateUserAttendanceDetails", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine($"Response Status: {response.StatusCode}");
+                Console.WriteLine($"Response Body: {responseString}");
+
+                if (response.IsSuccessStatusCode)
+                {
+
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {responseString}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
+        }
         //send idle time to api handling
         private async Task HandleIdletimeApi()
         {
@@ -1569,7 +1611,7 @@ namespace Hublog.Desktop.Components.Pages
                             // Output the final elapsed time
                             Console.WriteLine("Elapsed Time: " + elapsedTimeString);
                             elapsedTime = elapsedTimeString;
-                            _userActivitytimer = new Timer(OnTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
+                            _userActivitytimer = new Timer(OnTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
                             if (TimeSpan.TryParse(elapsedTime, out var parsedTimeSpan))
                             {
