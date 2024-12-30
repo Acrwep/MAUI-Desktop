@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 #if WINDOWS
 using System.Windows.Automation;
@@ -15,94 +16,98 @@ namespace Hublog.Desktop
     public class ApplicationMonitor
     {
         private readonly HttpClient _httpClient;
-        private string _previousAppOrUrl = string.Empty;
-        private Dictionary<string, DateTime> appStartTimes = new();
-        private Dictionary<string, TimeSpan> appUsageTimes = new();
+        private readonly Dictionary<string, DateTime> _appStartTimes = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, TimeSpan> _appUsageTimes = new();
+        private readonly Timer _pollingTimer;
+        private bool triggerStatus = false;
+        private string _previousAppOrUrl;
+        private string _previousFullAppOrUrl;
+        private string elapsedTime = "00:00:00";
+        private TimeSpan timeSpan = TimeSpan.Zero;
+        private System.Threading.Timer appsAndUrlTimer;
 
         public ApplicationMonitor(HttpClient httpClient)
         {
             _httpClient = httpClient;
+            _pollingTimer = new Timer(UpdateActiveApplication, null, TimeSpan.Zero, TimeSpan.FromSeconds(1)); // Check every second
+        }
+
+        private void UpdateActiveApplication(object state)
+        {
+            if (triggerStatus == false)
+            {
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                appsAndUrlTimer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000); 
+                _ = UpdateApplicationOrUrlUsageAsync(""); // Call the method asynchronously
+                triggerStatus = true;
+            }
+        }
+
+        private void UpdateTimer(object state)
+        {
+            timeSpan = timeSpan.Add(TimeSpan.FromSeconds(1));
+            elapsedTime = timeSpan.ToString(@"hh\:mm\:ss");
         }
 
         public async Task UpdateApplicationOrUrlUsageAsync(string token)
         {
-            int userId = GetUserIdFromToken(MauiProgram.token);
+            int userId = MauiProgram.Loginlist.Id;
             string activeAppOrUrl = GetActiveApplicationName();
+            string extractName = ExtractName(activeAppOrUrl);
 
             if (!string.IsNullOrEmpty(activeAppOrUrl))
             {
-                // Check if the active app/URL has changed since the last check
-                if (_previousAppOrUrl != activeAppOrUrl)
+                if (extractName != _previousAppOrUrl)
                 {
-                    // If there was a previous app/URL, log its usage before switching
-                    if (!string.IsNullOrEmpty(_previousAppOrUrl) && appStartTimes.ContainsKey(_previousAppOrUrl))
+                    if (_previousAppOrUrl == null || _previousAppOrUrl == "")
                     {
-                        var usageTime = DateTime.Now - appStartTimes[_previousAppOrUrl];
-
-                        if (appUsageTimes.ContainsKey(_previousAppOrUrl))
-                        {
-                            appUsageTimes[_previousAppOrUrl] += usageTime;
-                        }
-                        else
-                        {
-                            appUsageTimes[_previousAppOrUrl] = usageTime;
-                        }
-
-                        // Save usage for the previous application/URL
-                        if (IsUrl(_previousAppOrUrl))
-                        {
-                            await SaveUrlUsageDataAsync(userId, _previousAppOrUrl);
-                            await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
-                        }
-                        else
-                        {
-                            await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
-                        }
-
-                        // Remove the previous app/URL from start times to avoid reusing old start times
-                        appStartTimes.Remove(_previousAppOrUrl);
+                        _previousAppOrUrl = extractName;
+                        _previousFullAppOrUrl = activeAppOrUrl;
+                        return;
                     }
+                    string appName = ExtractApplicationName(_previousFullAppOrUrl);
+                    string urlName = ExtractUrl(_previousFullAppOrUrl);
 
-                    // Now start tracking the new app/URL
-                    if (!appStartTimes.ContainsKey(activeAppOrUrl))
+                    if (!string.IsNullOrEmpty(urlName))
                     {
-                        appStartTimes[activeAppOrUrl] = DateTime.Now;
+                        await SaveUrlUsageDataAsync(userId, _previousAppOrUrl, elapsedTime);
+                        await Task.Delay(500);
+                        appsAndUrlTimer?.Dispose();
+                        timeSpan = TimeSpan.Zero;
+                        elapsedTime = "00:00:00";
+                        appsAndUrlTimer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000);
                     }
-
-                    // Update the previous app/URL to the current one
-                    _previousAppOrUrl = activeAppOrUrl;
+                    else
+                    {
+                        await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl, elapsedTime);
+                        await Task.Delay(500);
+                        appsAndUrlTimer?.Dispose();
+                        timeSpan = TimeSpan.Zero;
+                        elapsedTime = "00:00:00";
+                        appsAndUrlTimer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000);
+                    }
+                    _previousAppOrUrl = extractName;
+                    _previousFullAppOrUrl = activeAppOrUrl;
+                }
+                else
+                {
+                    Console.WriteLine(elapsedTime);
                 }
             }
-            else
+        }
+
+        public static string ExtractName(string url)
+        {
+            var match = Regex.Match(url, @":([^/]+)");
+
+            if (match.Success)
             {
-                // If no active application is found, log all active app usages
-                if (!string.IsNullOrEmpty(_previousAppOrUrl) && appStartTimes.ContainsKey(_previousAppOrUrl))
-                {
-                    var usageTime = DateTime.Now - appStartTimes[_previousAppOrUrl];
-
-                    if (appUsageTimes.ContainsKey(_previousAppOrUrl))
-                    {
-                        appUsageTimes[_previousAppOrUrl] += usageTime;
-                    }
-                    else
-                    {
-                        appUsageTimes[_previousAppOrUrl] = usageTime;
-                    }
-
-                    if (IsUrl(_previousAppOrUrl))
-                    {
-                        await SaveUrlUsageDataAsync(userId, _previousAppOrUrl);
-                        await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
-                    }
-                    else
-                    {
-                        await SaveApplicationUsageDataAsync(userId, _previousAppOrUrl);
-                    }
-
-                    appStartTimes.Remove(_previousAppOrUrl);
-                    _previousAppOrUrl = string.Empty; // No active app or URL
-                }
+                return match.Groups[1].Value;
             }
+
+            return url;  // Return empty if no match is found
         }
 
         private string ExtractApplicationName(string appOrUrl)
@@ -127,21 +132,26 @@ namespace Hublog.Desktop
             IntPtr handle = GetForegroundWindow();
             const int nChars = 256;
             StringBuilder buff = new StringBuilder(nChars);
+            Task.Delay(500); // Small delay before retry
 
             if (GetWindowText(handle, buff, nChars) > 0)
             {
                 GetWindowThreadProcessId(handle, out uint processId);
-                var process = Process.GetProcessById((int)processId);
+                Process process = Process.GetProcessById((int)processId);
                 string applicationName = process.ProcessName.Split(' ')[0];
+                Task.Delay(500);
 
                 if (applicationName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
                     applicationName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
-                    applicationName.Equals("firefox", StringComparison.OrdinalIgnoreCase))
+                    applicationName.Equals("firefox", StringComparison.OrdinalIgnoreCase) ||
+                    applicationName.Equals("opera", StringComparison.OrdinalIgnoreCase) ||
+                    applicationName.Equals("brave", StringComparison.OrdinalIgnoreCase))
                 {
+                    Task.Delay(500);
                     string browserUrl = GetBrowserUrl(process);
                     if (!string.IsNullOrEmpty(browserUrl))
                     {
-                        return $"{applicationName}: {browserUrl}";
+                        return $"{applicationName}:{browserUrl}";
                     }
                 }
 
@@ -154,16 +164,15 @@ namespace Hublog.Desktop
         public string GetBrowserUrl(Process browserProcess)
         {
 #if WINDOWS
-            if (browserProcess.ProcessName == "chrome" || browserProcess.ProcessName == "msedge")
+            return browserProcess.ProcessName switch
             {
-                return GetChromeEdgeUrl(browserProcess);
-            }
-            else if (browserProcess.ProcessName == "firefox")
-            {
-                return GetFirefoxUrl(browserProcess);
-            }
-#endif
+                "chrome" or "msedge" => GetChromeEdgeUrl(browserProcess),
+                "firefox" => GetFirefoxUrl(browserProcess),
+                _ => string.Empty
+            };
+#else
             return string.Empty;
+#endif
         }
 
 #if WINDOWS
@@ -181,79 +190,194 @@ namespace Hublog.Desktop
         }
 #endif
 
-        private int GetUserIdFromToken(string token)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
-        }
-
-        private async Task SaveApplicationUsageDataAsync(int userId, string applicationName)
+        private async Task SaveApplicationUsageDataAsync(int userId, string applicationName, string totalUsage)
         {
             try
             {
-                string appName = ExtractApplicationName(applicationName);
 
-                if (appUsageTimes.TryGetValue(applicationName, out TimeSpan usageTime))
+                //string totalUsage = FormatTimeSpan(usageTime);
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                appsAndUrlTimer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000);
+
+                var appUsage = new ApplicationUsage
                 {
-                    string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
-
-                    var appUsage = new ApplicationUsage
-                    {
-                        UserId = userId,
-                        ApplicationName = appName,
-                        TotalUsage = totalUsage,
-                        UsageDate = DateTime.Now.Date,
-                        Details = $"User spent time on application: {appName}"
-                    };
-
-                    var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Application", appUsage);
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
-                    }
+                    UserId = userId,
+                    ApplicationName = applicationName,
+                    TotalUsage = totalUsage,
+                    UsageDate = DateTime.Now.Date,
+                    Details = $"User spent time on application: {applicationName}"
+                };
+                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Application", appUsage);
+                _appStartTimes.Remove(applicationName);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"Error saving application usage: {ex.Message}");
+            }
+            finally
+            {
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                appsAndUrlTimer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000);
             }
         }
 
-        private async Task SaveUrlUsageDataAsync(int userId, string url)
+        private async Task SaveUrlUsageDataAsync(int userId, string url, string totalUsage)
         {
             try
             {
-                string actualUrl = ExtractUrl(url);
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                appsAndUrlTimer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000);
 
-                if (appUsageTimes.TryGetValue(url, out TimeSpan usageTime))
+
+                var urlUsage = new UrlUsage
                 {
-                    string totalUsage = $"{(int)usageTime.TotalHours:D2}:{usageTime.Minutes:D2}:{usageTime.Seconds:D2}";
-                    string baseUrl = new UriBuilder(actualUrl).Uri.Host;  
+                    UserId = userId,
+                    Url = url.Contains("localhost") ? "localhost" : url,
+                    TotalUsage = totalUsage,
+                    UsageDate = DateTime.Now.Date,
+                    Details = $"User spent time on URL: {url}"
+                };
 
-                    var urlUsage = new UrlUsage
-                    {
-                        UserId = userId,
-                        Url = baseUrl,
-                        TotalUsage = totalUsage,
-                        UsageDate = DateTime.Now.Date,
-                        Details = $"User spent time on URL: {baseUrl}"
-                    };
-
-                    var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Url", urlUsage);
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        Console.WriteLine($"Failed to log URL usage: {response.ReasonPhrase}");
-                    }
+                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Url", urlUsage);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Failed to log URL usage: {response.ReasonPhrase}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"Error saving URL usage: {ex.Message}");
+            }
+            finally
+            {
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                appsAndUrlTimer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000);
             }
         }
 
+        //handle after punchout
+        public async Task LastApplicationOrUrlUsageAsync()
+        {
+            int userId = MauiProgram.Loginlist.Id;
+            Console.WriteLine(_previousAppOrUrl);
+
+            string appName = ExtractApplicationName(_previousFullAppOrUrl);
+            string urlName = ExtractUrl(_previousFullAppOrUrl);
+            if (!string.IsNullOrEmpty(urlName))
+            {
+                await LastSaveUrlUsageDataAsync(userId, _previousAppOrUrl, elapsedTime);
+                await Task.Delay(500);
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+            }
+            else
+            {
+                await LastSaveApplicationUsageDataAsync(userId, _previousAppOrUrl, elapsedTime);
+                await Task.Delay(500);
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+            }
+        }
+
+        private async Task LastSaveApplicationUsageDataAsync(int userId, string applicationName, string totalUsage)
+        {
+            try
+            {
+
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                _previousAppOrUrl = string.Empty;
+                _previousFullAppOrUrl = string.Empty;
+
+                var appUsage = new ApplicationUsage
+                {
+                    UserId = userId,
+                    ApplicationName = applicationName,
+                    TotalUsage = totalUsage,
+                    UsageDate = DateTime.Now.Date,
+                    Details = $"User spent time on application: {applicationName}"
+                };
+                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Application", appUsage);
+                _appStartTimes.Remove(applicationName);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Failed to log application usage: {response.ReasonPhrase}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving application usage: {ex.Message}");
+            }
+            finally
+            {
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                _previousAppOrUrl = string.Empty;
+                _previousFullAppOrUrl = string.Empty;
+                triggerStatus = true;
+            }
+        }
+
+        private async Task LastSaveUrlUsageDataAsync(int userId, string url, string totalUsage)
+        {
+            try
+            {
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                _previousAppOrUrl = string.Empty;
+                _previousFullAppOrUrl = string.Empty;
+
+                var urlUsage = new UrlUsage
+                {
+                    UserId = userId,
+                    Url = url.Contains("localhost") ? "localhost" : url,
+                    TotalUsage = totalUsage,
+                    UsageDate = DateTime.Now.Date,
+                    Details = $"User spent time on URL: {url}"
+                };
+
+                var response = await _httpClient.PostAsJsonAsync($"{MauiProgram.OnlineURL}api/AppsUrls/Url", urlUsage);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Failed to log URL usage: {response.ReasonPhrase}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving URL usage: {ex.Message}");
+            }
+            finally
+            {
+                appsAndUrlTimer?.Dispose();
+                timeSpan = TimeSpan.Zero;
+                elapsedTime = "00:00:00";
+                _previousAppOrUrl = string.Empty;
+                _previousFullAppOrUrl = string.Empty;
+                triggerStatus = true;
+            }
+        }
+
+        private string FormatTimeSpan(TimeSpan timeSpan)
+        {
+            return $"{(int)timeSpan.TotalHours:D2}:{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
+        }
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();

@@ -579,7 +579,7 @@ namespace Hublog.Desktop.Components.Pages
             while (isTracking)
             {
                 await _monitor.UpdateApplicationOrUrlUsageAsync(token);
-                await Task.Delay(5000);
+                await Task.Delay(2000);
             }
         }
 
@@ -1106,8 +1106,6 @@ namespace Hublog.Desktop.Components.Pages
                     isTimerRunning = false;
                     punchInTimer?.Dispose();
                     timeSpan = TimeSpan.Zero;
-                    StopTracking();
-                    StopScreenshotTimer();
                     await JSRuntime.InvokeVoidAsync("PunchOutAudio");
                     await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
                     await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
@@ -1170,6 +1168,13 @@ namespace Hublog.Desktop.Components.Pages
                     {
                         Console.WriteLine($"Error fetching attendance details: {ex.Message}");
                         await JSRuntime.InvokeVoidAsync("openErrorModal");
+                    }
+                    finally
+                    {
+                        await _monitor.LastApplicationOrUrlUsageAsync();
+                        await Task.Delay(2000);
+                        StopTracking();
+                        StopScreenshotTimer();
                     }
                 }
                 else
