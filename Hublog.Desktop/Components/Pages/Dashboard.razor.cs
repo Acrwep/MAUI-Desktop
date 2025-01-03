@@ -31,7 +31,7 @@ namespace Hublog.Desktop.Components.Pages
 
         // Event to handle inactivity
         public event Action OnInactivityDetected;
-        public class AttendanceDetails
+        public class UserPunchInOutDetails
         {
             public string FirstName { get; set; }
             public string Email { get; set; }
@@ -40,7 +40,7 @@ namespace Hublog.Desktop.Components.Pages
             public DateTime AttendanceDate { get; set; }
             public DateTime Start_Time { get; set; }
             public DateTime End_Time { get; set; }
-            public DateTime Total_Time { get; set; }
+            public TimeSpan Total_Time { get; set; }
             public DateTime Late_Time { get; set; }
             public int Status { get; set; }
         }
@@ -73,18 +73,6 @@ namespace Hublog.Desktop.Components.Pages
             public DateTime TriggeredTime { get; set; }
         }
 
-        public class AttendanceSummary
-        {
-            public int DaysPresent { get; set; }
-            public int DaysLeave { get; set; }
-        }
-
-        public class AttendanceResponse
-        {
-            public List<AttendanceDetails> AttendanceDetails { get; set; }
-            public AttendanceSummary AttendanceSummary { get; set; }
-        }
-
         public class BreakResponse
         {
             public List<BreakDetails> BreakDetails { get; set; }
@@ -98,11 +86,43 @@ namespace Hublog.Desktop.Components.Pages
         #region Declares
         private string elapsedTime = "00:00:00";
 
+        public class TimeSpanConverter : JsonConverter<TimeSpan>
+        {
+            public override TimeSpan ReadJson(JsonReader reader, Type objectType, TimeSpan existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                string timeString = reader.Value.ToString();
+
+                if (TimeSpan.TryParseExact(timeString, @"hh\:mm\:ss", null, out TimeSpan result))
+                {
+                    return result;
+                }
+
+                // Manually handle hours exceeding 23
+                string[] parts = timeString.Split(':');
+                if (parts.Length == 3 &&
+                    int.TryParse(parts[0], out int hours) &&
+                    int.TryParse(parts[1], out int minutes) &&
+                    int.TryParse(parts[2], out int seconds))
+                {
+                    return new TimeSpan(hours, minutes, seconds);
+                }
+
+                throw new FormatException($"Invalid TimeSpan format: {timeString}");
+            }
+
+            public override void WriteJson(JsonWriter writer, TimeSpan value, JsonSerializer serializer)
+            {
+                writer.WriteValue(value.ToString(@"hh\:mm\:ss"));
+            }
+        }
+
+
         protected override async Task OnInitializedAsync()
         {
             await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
             await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
             await JSRuntime.InvokeVoidAsync("closeInactiveModal");
+            await JSRuntime.InvokeVoidAsync("closeUpdateModal");
             StopAudioPlaybackLoop();
             Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
 
@@ -115,7 +135,7 @@ namespace Hublog.Desktop.Components.Pages
             DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
             try
             {
-                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
+                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserPunchInOutDetails"
            + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
            + $"&UserId={MauiProgram.Loginlist.Id}"
            + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
@@ -130,13 +150,19 @@ namespace Hublog.Desktop.Components.Pages
                     var responseData = await response.Content.ReadAsStringAsync();
 
                     // Deserialize JSON response
-                    var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
+                    var attendanceDetails = JsonConvert.DeserializeObject<List<UserPunchInOutDetails>>(
+                        responseData,
+                        new JsonSerializerSettings
+                        {
+                            Converters = new List<JsonConverter> { new TimeSpanConverter() }
+                        });
 
-                    if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
+                    if (attendanceDetails != null && attendanceDetails.Count >= 1)
                     {
-                        DateTime lastAttendanceDate = attendanceResponse.AttendanceDetails[^1].AttendanceDate;
-                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time;
-                        DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
+                        var lastDetail = attendanceDetails.Last();  // Get the last item
+                        DateTime lastAttendanceDate = lastDetail.AttendanceDate;
+                        DateTime lastStartTime = lastDetail.Start_Time;
+                        DateTime lastEndTime = lastDetail.End_Time;
 
                         // Check if End_Time is "0001-01-01T00:00:00" (DateTime.MinValue)
                         if (lastStartTime != DateTime.MinValue && lastEndTime == DateTime.MinValue)
@@ -383,7 +409,7 @@ namespace Hublog.Desktop.Components.Pages
             var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
             Console.WriteLine(punchIntimefromLocalStorage);
 
-           await StartTracking();
+            await StartTracking();
             StartScreenshotTimer();
         }
         private async void StopTimer()
@@ -551,7 +577,7 @@ namespace Hublog.Desktop.Components.Pages
                 timeSpan = timeSpan.Add(TimeSpan.FromSeconds(1));
                 elapsedTime = timeSpan.ToString(@"hh\:mm\:ss");
                 await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", elapsedTime);
-               await InvokeAsync(StateHasChanged);
+                await InvokeAsync(StateHasChanged);
             }
         }
         private DateTime GetISTTime()
@@ -1115,7 +1141,7 @@ namespace Hublog.Desktop.Components.Pages
                     }
                     try
                     {
-                        string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
+                        string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserPunchInOutDetails"
                                      + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
                                      + $"&UserId={MauiProgram.Loginlist.Id}"
                                      + $"&startDate={DateTime.Today:yyyy-MM-dd}"
@@ -1130,23 +1156,24 @@ namespace Hublog.Desktop.Components.Pages
                             var responseData = await responses.Content.ReadAsStringAsync();
 
                             // Deserialize JSON response
-                            var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
+                            var attendanceDetails = JsonConvert.DeserializeObject<List<UserPunchInOutDetails>>(responseData);
 
-                            if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
+                            if (attendanceDetails != null && attendanceDetails.Count >= 1)
                             {
                                 // Filter entries with today's date
                                 var today = DateTime.Today;
-                                var todayEntries = attendanceResponse.AttendanceDetails
-                                                     .Where(entry => entry.AttendanceDate.Date == today)
-                                                     .ToList();
+                                var todayEntries = attendanceDetails
+                          .Where(entry => entry.AttendanceDate.Date == today)
+                          .ToList();
 
                                 // Sum total_Time for entries matching today's date
                                 var totalDuration = new TimeSpan();
                                 foreach (var entry in todayEntries)
                                 {
-                                    if (entry.Total_Time != DateTime.MinValue)
+                                    // Check if Total_Time is a valid TimeSpan
+                                    if (entry.Total_Time != TimeSpan.Zero)  // Checking for zero duration instead of DateTime.MinValue
                                     {
-                                        totalDuration += entry.Total_Time.TimeOfDay;
+                                        totalDuration += entry.Total_Time;  // Add the entry's Total_Time to the total duration
                                     }
                                 }
 
@@ -1468,7 +1495,7 @@ namespace Hublog.Desktop.Components.Pages
             }
             finally
             {
-              await  UpdateUserAttendance();
+                await UpdateUserAttendance();
             }
         }
 
@@ -1520,7 +1547,7 @@ namespace Hublog.Desktop.Components.Pages
                 UserId = MauiProgram.Loginlist.Id,
                 OrganizationId = MauiProgram.Loginlist.OrganizationId,
                 Ideal_duration = 2,
-                Ideal_DateTime= istTime
+                Ideal_DateTime = istTime
             };
             var json = JsonConvert.SerializeObject(idleTimeDetails);
             Console.WriteLine($"JSON Payload: {json}");
@@ -1553,7 +1580,7 @@ namespace Hublog.Desktop.Components.Pages
         {
             try
             {
-                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserAttendanceDetails"
+                string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserPunchInOutDetails"
            + $"?OrganizationId={MauiProgram.Loginlist.OrganizationId}"
            + $"&UserId={MauiProgram.Loginlist.Id}"
            + $"&startDate={DateTime.Today:yyyy-MM-dd}"
@@ -1568,26 +1595,29 @@ namespace Hublog.Desktop.Components.Pages
                     var responseData = await response.Content.ReadAsStringAsync();
 
                     // Deserialize JSON response
-                    var attendanceResponse = JsonConvert.DeserializeObject<AttendanceResponse>(responseData);
-                    if (attendanceResponse != null && attendanceResponse.AttendanceDetails.Count >= 1)
+                    var attendanceDetails = JsonConvert.DeserializeObject<List<UserPunchInOutDetails>>(responseData);
+                    if (attendanceDetails != null && attendanceDetails.Count >= 1)
                     {
                         var today = DateTime.Today;
                         DateTime currentTime = DateTime.Now;
-                        DateTime lastAttendanceDate = attendanceResponse.AttendanceDetails[^1].AttendanceDate;
-                        DateTime lastStartTime = attendanceResponse.AttendanceDetails[^1].Start_Time;
-                        DateTime lastEndTime = attendanceResponse.AttendanceDetails[^1].End_Time;
 
-                        var todayEntries = attendanceResponse.AttendanceDetails
-                                            .Where(entry => entry.AttendanceDate.Date == today)
-                                            .ToList();
+                        var lastDetail = attendanceDetails.Last();  // Get the last item
+                        DateTime lastAttendanceDate = lastDetail.AttendanceDate;
+                        DateTime lastStartTime = lastDetail.Start_Time;
+                        DateTime lastEndTime = lastDetail.End_Time;
+
+                        var todayEntries = attendanceDetails
+                         .Where(entry => entry.AttendanceDate.Date == today)
+                         .ToList();
 
                         // Sum total_Time for entries matching today's date
                         var totalDuration = new TimeSpan();
                         foreach (var entry in todayEntries)
                         {
-                            if (entry.Total_Time != DateTime.MinValue)
+                            // Check if Total_Time is a valid TimeSpan
+                            if (entry.Total_Time != TimeSpan.Zero)  // Checking for zero duration instead of DateTime.MinValue
                             {
-                                totalDuration += entry.Total_Time.TimeOfDay;
+                                totalDuration += entry.Total_Time;  // Add the entry's Total_Time to the total duration
                             }
                         }
 
@@ -1600,7 +1630,7 @@ namespace Hublog.Desktop.Components.Pages
                             if (_userActivitytimer != null)
                             {
                                 _userActivitytimer.Dispose();
-                            }                            
+                            }
                             // Calculate the difference between current time and lastStartTime
                             TimeSpan timeDifference = currentTime - lastStartTime;
 

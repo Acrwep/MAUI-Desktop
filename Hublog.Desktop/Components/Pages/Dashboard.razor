@@ -19,7 +19,7 @@
 </div>
 
 <div class="dashboard_mainContainer">
-      <div class="dashboard_titlebar">
+    <div class="dashboard_titlebar">
         <div class="dashboard_titlebarlogoContainer">
             <img src="/images/hublog.ico" class="dashboard_titlebarlogo" />
         </div>
@@ -46,7 +46,7 @@
         <p class="dashboard_currentdateandtime">@CurrentDateTime</p>
 
         <div style="position:relative;">
-            @if (buttonText == "Punch In" && isPunchButtonLoading==true)
+            @if (buttonText == "Punch In" && isPunchButtonLoading == true)
             {
                 <div class="punchin_NonbuttonContainer" />
                 <button class="punchin_disablebutton"> Punch <br /> In</button>
@@ -69,7 +69,6 @@
             </div>
         }
     </div>
-
     <!-- Modal Break Selection -->
     <div class="modal" id="breakModal" tabindex="-1" aria-labelledby="breakModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
@@ -108,17 +107,27 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header breaktimer_modalheader">
-                    <p class="youron_text">Your on</p>
-                    @if (selectedBreakInfo != null)
+                    @if (@remainingTime.TotalSeconds <= 0)
                     {
-                        <p class="modal-title break_heading">@selectedBreakInfo.Name !</p>
+                        @if (selectedBreakInfo != null)
+                        {
+                            <p class="breakover_text">Your <span class="breakovet_titletext">@selectedBreakInfo.Name</span> is Over Click to Resume!</p>
+                        }
+                    }
+                    else
+                    {
+                        <p class="youron_text">Your on</p>
+                        @if (selectedBreakInfo != null)
+                        {
+                            <p class="modal-title break_heading">@selectedBreakInfo.Name !</p>
+                        }
                     }
                 </div>
                 <div class="modal-body breaktimer_modalbody">
                     <p id="breakTimeDisplay" class="break_timer">@remainingTime</p>
                     <button type="button" class="breakResume_button" @onclick="ResumeWorking">Resume Working</button>
                 </div>
-               
+
             </div>
         </div>
     </div>
@@ -152,7 +161,7 @@
                     </div>
                     <div style="display:flex">
                         <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="ToggleTimer" disabled="@isPunchButtonLoading">Yes</button>
-                            <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ClosePunchoutModal">No</button>
+                        <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ClosePunchoutModal">No</button>
                     </div>
                 </div>
             </div>
@@ -205,7 +214,7 @@
                         <p class="punchout_confirmation_modaltext" style="margin-top:4px">Are you sure want to logout?</p>
                     </div>
                     <div style="display:flex;margin-top:6px">
-                        <Hublog.Desktop.Components.Layout.LogoutButton />            
+                        <Hublog.Desktop.Components.Layout.LogoutButton />
                         <button type="button" class="punchoutConfirmationModal_buttons" @onclick="CloseLogoutModal">No</button>
                     </div>
                 </div>
@@ -213,7 +222,7 @@
         </div>
     </div>
 
-     <!-- Modal Error -->
+    <!-- Modal Error -->
     <div class="modal" id="errorModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content punchout_confirmationmodal_content">
@@ -251,6 +260,30 @@
         </div>
     </div>
 
+    <!-- Modal Update -->
+    <div class="modal" id="updateModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content punchout_confirmationmodal_content">
+                <div class="modal-header punchout_modalheader">
+                    <div class="punchoutmodal_logoContainer">
+                        <img src="/images/hublog.ico" class="punchoutmodal_headericon" />
+                        <p>Update Available!</p>
+                    </div>
+                </div>
+                <div class="modal-body punchout_modalbody">
+                    <div style="display:flex">
+                        <img src="/images/refresh.png" class="updatemodal_image" />
+                        <p class="punchout_confirmation_modaltext" style="margin-top:4px">A newer version of the application is now available.</p>
+                    </div>
+
+                    <div class="updatemodal_updatebuttonContainer">
+                        <button class="updatemodal_updatebutton" @onclick=ExeDownload>Update Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="logoutrow_container">
         <p class="dashboard_versionnumber">Version 1.2</p>
         <div class="opendashboard_buttoncontainer">
@@ -264,7 +297,7 @@
                     <div class="lastsync_container">
                         <img src="/images/refresh-cw.svg" class="lastsync_image" />
                         <p class="lastsync_text">last sync @lastSynctime</p>
-                                                @* <p class="lastsync_text">last sync 1 hr ago</p> *@
+                        @* <p class="lastsync_text">last sync 1 hr ago</p> *@
                         @if (buttonText == "Punch In")
                         {
                             <img src="/images/log-out.svg" class="logout_button" @onclick="OpenLogoutModal" />
@@ -297,6 +330,14 @@
     private async Task OpenErrorModal()
     {
         await JSRuntime.InvokeVoidAsync("openErrorModal");
+    }
+    private async Task OpenUpdateModal()
+    {
+        await JSRuntime.InvokeVoidAsync("openUpdateModal");
+    }
+    private async Task ExeDownload()
+    {
+        await JSRuntime.InvokeVoidAsync("Download");
     }
     private async Task CloseErrorModal()
     {

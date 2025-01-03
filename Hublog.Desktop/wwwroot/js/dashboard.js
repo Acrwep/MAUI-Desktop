@@ -207,8 +207,6 @@ function closeLoginNetworkModal() {
         console.error("Modal element not found");
     }
 }
-
-//audio handling
 function openErrorModal() {
     const modalElement = new bootstrap.Modal(document.getElementById('errorModal'), {
         backdrop: 'static',
@@ -240,7 +238,47 @@ function closeErrorModal() {
     }
 }
 
+function openUpdateModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('updateModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeUpdateModal() {
+    var modalElement = document.getElementById('updateModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        if (modal) {
+            modal.hide();
+            modal.hide();
 
+            setTimeout(() => {
+                modal.hide();
+            }, 1000)
+        }
+
+        // Ensure backdrop is removed
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+
+        // Remove "modal-open" class from body
+        document.body.classList.remove('modal-open');
+    } else {
+        console.error("Modal element not found");
+    }
+}
+function Download() {
+    const url = 'https://hublog.org:8087/Hublog.exe';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Hublog.exe';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+//audio handling
 function playAudio() {
     var audioElement = document.getElementById("audioPlayer");
     if (audioElement) {

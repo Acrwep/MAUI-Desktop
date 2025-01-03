@@ -518,7 +518,15 @@ html, body {
     flex-direction: column;
     margin: 0 !important;
 }
-
+.breakover_text {
+    text-align: center;
+    margin: 0 !important;
+}
+.breakovet_titletext {
+    margin: 0 !important;
+    font-weight: 600;
+    color: #d32f2f;
+}
 .youron_text {
     margin: 0 !important;
     font-weight: 500;
@@ -738,7 +746,35 @@ html, body {
         transform: scale(0.9);
         box-shadow: 3px 2px 22px 1px rgba(224, 79, 95, 0.6);
     }
+.updatemodal_image {
+    width: 26px;
+    height: 26px;
+    margin-right: 7px;
+    margin-top:4px;
+}
+.updatemodal_updatebutton {
+    background: #ffffff;
+    color: rgba(0, 0, 0, 0.88);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
+    outline: 0 !important;
+    border: 1px solid #d9d9d9 !important;
+    font-size: 14px;
+    line-height: 1.5714285714285714;
+    width: 120px;
+    height: 27px;
+    padding: 0px 15px;
+    border-radius: 6px;
+}
 
+    .updatemodal_updatebutton:hover {
+        border: 1px solid #25a17d !important;
+        color: #25a17d;
+    }
+
+    .updatemodal_updatebutton:active {
+        transform: scale(0.9);
+        box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
+    }
 .loader-overlay {
     position: fixed;
     top: 0;

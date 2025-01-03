@@ -112,12 +112,20 @@ namespace Hublog.Desktop
 
         private string ExtractApplicationName(string appOrUrl)
         {
+            if(appOrUrl== null||appOrUrl=="")
+            {
+                return "";
+            }
             var parts = appOrUrl.Split(':');
             return parts.Length > 0 ? parts[0].Trim() : string.Empty;
         }
 
         private string ExtractUrl(string appOrUrl)
         {
+            if (appOrUrl == null || appOrUrl == "")
+            {
+                return "";
+            }
             var parts = appOrUrl.Split(':');
             return parts.Length > 1 ? parts[1].Trim() : string.Empty;
         }
@@ -273,6 +281,10 @@ namespace Hublog.Desktop
             int userId = MauiProgram.Loginlist.Id;
             Console.WriteLine(_previousAppOrUrl);
 
+            if (_previousFullAppOrUrl == "" || _previousFullAppOrUrl == null)
+            {
+                return;
+            }
             string appName = ExtractApplicationName(_previousFullAppOrUrl);
             string urlName = ExtractUrl(_previousFullAppOrUrl);
             if (!string.IsNullOrEmpty(urlName))
