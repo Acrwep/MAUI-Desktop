@@ -285,10 +285,10 @@ function playAudio() {
         audioElement.play();
     }
 };
-
 function pauseAudio() {
     var audioElement = document.getElementById("audioPlayer");
     if (audioElement) {
+        audioElement.pause();
         audioElement.pause();
         audioElement.currentTime = 0; // Reset the audio to the start
     }
@@ -298,6 +298,10 @@ function PunchInAudio() {
     var audioElement = document.getElementById("punchInPlayer");
     if (audioElement) {
         audioElement.play();
+
+        setTimeout(() => {
+            audioElement.pause();
+        }, 3000);
     }
 };
 
@@ -305,5 +309,9 @@ function PunchOutAudio() {
     var audioElement = document.getElementById("punchOutPlayer");
     if (audioElement) {
         audioElement.play();
+
+        setTimeout(() => {
+            audioElement.pause();
+        }, 3000);
     }
 };

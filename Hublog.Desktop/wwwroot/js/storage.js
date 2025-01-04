@@ -46,3 +46,7 @@ function getInactivityAlertStatus() {
 function getLastsynctime() {
     return localStorage.getItem('lastsyncTime' || null);
 }
+//audio
+function getResumeworkAudioStatus() {
+    return localStorage.getItem('resumeWorkAudioStatus' || null);
+}

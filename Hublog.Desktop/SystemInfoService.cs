@@ -24,7 +24,7 @@ namespace Hublog.Desktop
                 SystemType = GetSystemType(),
                 IPAddress = GetIPAddress(),
                 AppType = GetAppType(),
-                HublogVersion = GetApplicationVersion()
+                HublogVersion = "1.2.1"
             }; 
 
             return systemInfo;
@@ -96,12 +96,6 @@ namespace Hublog.Desktop
             var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
             var ip = host.AddressList.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
             return ip?.ToString() ?? "N/A";
-        }
-
-        private string GetApplicationVersion()
-        {
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
-            return version != null ? version.ToString() : "Unknown Version";
         }
     }
 }

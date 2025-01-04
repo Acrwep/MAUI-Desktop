@@ -40,7 +40,7 @@ namespace Hublog.Desktop.Components.Pages
             public DateTime AttendanceDate { get; set; }
             public DateTime Start_Time { get; set; }
             public DateTime End_Time { get; set; }
-            public TimeSpan Total_Time { get; set; }
+            public string Total_Time { get; set; }
             public DateTime Late_Time { get; set; }
             public int Status { get; set; }
         }
@@ -83,6 +83,12 @@ namespace Hublog.Desktop.Components.Pages
             public List<AlertRulesdatas> AlertRulesdatas { get; set; }
         }
 
+        public class HublogVersionDetails
+        {
+            public int Id { get; set; }
+            public string VersionNumber { get; set; }
+        }
+
         #region Declares
         private string elapsedTime = "00:00:00";
 
@@ -119,10 +125,15 @@ namespace Hublog.Desktop.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            // Ensure you're disposing the timer here to avoid duplication
+            breakAlerttimer?.Dispose();
+            breakAlerttimer = null;
+
             await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
             await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
             await JSRuntime.InvokeVoidAsync("closeInactiveModal");
             await JSRuntime.InvokeVoidAsync("closeUpdateModal");
+            await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
             StopAudioPlaybackLoop();
             Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
 
@@ -234,6 +245,7 @@ namespace Hublog.Desktop.Components.Pages
                                             await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
                                             await JSRuntime.InvokeVoidAsync("closeInactiveModal");
                                             await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+                                            await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
                                             StopAudioPlaybackLoop();
                                             //
 
@@ -276,6 +288,7 @@ namespace Hublog.Desktop.Components.Pages
                         await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
                         await JSRuntime.InvokeVoidAsync("closeInactiveModal");
                         await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+                        await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
                         StopAudioPlaybackLoop();
                         //
 
@@ -521,9 +534,10 @@ namespace Hublog.Desktop.Components.Pages
         }
 
         //Break alert timer logic. the alert should play every 20sec
-        private void StartAudioPlaybackLoop()
+        private async void StartAudioPlaybackLoop()
         {
             // Start a new periodic timer
+            await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "true");
             breakAlerttimer = new PeriodicTimer(TimeSpan.FromSeconds(30));
 
             // Run the playback loop
@@ -535,27 +549,40 @@ namespace Hublog.Desktop.Components.Pages
             // Dispose of the timer if it exists
             breakAlerttimer?.Dispose();
             breakAlerttimer = null;
+            await InvokeAsync(StateHasChanged); // Refresh UI
+            await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
             await PauseAudio();
         }
 
         private async Task PlayAudioLoopAsync()
         {
-            if (breakAlerttimer == null)
+            var getResumeworkAudiostatus = await JSRuntime.InvokeAsync<string>("getResumeworkAudioStatus");
+
+            if (breakAlerttimer == null || getResumeworkAudiostatus=="false")
                 return;
 
             try
             {
                 while (await breakAlerttimer.WaitForNextTickAsync())
                 {
+                    // Check the condition within the loop
+                    getResumeworkAudiostatus = await JSRuntime.InvokeAsync<string>("getResumeworkAudioStatus");
+                    if (breakAlerttimer == null || getResumeworkAudiostatus == "false")
+                    {
+                        Console.WriteLine("Stopping loop due to condition not met.");
+                        break; // Exit the loop if conditions are not met
+                    }
                     await PlayAudio();
                 }
             }
-            catch (OperationCanceledException)
+            catch (Exception ex)
             {
                 // Timer was stopped
+                Console.Error.WriteLine($"Error in PlayAudioLoopAsync: {ex.Message}");
             }
             finally
             {
+                await JSRuntime.InvokeVoidAsync("pauseAudio");
                 StopAudioPlaybackLoop(); // Clean up
             }
         }
@@ -1170,10 +1197,10 @@ namespace Hublog.Desktop.Components.Pages
                                 var totalDuration = new TimeSpan();
                                 foreach (var entry in todayEntries)
                                 {
-                                    // Check if Total_Time is a valid TimeSpan
-                                    if (entry.Total_Time != TimeSpan.Zero)  // Checking for zero duration instead of DateTime.MinValue
+                                    if (!string.IsNullOrEmpty(entry.Total_Time) &&
+                                        TimeSpan.TryParse(entry.Total_Time, out var duration))
                                     {
-                                        totalDuration += entry.Total_Time;  // Add the entry's Total_Time to the total duration
+                                        totalDuration += duration;
                                     }
                                 }
 
@@ -1198,10 +1225,7 @@ namespace Hublog.Desktop.Components.Pages
                     }
                     finally
                     {
-                        await _monitor.LastApplicationOrUrlUsageAsync();
-                        await Task.Delay(2000);
-                        StopTracking();
-                        StopScreenshotTimer();
+                        HandleSystemInfo();
                     }
                 }
                 else
@@ -1209,14 +1233,66 @@ namespace Hublog.Desktop.Components.Pages
                     await JSRuntime.InvokeVoidAsync("openErrorModal");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error fetching attendance details: {ex.Message}");
+                StopAudioPlaybackLoop();
                 await JSRuntime.InvokeVoidAsync("openErrorModal");
             }
 
         }
         #endregion
 
+        private async void HandleSystemInfo()
+        {
+            try
+            {
+                var systemInfoService = new SystemInfoService();
+                var systemInfo = systemInfoService.GetSystemInfo();
+
+                var systemInfoModel = new SystemInfoModel
+                {
+                    UserId = systemInfo.UserId,
+                    DeviceId = systemInfo.DeviceId,
+                    DeviceName = systemInfo.DeviceName,
+                    Platform = systemInfo.Platform,
+                    OSName = systemInfo.OSName,
+                    OSBuild = systemInfo.OSBuild,
+                    SystemType = systemInfo.SystemType,
+                    IPAddress = systemInfo.IPAddress,
+                    AppType = systemInfo.AppType,
+                    HublogVersion = systemInfo.HublogVersion,
+                    Status = 0
+                };
+
+                var jsonContent = JsonConvert.SerializeObject(systemInfoModel);
+                var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                var systemInfoResponse = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/SystemInfo/InsertOrUpdateSystemInfo", httpContent);
+
+                if (systemInfoResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("System info successfully inserted or updated.");
+                }
+                else
+                {
+                    var errorResponse = await systemInfoResponse.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Failed to insert or update system info. Status Code: {systemInfoResponse.StatusCode}");
+                    Console.WriteLine($"Error Response: {errorResponse}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+                await _monitor.LastApplicationOrUrlUsageAsync();
+                await Task.Delay(2000);
+                StopTracking();
+                StopScreenshotTimer();
+            }
+        }
         private void StartScreenshotTimer()
         {
             if (isTimerActive)
@@ -1351,6 +1427,7 @@ namespace Hublog.Desktop.Components.Pages
                     else
                     {
                         OnInactivityDetected?.Invoke();
+                        await JSRuntime.InvokeVoidAsync("pauseAudio");
                         StopAudioPlaybackLoop();
                         await HandleInactivity();
                     }
@@ -1388,6 +1465,7 @@ namespace Hublog.Desktop.Components.Pages
         {
             await JSRuntime.InvokeVoidAsync("closeInactiveModal");
             await JSRuntime.InvokeVoidAsync("setItem", "triggerInactiveAlert", "true");
+            await JSRuntime.InvokeVoidAsync("pauseAudio");
             StopAudioPlaybackLoop();
         }
 
@@ -1614,10 +1692,10 @@ namespace Hublog.Desktop.Components.Pages
                         var totalDuration = new TimeSpan();
                         foreach (var entry in todayEntries)
                         {
-                            // Check if Total_Time is a valid TimeSpan
-                            if (entry.Total_Time != TimeSpan.Zero)  // Checking for zero duration instead of DateTime.MinValue
+                            if (!string.IsNullOrEmpty(entry.Total_Time) &&
+                                TimeSpan.TryParse(entry.Total_Time, out var duration))
                             {
-                                totalDuration += entry.Total_Time;  // Add the entry's Total_Time to the total duration
+                                totalDuration += duration;
                             }
                         }
 
@@ -1631,23 +1709,37 @@ namespace Hublog.Desktop.Components.Pages
                             {
                                 _userActivitytimer.Dispose();
                             }
-                            // Calculate the difference between current time and lastStartTime
-                            TimeSpan timeDifference = currentTime - lastStartTime;
+                            //TimeSpan timeDifference = currentTime - lastStartTime;
 
-                            // Parse totalDurationString into a TimeSpan object (assuming it's in "hh:mm:ss" format)
-                            TimeSpan totalDurationParsed = TimeSpan.Parse(totalDurationString);
+                            //TimeSpan totalDurationParsed = TimeSpan.Parse(totalDurationString);
 
-                            // Add timeDifference to totalDurationParsed
-                            TimeSpan addtime = totalDurationParsed + timeDifference;
+                            //TimeSpan addtime = totalDurationParsed + timeDifference;
 
-                            // Format elapsedTime as "hh:mm:ss"
-                            string elapsedTimeString = addtime.ToString(@"hh\:mm\:ss");
+                            //string elapsedTimeString = addtime.ToString(@"hh\:mm\:ss");
 
-                            // Output the final elapsed time
-                            Console.WriteLine("Elapsed Time: " + elapsedTimeString);
-                            elapsedTime = elapsedTimeString;
+                            //Console.WriteLine("Elapsed Time: " + elapsedTimeString);
+
+
+                            var todayTotalDuration = new TimeSpan();
+
+                            var todayAllEntriess = attendanceDetails
+                       .Where(entry => entry.AttendanceDate.Date == today)
+                       .ToList();
+
+                            // Sum total_Time for entries matching today's date
+                            foreach (var entry in todayAllEntriess)
+                            {
+                                if (!string.IsNullOrEmpty(entry.Total_Time) &&
+                                    TimeSpan.TryParse(entry.Total_Time, out var duration))
+                                {
+                                    todayTotalDuration += duration;
+                                }
+                            }
+
                             _userActivitytimer = new Timer(OnTimerElapsed, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+                            string todayTotalDurationString = totalDuration.ToString(@"hh\:mm\:ss");
 
+                            elapsedTime = todayTotalDurationString;
                             if (TimeSpan.TryParse(elapsedTime, out var parsedTimeSpan))
                             {
                                 timeSpan = parsedTimeSpan;
@@ -1849,6 +1941,48 @@ namespace Hublog.Desktop.Components.Pages
             }
             finally
             {
+                HandleHublogVersion();
+            }
+        }
+
+        private async void HandleHublogVersion()
+        {
+            try
+            {
+                string URL = $"{MauiProgram.OnlineURL}api/SystemInfo/GetHublogVersion";
+
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+                var response = await HttpClient.GetAsync(URL);
+                Console.WriteLine("Response Data: " + response);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseData = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize JSON response
+                    var hublogVersionResponse = JsonConvert.DeserializeObject<List<HublogVersionDetails>>(responseData);
+
+                    if (hublogVersionResponse != null && hublogVersionResponse.Count > 0)
+                    {
+                        var hublogVersionDetail = hublogVersionResponse[0];
+
+                        if (hublogVersionDetail.VersionNumber != "1.2.1")
+                        {
+                            await JSRuntime.InvokeVoidAsync("openUpdateModal");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No version details found.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching breaks: {ex.Message}");
+            }
+            finally
+            {
                 await Task.Delay(1000);
                 isLoading = false;
                 await JSRuntime.InvokeVoidAsync("setItem", "lastsyncTime", DateTime.Now);
@@ -1856,7 +1990,6 @@ namespace Hublog.Desktop.Components.Pages
                 await InvokeAsync(StateHasChanged); // Refresh UI
             }
         }
-
         //lastsync time getting
         public static string GetTimeAgo(TimeSpan timeDifference)
         {

@@ -19,9 +19,11 @@
         await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
         await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
         await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
+        await JSRuntime.InvokeVoidAsync("pauseAudio");
+        await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
         try
         {
-            var currentUser = MauiProgram.Loginlist; 
+            var currentUser = MauiProgram.Loginlist;
 
             if (currentUser == null)
             {
@@ -30,10 +32,10 @@
             }
 
             var loginModel = new LoginModels
-            {
-                UserName = currentUser.Email, 
-                Password = currentUser.Password  
-            };
+                {
+                    UserName = currentUser.Email,
+                    Password = currentUser.Password
+                };
 
             var loginJson = JsonSerializer.Serialize(loginModel);
 
