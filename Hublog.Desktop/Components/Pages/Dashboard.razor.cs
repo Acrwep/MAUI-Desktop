@@ -1401,8 +1401,13 @@ namespace Hublog.Desktop.Components.Pages
             var lastInputInfo = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
             if (GetLastInputInfo(ref lastInputInfo))
             {
-                var idleTime = Environment.TickCount - lastInputInfo.dwTime;
+                uint tickCount = (uint)Environment.TickCount;
+                uint idleTime = tickCount >= lastInputInfo.dwTime
+                    ? tickCount - lastInputInfo.dwTime
+                    : (uint.MaxValue - lastInputInfo.dwTime + tickCount + 1);
+
                 Console.WriteLine($"Idle time: {idleTime} ms");
+
                 var getBreakstatus = await JSRuntime.InvokeAsync<string>("getbreakStatus");
                 Console.WriteLine(getBreakstatus);
 
