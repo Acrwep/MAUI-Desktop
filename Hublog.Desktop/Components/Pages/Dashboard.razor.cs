@@ -143,7 +143,7 @@ namespace Hublog.Desktop.Components.Pages
             // handle previous day attendance
             DateTime currentDate = DateTime.Now; // Get the current date and time
             DateTime dateOneDaysBefore = currentDate.AddDays(-1); // Subtract 1 days
-            DateTime dateSixDaysBefore = currentDate.AddDays(-6); // Subtract 5 days
+            DateTime dateSixDaysBefore = currentDate.AddDays(-15); // Subtract 14 days
             try
             {
                 string URL = $"{MauiProgram.OnlineURL}api/Users/GetUserPunchInOutDetails"
@@ -161,12 +161,7 @@ namespace Hublog.Desktop.Components.Pages
                     var responseData = await response.Content.ReadAsStringAsync();
 
                     // Deserialize JSON response
-                    var attendanceDetails = JsonConvert.DeserializeObject<List<UserPunchInOutDetails>>(
-                        responseData,
-                        new JsonSerializerSettings
-                        {
-                            Converters = new List<JsonConverter> { new TimeSpanConverter() }
-                        });
+                    var attendanceDetails = JsonConvert.DeserializeObject<List<UserPunchInOutDetails>>(responseData);
 
                     if (attendanceDetails != null && attendanceDetails.Count >= 1)
                     {
@@ -333,7 +328,7 @@ namespace Hublog.Desktop.Components.Pages
         private TimeSpan screenshotInterval = TimeSpan.FromMinutes(5);
         private bool isTimerActive = false;
         private bool InactivealertStatus;
-        private long InactivityThreshold = 1800000; // 30 min in milliseconds
+        private long InactivityPunchOutThreshold = 1800000; // 30 min in milliseconds
         private long InactivityAlertThreshold = 600000; // 10 min in milliseconds
         private bool isLoading = false;
         private bool isPunchButtonLoading = false;
@@ -421,9 +416,9 @@ namespace Hublog.Desktop.Components.Pages
             currentType = 1;
             var punchIntimefromLocalStorage = await JSRuntime.InvokeAsync<string>("getpunchInTime");
             Console.WriteLine(punchIntimefromLocalStorage);
+            StartScreenshotTimer();
 
             await StartTracking();
-            StartScreenshotTimer();
         }
         private async void StopTimer()
         {
@@ -438,51 +433,7 @@ namespace Hublog.Desktop.Components.Pages
 
             if (currentType == 1 || currentType == 2)
             {
-                var systemInfoService = new SystemInfoService();
-                var systemInfo = systemInfoService.GetSystemInfo();
-
-                var systemInfoModel = new SystemInfoModel
-                {
-                    UserId = systemInfo.UserId,
-                    DeviceId = systemInfo.DeviceId,
-                    DeviceName = systemInfo.DeviceName,
-                    Platform = systemInfo.Platform,
-                    OSName = systemInfo.OSName,
-                    OSBuild = systemInfo.OSBuild,
-                    SystemType = systemInfo.SystemType,
-                    IPAddress = systemInfo.IPAddress,
-                    AppType = systemInfo.AppType,
-                    HublogVersion = systemInfo.HublogVersion,
-                    Status = 0
-                };
-
-                try
-                {
-                    var systemInfoJson = JsonConvert.SerializeObject(systemInfoModel);
-                    var systemInfoContent = new StringContent(systemInfoJson, Encoding.UTF8, "application/json");
-
-                    // Send the POST request
-                    var systemInfoResponse = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/SystemInfo/InsertOrUpdateSystemInfo", systemInfoContent);
-
-                    // Read the response content
-                    var systemInfoResponseString = await systemInfoResponse.Content.ReadAsStringAsync();
-
-                    if (systemInfoResponse.IsSuccessStatusCode)
-                    {
-                        Console.WriteLine("System info status updated to offline successfully.");
-                        PunchOut("user");
-                    }
-                    else
-                    {
-                        await JSRuntime.InvokeVoidAsync("openErrorModal");
-                        Console.WriteLine($"Error updating system info status: {systemInfoResponseString}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await JSRuntime.InvokeVoidAsync("openErrorModal");
-                    Console.WriteLine($"An error occurred: {ex.Message}");
-                }
+                PunchOut("user");
             }
             else
             {
@@ -558,7 +509,7 @@ namespace Hublog.Desktop.Components.Pages
         {
             var getResumeworkAudiostatus = await JSRuntime.InvokeAsync<string>("getResumeworkAudioStatus");
 
-            if (breakAlerttimer == null || getResumeworkAudiostatus=="false")
+            if (breakAlerttimer == null || getResumeworkAudiostatus == "false")
                 return;
 
             try
@@ -957,7 +908,7 @@ namespace Hublog.Desktop.Components.Pages
                 End_Time = null,
                 Late_Time = null,
                 Total_Time = null,
-                Status = currentType
+                Status = 0
             }
         };
 
@@ -1081,6 +1032,15 @@ namespace Hublog.Desktop.Components.Pages
         public async void PunchOut(string punchoutType)
         {
             isPunchButtonLoading = true;
+            DateTime? istTime = GetISTTime();
+
+            if (!istTime.HasValue || istTime.Value == DateTime.MinValue)
+            {
+                isPunchButtonLoading = false;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
             try
             {
                 if (currentType == 2)
@@ -1089,7 +1049,7 @@ namespace Hublog.Desktop.Components.Pages
                     currentType = 1;
                 }
                 currentType = 1;
-                DateTime istTime = GetISTTime();
+
 
                 // handle modals
                 await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
@@ -1120,12 +1080,12 @@ namespace Hublog.Desktop.Components.Pages
                 Id = 0,
                 UserId = MauiProgram.Loginlist.Id,
                 OrganizationId = MauiProgram.Loginlist.OrganizationId,
-                AttendanceDate = istTime.Date,
+                AttendanceDate = istTime?.Date ?? default,
                 Start_Time = parsedPunchInTime,
                 End_Time = istTime,
                 Late_Time = null,
                 Total_Time = null,
-                Status = currentType,
+                Status = 1,
                 Punchout_type= punchoutType
             }
         };
@@ -1159,6 +1119,7 @@ namespace Hublog.Desktop.Components.Pages
                     isTimerRunning = false;
                     punchInTimer?.Dispose();
                     timeSpan = TimeSpan.Zero;
+                    await InvokeAsync(StateHasChanged);
                     await JSRuntime.InvokeVoidAsync("PunchOutAudio");
                     await JSRuntime.InvokeVoidAsync("setItem", "punchInTime", null);
                     await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
@@ -1287,10 +1248,15 @@ namespace Hublog.Desktop.Components.Pages
             }
             finally
             {
-                await _monitor.LastApplicationOrUrlUsageAsync();
+                if (_monitor != null)
+                {
+                    await _monitor.LastApplicationOrUrlUsageAsync();
+                }
                 await Task.Delay(2000);
-                StopTracking();
                 StopScreenshotTimer();
+                StopTracking();
+                await Task.Delay(3000);
+                await CaptureAndUploadScreenshot();
             }
         }
         private void StartScreenshotTimer()
@@ -1311,6 +1277,7 @@ namespace Hublog.Desktop.Components.Pages
         {
             screenshotTimer?.Dispose();
             isTimerActive = false;
+            InvokeAsync(StateHasChanged); // Refresh UI
         }
         private async Task CaptureAndUploadScreenshot()
         {
@@ -1422,21 +1389,16 @@ namespace Hublog.Desktop.Components.Pages
                 if (punchIntimefromLocalStorage == null || punchIntimefromLocalStorage == "null") return;
 
 
-                if (idleTime > InactivityThreshold)
+                if (idleTime > InactivityPunchOutThreshold)
                 {
                     // Trigger inactivity event and handle navigation
-                    if (getBreakstatus == "isBreaktime" || getInactivityAlertstatus != "true")
-                    {
-                        return;
-                    }
-                    else
+                    if (getBreakstatus != "isBreaktime" && getInactivityAlertstatus == "true")
                     {
                         OnInactivityDetected?.Invoke();
                         await JSRuntime.InvokeVoidAsync("pauseAudio");
                         StopAudioPlaybackLoop();
                         await HandleInactivity();
                     }
-
                 }
                 // Check if the system has been inactive more than
                 if (idleTime > InactivityAlertThreshold)
@@ -1623,40 +1585,46 @@ namespace Hublog.Desktop.Components.Pages
         //send idle time to api handling
         private async Task HandleIdletimeApi()
         {
-            DateTime istTime = GetISTTime();
+            var getBreakstatus = await JSRuntime.InvokeAsync<string>("getbreakStatus");
+            Console.WriteLine(getBreakstatus);
 
-            var idleTimeDetails = new IdletimeModal
+            if (getBreakstatus != "isBreaktime")
             {
-                UserId = MauiProgram.Loginlist.Id,
-                OrganizationId = MauiProgram.Loginlist.OrganizationId,
-                Ideal_duration = 2,
-                Ideal_DateTime = istTime
-            };
-            var json = JsonConvert.SerializeObject(idleTimeDetails);
-            Console.WriteLine($"JSON Payload: {json}");
+                DateTime istTime = GetISTTime();
 
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            Console.WriteLine($"API URL: {MauiProgram.OnlineURL}api/Users/Insert_IdealActivity");
-
-            try
-            {
-                var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/Insert_IdealActivity", content);
-                var responseString = await response.Content.ReadAsStringAsync();
-
-                Console.WriteLine($"Response Status: {response.StatusCode}");
-                Console.WriteLine($"Response Body: {responseString}");
-
-                if (response.IsSuccessStatusCode)
+                var idleTimeDetails = new IdletimeModal
                 {
-                }
-                else
+                    UserId = MauiProgram.Loginlist.Id,
+                    OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                    Ideal_duration = 2,
+                    Ideal_DateTime = istTime
+                };
+                var json = JsonConvert.SerializeObject(idleTimeDetails);
+                Console.WriteLine($"JSON Payload: {json}");
+
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                Console.WriteLine($"API URL: {MauiProgram.OnlineURL}api/Users/Insert_IdealActivity");
+
+                try
                 {
-                    Console.WriteLine($"Error: {responseString}");
+                    var response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/Insert_IdealActivity", content);
+                    var responseString = await response.Content.ReadAsStringAsync();
+
+                    Console.WriteLine($"Response Status: {response.StatusCode}");
+                    Console.WriteLine($"Response Body: {responseString}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error: {responseString}");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception: {ex.Message}");
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception: {ex.Message}");
+                }
             }
         }
         private async void HandleCurrentAttendance()
@@ -1912,7 +1880,7 @@ namespace Hublog.Desktop.Components.Pages
                             Console.WriteLine(alertThresholdInMilliseconds);
                             Console.WriteLine(punchoutThresholdInMilliseconds);
                             InactivityAlertThreshold = alertThresholdInMilliseconds;
-                            InactivityThreshold = punchoutThresholdInMilliseconds;
+                            InactivityPunchOutThreshold = punchoutThresholdInMilliseconds;
                             if (rule.Status == true)
                             {
                                 await JSRuntime.InvokeVoidAsync("setItem", "inactivityAlertStatus", "true");

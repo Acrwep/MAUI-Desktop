@@ -11,6 +11,8 @@ function closePunchoutConfirmationModal() {
         var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         if (modal) {
             modal.hide();
+            modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
@@ -50,6 +52,7 @@ function closeBreakModal() {
     var modal = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
     modal.hide();
     modal.hide();
+    modal.hide();
 
     setTimeout(() => {
         modal.hide();
@@ -59,6 +62,7 @@ function closeBreakModal() {
 
 function closeBreakTimerModal() {
     var modal = bootstrap.Modal.getInstance(document.getElementById('breakTimerModal'));
+    modal.hide();
     modal.hide();
     modal.hide();
 
@@ -98,6 +102,7 @@ function closeInactiveModal() {
         if (modal) {
             modal.hide();
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
@@ -129,6 +134,7 @@ function closeLogoutModal() {
         if (modal) {
             modal.hide();
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
@@ -157,6 +163,7 @@ function closeNetworkModal() {
     if (modalElement) {
         var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         if (modal) {
+            modal.hide();
             modal.hide();
             modal.hide();
 
@@ -191,6 +198,7 @@ function closeLoginNetworkModal() {
         if (modal) {
             modal.hide();
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
@@ -219,6 +227,7 @@ function closeErrorModal() {
     if (modalElement) {
         var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
         if (modal) {
+            modal.hide();
             modal.hide();
             modal.hide();
 
@@ -252,6 +261,7 @@ function closeUpdateModal() {
         if (modal) {
             modal.hide();
             modal.hide();
+            modal.hide();
 
             setTimeout(() => {
                 modal.hide();
@@ -269,10 +279,10 @@ function closeUpdateModal() {
     }
 }
 function Download() {
-    const url = 'https://hublog.org:8087/Hublog.exe';
+    const url = 'https://hublog.org/downloads';
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Hublog.exe';
+    //a.download = 'Hublog.exe';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -298,10 +308,6 @@ function PunchInAudio() {
     var audioElement = document.getElementById("punchInPlayer");
     if (audioElement) {
         audioElement.play();
-
-        setTimeout(() => {
-            audioElement.pause();
-        }, 3000);
     }
 };
 
@@ -309,9 +315,5 @@ function PunchOutAudio() {
     var audioElement = document.getElementById("punchOutPlayer");
     if (audioElement) {
         audioElement.play();
-
-        setTimeout(() => {
-            audioElement.pause();
-        }, 3000);
     }
 };

@@ -21,60 +21,61 @@
         await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
         await JSRuntime.InvokeVoidAsync("pauseAudio");
         await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
-        try
-        {
-            var currentUser = MauiProgram.Loginlist;
+        LogoutProcessAsync();
+        // try
+        // {
+        //     var currentUser = MauiProgram.Loginlist;
 
-            if (currentUser == null)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "No user is currently logged in.");
-                return;
-            }
+        //     if (currentUser == null)
+        //     {
+        //         await JSRuntime.InvokeVoidAsync("alert", "No user is currently logged in.");
+        //         return;
+        //     }
 
-            var loginModel = new LoginModels
-                {
-                    UserName = currentUser.Email,
-                    Password = currentUser.Password
-                };
+        //     var loginModel = new LoginModels
+        //         {
+        //             UserName = currentUser.Email,
+        //             Password = currentUser.Password
+        //         };
 
-            var loginJson = JsonSerializer.Serialize(loginModel);
+        //     var loginJson = JsonSerializer.Serialize(loginModel);
 
-            var content = new StringContent(loginJson, System.Text.Encoding.UTF8, "application/json");
+        //     var content = new StringContent(loginJson, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await Http.PostAsync($"{MauiProgram.OnlineURL}api/Login/UserLogout", content);
+        //     var response = await Http.PostAsync($"{MauiProgram.OnlineURL}api/Login/UserLogout", content);
 
-            var responseString = await response.Content.ReadAsStringAsync();
+        //     var responseString = await response.Content.ReadAsStringAsync();
 
-            if (response.IsSuccessStatusCode)
-            {
-                await LogoutProcessAsync();
-            }
-            else
-            {
-                var errorMessage = "Logout failed. Please try again.";
-                try
-                {
-                    using (var document = JsonDocument.Parse(responseString))
-                    {
-                        var root = document.RootElement;
-                        if (root.TryGetProperty("message", out var messageProperty))
-                        {
-                            errorMessage = messageProperty.GetString() ?? errorMessage;
-                        }
-                    }
-                }
-                catch
-                {
-                    // Use the default error message if JSON parsing fails
-                }
+        //     if (response.IsSuccessStatusCode)
+        //     {
+        //         await LogoutProcessAsync();
+        //     }
+        //     else
+        //     {
+        //         var errorMessage = "Logout failed. Please try again.";
+        //         try
+        //         {
+        //             using (var document = JsonDocument.Parse(responseString))
+        //             {
+        //                 var root = document.RootElement;
+        //                 if (root.TryGetProperty("message", out var messageProperty))
+        //                 {
+        //                     errorMessage = messageProperty.GetString() ?? errorMessage;
+        //                 }
+        //             }
+        //         }
+        //         catch
+        //         {
+        //             // Use the default error message if JSON parsing fails
+        //         }
 
-                await JSRuntime.InvokeVoidAsync("alert", errorMessage);
-            }
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
-        }
+        //         await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+        //     }
+        // }
+        // catch (Exception ex)
+        // {
+        //     await JSRuntime.InvokeVoidAsync("alert", $"An unexpected error occurred: {ex.Message}");
+        // }
     }
 
     private async Task LogoutProcessAsync()

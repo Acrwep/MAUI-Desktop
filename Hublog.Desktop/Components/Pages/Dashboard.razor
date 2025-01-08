@@ -160,7 +160,7 @@
                         <p class="punchout_confirmation_modaltext">Are you sure you want to punch out on this device?</p>
                     </div>
                     <div style="display:flex">
-                        <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="ToggleTimer" disabled="@isPunchButtonLoading">Yes</button>
+                        <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="() => PunchOut(PunchoutType)" disabled="@isPunchButtonLoading">Yes</button>
                         <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ClosePunchoutModal">No</button>
                     </div>
                 </div>
@@ -188,7 +188,7 @@
                     </div>
                     <div style="display:flex;margin-top:6px">
                         <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="InactivityModalClose">Yes</button>
-                        <button type="button" class="punchoutConfirmationModal_buttons" @onclick="ToggleTimer">No</button>
+                        <button type="button" class="punchoutConfirmationModal_buttons" @onclick="() => PunchOut(PunchoutType)">No</button>
                     </div>
                 </div>
             </div>
@@ -315,6 +315,7 @@
 
 
 @code {
+    private string PunchoutType = "user";
     private async Task ClosePunchoutModal()
     {
         await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
@@ -338,6 +339,17 @@
     private async Task ExeDownload()
     {
         await JSRuntime.InvokeVoidAsync("Download");
+        await Task.Delay(2000);
+        Navigation.NavigateTo("/");
+        await JSRuntime.InvokeVoidAsync("closeLogoutModal");
+        await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
+        await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
+        await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+        await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
+        await JSRuntime.InvokeVoidAsync("pauseAudio");
+        await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
+        MauiProgram.Loginlist = new Users();
+        MauiProgram.token = "";
     }
     private async Task CloseErrorModal()
     {
