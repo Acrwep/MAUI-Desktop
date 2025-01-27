@@ -18,6 +18,14 @@ namespace Hublog.Desktop.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            await Task.Delay(500);
+            var getUpdateInprogressStatus = await JSRuntime.InvokeAsync<string>("getUpdateProcessStatus");
+            Console.WriteLine(getUpdateInprogressStatus);
+            if(getUpdateInprogressStatus== "inprogress")
+            {
+                HandleUpdateInprogress();
+            }
+
             Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
             CheckNetworkStatus();
         }

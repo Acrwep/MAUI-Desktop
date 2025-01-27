@@ -14,33 +14,26 @@ function closePunchoutConfirmationModal() {
             modal.hide();
             modal.hide();
 
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
             setTimeout(() => {
-                modal.hide();
-            }, 1000)
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
         }
-
-        // Ensure backdrop is removed
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-
-        // Remove "modal-open" class from body
-        document.body.classList.remove('modal-open');
     } else {
         console.error("Modal element not found");
     }
 }
 
-function openBreakTimerModal() {
-    console.log("openBreakModal called");
-    const modalElement = new bootstrap.Modal(document.getElementById('breakTimerModal'), {
-        backdrop: 'static',
-        keyboard: true
-    });
-    modalElement.show();
-}
-
 function openBreakModal() {
-    console.log("openBreakModal called");
     const modalElement = new bootstrap.Modal(document.getElementById('breakModal'), {
         backdrop: 'static',
         keyboard: true
@@ -49,27 +42,61 @@ function openBreakModal() {
 }
 
 function closeBreakModal() {
-    var modal = bootstrap.Modal.getInstance(document.getElementById('breakModal'));
-    modal.hide();
-    modal.hide();
-    modal.hide();
+    var modalElement = document.getElementById('breakModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        modal.hide();
+        modal.hide();
+        modal.hide();
 
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        document.body.classList.remove('modal-open');
+
+        setTimeout(() => {
+            if (!document.querySelector('.modal.show')) {
+                document.body.classList.remove('modal-open');
+                let backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+            }
+        }, 300);
+    }
+}
+
+function openBreakTimerModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('breakTimerModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
     setTimeout(() => {
-        modal.hide();
-        modal.hide();
-    },1000)
+        modalElement.show();
+    }, 700);
 }
 
 function closeBreakTimerModal() {
-    var modal = bootstrap.Modal.getInstance(document.getElementById('breakTimerModal'));
-    modal.hide();
-    modal.hide();
-    modal.hide();
+    var modalElement = document.getElementById('breakTimerModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        modal.hide();
+        modal.hide();
+        modal.hide();
 
-    setTimeout(() => {
-        modal.hide();
-        modal.hide();
-    }, 1000)
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        document.body.classList.remove('modal-open');
+
+        setTimeout(() => {
+            if (!document.querySelector('.modal.show')) {
+                document.body.classList.remove('modal-open');
+                let backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+            }
+        }, 500);
+    }
 }
 
 function changeResumeButtonColorToRed() {
@@ -83,8 +110,8 @@ function changeResumeButtonColorToRed() {
 function resetResumeButtonColor() {
     var button = document.querySelector('.breakResume_button');
     if (button) {
-        button.style.backgroundColor = ''; 
-        button.style.color = ''; 
+        button.style.backgroundColor = '';
+        button.style.color = '';
     }
 }
 
@@ -104,17 +131,20 @@ function closeInactiveModal() {
             modal.hide();
             modal.hide();
 
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
             setTimeout(() => {
-                modal.hide();
-            }, 1000)
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
         }
-
-        // Ensure backdrop is removed
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-
-        // Remove "modal-open" class from body
-        document.body.classList.remove('modal-open');
     } else {
         console.error("Modal element not found");
     }
@@ -136,17 +166,20 @@ function closeLogoutModal() {
             modal.hide();
             modal.hide();
 
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
             setTimeout(() => {
-                modal.hide();
-            }, 1000)
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
         }
-
-        // Ensure backdrop is removed
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-
-        // Remove "modal-open" class from body
-        document.body.classList.remove('modal-open');
     } else {
         console.error("Modal element not found");
     }
@@ -167,17 +200,20 @@ function closeNetworkModal() {
             modal.hide();
             modal.hide();
 
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
             setTimeout(() => {
-                modal.hide();
-            }, 1000)
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
         }
-
-        // Ensure backdrop is removed
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-
-        // Remove "modal-open" class from body
-        document.body.classList.remove('modal-open');
     } else {
         console.error("Modal element not found");
     }
@@ -200,17 +236,20 @@ function closeLoginNetworkModal() {
             modal.hide();
             modal.hide();
 
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
             setTimeout(() => {
-                modal.hide();
-            }, 1000)
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
         }
-
-        // Ensure backdrop is removed
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-
-        // Remove "modal-open" class from body
-        document.body.classList.remove('modal-open');
     } else {
         console.error("Modal element not found");
     }
@@ -231,17 +270,20 @@ function closeErrorModal() {
             modal.hide();
             modal.hide();
 
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
             setTimeout(() => {
-                modal.hide();
-            }, 1000)
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
         }
-
-        // Ensure backdrop is removed
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-
-        // Remove "modal-open" class from body
-        document.body.classList.remove('modal-open');
     } else {
         console.error("Modal element not found");
     }
@@ -263,17 +305,55 @@ function closeUpdateModal() {
             modal.hide();
             modal.hide();
 
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
             setTimeout(() => {
-                modal.hide();
-            }, 1000)
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
         }
+    } else {
+        console.error("Modal element not found");
+    }
+}
 
-        // Ensure backdrop is removed
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
+function openUpdateInprogressModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('updateInprogressModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeUpdateInprogressModal() {
+    var modalElement = document.getElementById('updateInprogressModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        if (modal) {
+            modal.hide();
+            modal.hide();
+            modal.hide();
 
-        // Remove "modal-open" class from body
-        document.body.classList.remove('modal-open');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
+            setTimeout(() => {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
+        }
     } else {
         console.error("Modal element not found");
     }
@@ -317,3 +397,23 @@ function PunchOutAudio() {
         audioElement.play();
     }
 };
+
+function updateProgressBar(percent) {
+    const progressBar = document.getElementById('progressBar');
+    progressBar.style.width = percent + '%'; // Update the width
+    progressBar.textContent = percent + '%'; // Update the text
+}
+
+function simulateProgress() {
+    let progress = 0;
+
+    const interval = setInterval(() => {
+        if (progress >= 100) {
+            clearInterval(interval); // Stop when progress reaches 100%
+            alert('Download Complete!');
+        } else {
+            progress += 10; // Increment progress
+            updateProgressBar(progress);
+        }
+    }, 500); // Update every 500ms
+}

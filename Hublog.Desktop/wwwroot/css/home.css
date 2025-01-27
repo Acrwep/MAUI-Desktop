@@ -247,3 +247,46 @@ input[type="password"]::-ms-clear {
     margin-top: 4px !important;
     color: gray;
 }
+.progressContainer {
+    width: 100%;
+    background: #C4C5C5;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 2px 0;
+    margin-top:4px;
+}
+
+.progressBar {
+    background: #25a17d;
+    height: 11px;
+    border-radius: 6px;
+    text-align: center;
+    color: white;
+    line-height: 20px;
+}
+.failedprogressBar {
+    background: rgba(244, 67, 54, 0.82);
+    height: 11px;
+    border-radius: 6px;
+    text-align: center;
+    color: white;
+    line-height: 20px;
+}
+.updateprogressmodal_completetext {
+    color: gray;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 13px;
+    font-weight: 500;
+}
+.updateprogressmodal_incompletetext {
+    color: rgb(244, 67, 54);
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 13px;
+    font-weight: 500;
+}

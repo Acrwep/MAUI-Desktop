@@ -14,7 +14,7 @@
 @inject NavigationManager Navigation
 
 <!-- Loader -->
-<div class="loader-overlay" style="@(isLoading ? "display: flex;" : "display: none;")">
+<div class="loader-overlay" style="@(isLoading || isPunchoutLoading ? "display: flex;" : "display: none;")">
     <div class="loader"></div>
 </div>
 
@@ -40,7 +40,6 @@
         <p class="dashboard_fullname">@firstName @lastName</p>
         <p class="dashboard_email">@userEmail</p>
     </div>
-
     <div class="dashboard_timerContainer">
         <p class="dashboard_timer">@elapsedTime</p>
         <p class="dashboard_currentdateandtime">@CurrentDateTime</p>
@@ -277,7 +276,7 @@
                     </div>
 
                     <div class="updatemodal_updatebuttonContainer">
-                        <button class="updatemodal_updatebutton" @onclick=ExeDownload>Update Now</button>
+                        <button class="updatemodal_updatebutton" @onclick=HandleUpdateNow>Update Now</button>
                     </div>
                 </div>
             </div>
@@ -336,20 +335,10 @@
     {
         await JSRuntime.InvokeVoidAsync("openUpdateModal");
     }
-    private async Task ExeDownload()
+    private async Task HandleUpdateNow()
     {
-        await JSRuntime.InvokeVoidAsync("Download");
-        await Task.Delay(2000);
         Navigation.NavigateTo("/");
-        await JSRuntime.InvokeVoidAsync("closeLogoutModal");
-        await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
-        await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
-        await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
-        await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
-        await JSRuntime.InvokeVoidAsync("pauseAudio");
-        await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
-        MauiProgram.Loginlist = new Users();
-        MauiProgram.token = "";
+        await JSRuntime.InvokeVoidAsync("setItem", "updateProcessStatus", "inprogress");
     }
     private async Task CloseErrorModal()
     {

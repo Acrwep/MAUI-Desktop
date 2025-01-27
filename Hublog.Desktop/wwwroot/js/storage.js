@@ -50,3 +50,6 @@ function getLastsynctime() {
 function getResumeworkAudioStatus() {
     return localStorage.getItem('resumeWorkAudioStatus' || null);
 }
+function getUpdateProcessStatus() {
+    return localStorage.getItem('updateProcessStatus' || null);
+}

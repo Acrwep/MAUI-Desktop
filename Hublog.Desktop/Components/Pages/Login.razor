@@ -2,6 +2,9 @@
 @using Hublog.Desktop.Entities
 @using System.Text.Json
 @using Hublog.Desktop.Components
+@using System.IO
+@using System;
+@using System.Diagnostics;
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
@@ -76,9 +79,52 @@
                         <button type="submit" class="login_button">Login</button>
                     </div>
                 </EditForm>
+                @* <button @onclick="HandleUpdateInprogress">Check</button> *@
             </div>
         </div>
     }
+
+    <!-- Modal UpdateInprogress -->
+    <div class="modal" id="updateInprogressModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content punchout_confirmationmodal_content">
+                <div class="modal-header punchout_modalheader">
+                    <div class="punchoutmodal_logoContainer">
+                        <img src="/images/hublog.ico" class="punchoutmodal_headericon" />
+                        <p>Update In Progress</p>
+                    </div>
+                </div>
+                <div class="modal-body punchout_modalbody">
+                    <div class="progressContainer">
+                        @if (@progressValue == 101)
+                        {
+                            <div class="failedprogressBar" style="width: 90%;">
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="progressBar" style="width: @($"{progressValue}%");">
+                            </div>
+                        }
+
+                    </div>
+                    @if (@progressValue == 101)
+                    {
+                        <p class="updateprogressmodal_incompletetext">
+                            Installation was failed
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="updateprogressmodal_completetext">
+                            @($"{progressValue}% Complete")
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Modal Network -->
     <div class="modal" id="loginNetworkModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -101,6 +147,8 @@
 </div>
 
 @code {
+    private int progressValue = 0;
+
     private bool isPasswordVisible = false;
     private string passwordInputType => isPasswordVisible ? "text" : "password";
 
@@ -112,5 +160,88 @@
     {
         // Exit the application
         Microsoft.Maui.Controls.Application.Current.Quit();
+    }
+
+    private async void HandleUpdateInprogress()
+    {
+        // Exit the application
+        await JSRuntime.InvokeVoidAsync("openUpdateInprogressModal");
+
+        progressValue = 0;
+        StateHasChanged(); // Trigger UI re-rendering
+        await JSRuntime.InvokeVoidAsync("closeLogoutModal");
+        await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
+        await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
+        await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
+        await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
+        await JSRuntime.InvokeVoidAsync("pauseAudio");
+        progressValue = 10;
+        StateHasChanged();
+        await Task.Delay(500);
+        await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
+        await JSRuntime.InvokeVoidAsync("removeItem", "updateProcessStatus");
+        MauiProgram.Loginlist = new Users();
+        MauiProgram.token = "";
+        progressValue = 25;
+        StateHasChanged();
+        await Task.Delay(500);
+        string downloadUrl = "https://hublog.org:8087/Hublog-v1.2.1.exe"; // URL of the new .exe file
+        string installDir = @"C:\Program Files (x86)\Hublog"; // Installation directory
+        string tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Hublog.exe"); // Temporary location to download the file
+        progressValue = 50;
+        StateHasChanged();
+        await Task.Delay(500);
+        try
+        {
+            // Ensure the temporary directory exists
+            Console.WriteLine($"Temp Path: {tempPath}");
+
+            // Download the new version of Hublog.exe to the temp folder
+            using (var client = new HttpClient())
+            using (var response = await client.GetAsync(downloadUrl))
+            {
+                progressValue = 65;
+                StateHasChanged();
+                response.EnsureSuccessStatusCode();
+                await Task.Delay(500);
+                using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await response.Content.CopyToAsync(fileStream);
+                }
+                progressValue = 75;
+                StateHasChanged();
+            }
+            await Task.Delay(500);
+            progressValue = 90;
+            StateHasChanged();
+            // Run the installer silently with admin privileges
+#if WINDOWS
+    var process = Process.Start(new ProcessStartInfo
+    {
+    FileName = tempPath,
+    Arguments = $"/S /D={installDir}", // Silent install and target directory
+    UseShellExecute = true,
+    Verb = "runas" // Run as administrator
+    });
+
+    process.WaitForExit(); // Wait for the installer to complete
+#else
+            Console.WriteLine("Process.Start is not supported on this platform.");
+#endif
+
+            progressValue = 100;
+            StateHasChanged();
+            await Task.Delay(500);
+            // Close the current application
+            Microsoft.Maui.Controls.Application.Current.Quit();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            progressValue = 101;
+            StateHasChanged();
+            await Task.Delay(2000);
+            Microsoft.Maui.Controls.Application.Current.Quit();
+        }
     }
 }

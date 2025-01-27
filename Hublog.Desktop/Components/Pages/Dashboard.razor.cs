@@ -43,6 +43,8 @@ namespace Hublog.Desktop.Components.Pages
             public string Total_Time { get; set; }
             public DateTime Late_Time { get; set; }
             public int Status { get; set; }
+            [JsonIgnore]  // Ignore this property during deserialization
+            public string PunchOutType { get; set; }
         }
 
         public class BreakDetails
@@ -178,8 +180,8 @@ namespace Hublog.Desktop.Components.Pages
                             {
                                 string apiUrl = $"{MauiProgram.OnlineURL}api/Users/Get_Active_Time"
                              + $"?userid={MauiProgram.Loginlist.Id}"
-                             + $"&startDate={dateSixDaysBefore:yyyy-MM-dd}"
-                             + $"&endDate={dateOneDaysBefore:yyyy-MM-dd}";
+                             + $"&startDate={lastStartTime:yyyy-MM-dd}"
+                             + $"&endDate={lastStartTime:yyyy-MM-dd}";
 
                                 HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
                                 var activityresponse = await HttpClient.GetAsync(apiUrl);
@@ -225,7 +227,7 @@ namespace Hublog.Desktop.Components.Pages
                                         }
                                         catch (Exception ex)
                                         {
-                                            Console.WriteLine($"Error while calling InsertAttendance API: {ex.Message}");
+                                            Console.WriteLine($"Error while calling punchout API: {ex.Message}");
                                             await JSRuntime.InvokeVoidAsync("openErrorModal");
                                             return;
                                         }
@@ -331,6 +333,7 @@ namespace Hublog.Desktop.Components.Pages
         private long InactivityPunchOutThreshold = 1800000; // 30 min in milliseconds
         private long InactivityAlertThreshold = 600000; // 10 min in milliseconds
         private bool isLoading = false;
+        private bool isPunchoutLoading = false;
         private bool isPunchButtonLoading = false;
 
         private List<BreakMaster> availableBreaks = new List<BreakMaster>();
@@ -344,6 +347,7 @@ namespace Hublog.Desktop.Components.Pages
         private Timer _userActivitytimer;
         private DateTime _lastApiCallTime = DateTime.MinValue;  // Variable to track the last API call time
         private string lastSynctime;
+        private bool TriggerApiNetworkAvailable = false;
 
         [Inject]
         public IScreenCaptureService ScreenCaptureService { get; set; }
@@ -918,11 +922,11 @@ namespace Hublog.Desktop.Components.Pages
                 HttpResponseMessage response;
                 try
                 {
-                    response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/InsertAttendance", content);
+                    response = await HttpClient.PostAsync($"{MauiProgram.OnlineURL}api/Users/PunchIn_InsertAttendance", content);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error while calling InsertAttendance API: {ex.Message}");
+                    Console.WriteLine($"Error while calling punchin API: {ex.Message}");
                     HandlePunchInFailure();
                     return;
                 }
@@ -978,7 +982,7 @@ namespace Hublog.Desktop.Components.Pages
                 }
                 else
                 {
-                    Console.WriteLine($"Error response from InsertAttendance API: {responseString}");
+                    Console.WriteLine($"Error response from punchin API: {responseString}");
                     HandlePunchInFailure();
                 }
             }
@@ -1032,6 +1036,8 @@ namespace Hublog.Desktop.Components.Pages
         public async void PunchOut(string punchoutType)
         {
             isPunchButtonLoading = true;
+            isPunchoutLoading = true;
+            await InvokeAsync(StateHasChanged);
             DateTime? istTime = GetISTTime();
 
             if (!istTime.HasValue || istTime.Value == DateTime.MinValue)
@@ -1100,7 +1106,7 @@ namespace Hublog.Desktop.Components.Pages
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error while calling InsertAttendance API: {ex.Message}");
+                    Console.WriteLine($"Error while calling Punchout API: {ex.Message}");
                     await JSRuntime.InvokeVoidAsync("openErrorModal");
                     return;
                 }
@@ -1136,12 +1142,12 @@ namespace Hublog.Desktop.Components.Pages
                                      + $"&endDate={DateTime.Today:yyyy-MM-dd}";
 
                         HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
-                        var responses = await HttpClient.GetAsync(URL);
-                        Console.WriteLine("Response Data: " + responses);
+                        var getPunchInOutDetailsresponse = await HttpClient.GetAsync(URL);
+                        Console.WriteLine("Response Data: " + getPunchInOutDetailsresponse);
 
-                        if (responses.IsSuccessStatusCode)
+                        if (getPunchInOutDetailsresponse.IsSuccessStatusCode)
                         {
-                            var responseData = await responses.Content.ReadAsStringAsync();
+                            var responseData = await getPunchInOutDetailsresponse.Content.ReadAsStringAsync();
 
                             // Deserialize JSON response
                             var attendanceDetails = JsonConvert.DeserializeObject<List<UserPunchInOutDetails>>(responseData);
@@ -1174,15 +1180,14 @@ namespace Hublog.Desktop.Components.Pages
                         }
                         else
                         {
-                            var errorResponse = await responses.Content.ReadAsStringAsync();
+                            var errorResponse = await getPunchInOutDetailsresponse.Content.ReadAsStringAsync();
                             Console.WriteLine($"Error: {errorResponse}");
                             await JSRuntime.InvokeVoidAsync("openErrorModal");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error fetching attendance details: {ex.Message}");
-                        await JSRuntime.InvokeVoidAsync("openErrorModal");
+                        Console.WriteLine($"Error fetching attendance details: {ex.Message}"); //
                     }
                     finally
                     {
@@ -1191,6 +1196,8 @@ namespace Hublog.Desktop.Components.Pages
                 }
                 else
                 {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error: {errorResponse}");
                     await JSRuntime.InvokeVoidAsync("openErrorModal");
                 }
             }
@@ -1315,7 +1322,8 @@ namespace Hublog.Desktop.Components.Pages
 
                 HttpResponseMessage response = await client.PostAsync(URL, content);
                 string responseString = await response.Content.ReadAsStringAsync();
-
+                isPunchoutLoading = false;
+                await InvokeAsync(StateHasChanged); // Refresh UI
                 if (response.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"Screenshot uploaded successfully at {DateTime.Now}");
@@ -1943,6 +1951,10 @@ namespace Hublog.Desktop.Components.Pages
                         {
                             await JSRuntime.InvokeVoidAsync("openUpdateModal");
                         }
+                        else
+                        {
+                            Console.WriteLine("Using Current version");
+                        }
                     }
                     else
                     {
@@ -2015,11 +2027,20 @@ namespace Hublog.Desktop.Components.Pages
                 {
                     Console.WriteLine("Device is connected to the internet.");
                     await JSRuntime.InvokeVoidAsync("closeNetworkModal");
+                    if (TriggerApiNetworkAvailable == true)
+                    {
+                        TriggerApiNetworkAvailable = false;
+                        await InvokeAsync(StateHasChanged); // Refresh UI
+                        await OnInitializedAsync();
+                    }
                 }
                 else
                 {
                     Console.WriteLine("Device is not connected to the internet.");
                     await Task.Delay(500); // Ensure DOM is rendered
+                    TriggerApiNetworkAvailable = true;
+                    punchInTimer?.Dispose();
+                    await InvokeAsync(StateHasChanged); // Refresh UI
                     await JSRuntime.InvokeVoidAsync("openNetworkModal");
                 }
             }
