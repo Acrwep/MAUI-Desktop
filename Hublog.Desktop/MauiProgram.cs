@@ -1,5 +1,6 @@
 ﻿using Hublog.Desktop.Entities;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using Microsoft.Maui.LifecycleEvents;
 using Microsoft.Maui.Platform;
 using System.Threading;
@@ -50,6 +51,7 @@ namespace Hublog.Desktop
                 {
                     windowsLifecycleBuilder.OnWindowCreated(window =>
                     {
+                        window.Title = "Hublog";
                         var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
                         var id = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
                         var appWindow =
@@ -76,6 +78,8 @@ namespace Hublog.Desktop
 #endif
 #if WINDOWS
             builder.Services.AddSingleton<IScreenCaptureService, Platforms.Windows.WindowsScreenCaptureService>();
+            builder.Services.AddSingleton<LiveStreamClient>(); // Register LiveStreamClient as singleton
+            builder.Services.AddSingleton<IActiveWindowTracker, Platforms.Windows.ActiveWindowTracker>();
 #endif
             return builder.Build();
 

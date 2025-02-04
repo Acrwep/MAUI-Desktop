@@ -351,6 +351,8 @@ namespace Hublog.Desktop.Components.Pages
 
         [Inject]
         public IScreenCaptureService ScreenCaptureService { get; set; }
+        [Inject] public LiveStreamClient _liveStreamClient { get; set; }
+
         [Inject] public HttpClient HttpClient { get; set; }
         #endregion
 
@@ -577,23 +579,38 @@ namespace Hublog.Desktop.Components.Pages
 
         private async Task StartTracking()
         {
-            isTracking = true;
+            //await _liveStreamClient.StartSignalR();
+        isTracking = true;
 
             var httpClient = MauiProgram.CreateMauiApp().Services.GetRequiredService<HttpClient>();
             httpClient.BaseAddress = new Uri(MauiProgram.OnlineURL);
 
-            _monitor = new ApplicationMonitor(httpClient);
+            // Assuming you have a service registered in your DI container that implements IActiveWindowTracker
+            var activeWindowTracker = MauiProgram.CreateMauiApp().Services.GetRequiredService<IActiveWindowTracker>();
+            var activeScreenshotTracker = MauiProgram.CreateMauiApp().Services.GetRequiredService<IScreenCaptureService>();
+
+            _monitor = new ApplicationMonitor(httpClient, activeWindowTracker, activeScreenshotTracker);
 
             while (isTracking)
             {
                 await _monitor.UpdateApplicationOrUrlUsageAsync(token);
+                //if (_liveStreamClient != null)
+                //{
+                //    await _liveStreamClient.StartSignalR();  // Now it will be initialized
+                //}
+                //else
+                //{
+                //    Console.WriteLine("LiveStreamClient is not initialized.");
+                //}
                 await Task.Delay(2000);
             }
         }
 
-        private void StopTracking()
+        public async Task StopTracking()
         {
             isTracking = false;
+            //await InvokeAsync(StateHasChanged);
+            //await _monitor.StopSignalR();  // Now it will be initialized
         }
         #endregion
 

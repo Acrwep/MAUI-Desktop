@@ -117,6 +117,8 @@ html, body {
     margin: 0 !important;
     font-size: 20px;
     margin-bottom: 4px !important;
+    user-select:text;
+    cursor:text;
 }
 
 .dashboard_email {
