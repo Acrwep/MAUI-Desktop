@@ -34,14 +34,12 @@ namespace Hublog.Desktop
         private System.Threading.Timer appsAndUrlTimer;
         private bool _isSignalRConnectionStarted = false;  // Flag to track connection state
         private HubConnection _connection;
-        private readonly IActiveWindowTracker _activeWindowTracker;
         private readonly IScreenCaptureService _screenCaptureTracker;
 
-        public ApplicationMonitor(HttpClient httpClient, IActiveWindowTracker activeWindowTracker, IScreenCaptureService screenCaptureTracker)
+        public ApplicationMonitor(HttpClient httpClient, IScreenCaptureService screenCaptureTracker)
         {
             _httpClient = httpClient;
             _pollingTimer = new Timer(UpdateActiveApplication, null, TimeSpan.Zero, TimeSpan.FromSeconds(1)); // Check every second
-            _activeWindowTracker = activeWindowTracker;
             _screenCaptureTracker = screenCaptureTracker;
 
             // Configure the connection to the SignalR hub
@@ -146,7 +144,7 @@ namespace Hublog.Desktop
         }
 
         private string ExtractApplicationName(string appOrUrl)
-        {         
+        {
             if (appOrUrl == null || appOrUrl == "")
             {
                 return "";
@@ -157,34 +155,52 @@ namespace Hublog.Desktop
 
         private string ExtractUrl(string appOrUrl)
         {
-            if (string.IsNullOrEmpty(appOrUrl))
+            if (string.IsNullOrEmpty(appOrUrl) || appOrUrl == "msedge" || appOrUrl == "chrome" || appOrUrl == "firefox" || appOrUrl == "opera" || appOrUrl == "brave")
             {
                 return "";
             }
 
+            // Split the string into two parts based on the colon ":"
             var parts = appOrUrl.Split(new[] { ':' }, 2); // Split into two parts only
             if (parts.Length > 1)
             {
-                string extractedUrl = parts[1].Trim();
+                string extractedUrl = parts[1].Trim(); // Extract the URL part after ":"
 
-                // Ensure the extracted part contains a valid URL
-                if (extractedUrl.StartsWith("https://") || extractedUrl.StartsWith("http://"))
+                if (extractedUrl.Contains(" — "))
                 {
+                    //firebox url handling
+                    string[] split = extractedUrl.Split(new[] { " — " }, StringSplitOptions.None);
+                    return $"{split[0].Trim().ToLower()}.com";
+                }
+                else if (extractedUrl.Contains(" - "))
+                {
+                    //opera url handling
+                    string[] split = extractedUrl.Split(new[] { " - " }, StringSplitOptions.None);
+                    return $"{split[0].Trim().ToLower()}.com";
+                }
+                else if (!extractedUrl.StartsWith("https://") && !extractedUrl.StartsWith("http://")) 
+                {
+                    //chrome url handling
+                    string domain = extractedUrl.Split('/')[0];
+                    return domain;
+                }
+                else
+                {
+                    //microsioftedge url handling
                     try
                     {
                         Uri uri = new Uri(extractedUrl);
-                        return uri.Host; // Extract the domain (e.g., web.whatsapp.com)
+                        return uri.Host; // Extract the domain (e.g., chatgpt.com)
                     }
                     catch
                     {
                         return extractedUrl; // Return as is if parsing fails
                     }
                 }
-                return extractedUrl;
             }
-
             return string.Empty;
         }
+
 
         public string GetActiveApplicationName()
         {
@@ -203,6 +219,7 @@ namespace Hublog.Desktop
                 if (applicationName.Equals("chrome", StringComparison.OrdinalIgnoreCase) ||
                     applicationName.Equals("msedge", StringComparison.OrdinalIgnoreCase) ||
                     applicationName.Equals("firefox", StringComparison.OrdinalIgnoreCase) ||
+                    applicationName.Equals("Mozilla Firefox", StringComparison.OrdinalIgnoreCase) ||
                     applicationName.Equals("opera", StringComparison.OrdinalIgnoreCase) ||
                     applicationName.Equals("brave", StringComparison.OrdinalIgnoreCase))
                 {
@@ -226,7 +243,7 @@ namespace Hublog.Desktop
             return browserProcess.ProcessName switch
             {
                 "chrome" or "msedge" => GetChromeEdgeUrl(browserProcess),
-                "firefox" => GetFirefoxUrl(browserProcess),
+                "firefox" or "opera" or "brave" => GetExternalBrowserUrl(browserProcess),
                 _ => string.Empty
             };
 #else
@@ -243,7 +260,7 @@ namespace Hublog.Desktop
             return element != null ? ((System.Windows.Automation.ValuePattern)element.GetCurrentPattern(System.Windows.Automation.ValuePattern.Pattern)).Current.Value as string : string.Empty;
         }
 
-        private string GetFirefoxUrl(Process process)
+        private string GetExternalBrowserUrl(Process process)
         {
             return process.MainWindowTitle;
         }
@@ -260,6 +277,10 @@ namespace Hublog.Desktop
 
         private async Task SaveApplicationUsageDataAsync(int userId, string applicationName, string totalUsage)
         {
+            if (string.IsNullOrEmpty(applicationName) || applicationName == "msedge" || applicationName == "chrome" || applicationName == "firefox" || applicationName == "opera" || applicationName == "brave")
+            {
+                return;
+            }
             bool finalValidationStatus = FinalApplicationNameValidation(applicationName);
 
             if (finalValidationStatus == true)
@@ -388,7 +409,11 @@ namespace Hublog.Desktop
 
         private async Task LastSaveApplicationUsageDataAsync(int userId, string applicationName, string totalUsage)
         {
-            await StopSignalR();
+            if (string.IsNullOrEmpty(applicationName) || applicationName == "msedge" || applicationName == "chrome" || applicationName == "firefox" || applicationName == "opera" || applicationName == "brave")
+            {
+                await StopSignalR();
+                return;
+            }
             bool finalValidationStatus = FinalApplicationNameValidation(applicationName);
 
             if (finalValidationStatus == true)
@@ -545,7 +570,7 @@ namespace Hublog.Desktop
                 bool validateActiveApp = FinalApplicationNameValidation(activeApp);
                 string activeUrl = ExtractUrl(activeAppandUrl);
                 bool validateActiveUrl = FinalUrlValidation(activeUrl);
-                string activeApplogo = validateActiveApp ? _activeWindowTracker.GetApplicationIconBase64(activeApp) : "";
+                string activeApplogo = validateActiveApp ? GetApplicationIconBase64(activeApp) : "";
                 byte[] screenshotData;
                 string screenshotAsBase64 = string.Empty; // Initialize with an empty string
 
@@ -593,7 +618,7 @@ namespace Hublog.Desktop
                 activeUrl = "",
                 liveStreamStatus = false,
                 activeAppLogo = "",
-                activeScreenshot="",
+                activeScreenshot = "",
             };
 
             // Send the active data to SignalR Hub
@@ -624,6 +649,35 @@ namespace Hublog.Desktop
             string base64Image = Convert.ToBase64String(imageData);
             Console.WriteLine("Base64 Image Data: " + base64Image); // Log base64 image data
             return base64Image;
+        }
+
+        public string GetApplicationIconBase64(string activeAppName)
+        {
+            try
+            {
+                Process[] processes = Process.GetProcessesByName(activeAppName);
+                if (processes.Length > 0)
+                {
+                    string exePath = processes[0].MainModule.FileName;
+                    using (Icon icon = Icon.ExtractAssociatedIcon(exePath))
+                    {
+                        if (icon != null)
+                        {
+                            using (MemoryStream ms = new MemoryStream())
+                            {
+                                icon.ToBitmap().Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                                return Convert.ToBase64String(ms.ToArray()); // Convert to Base64
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting application icon: {ex.Message}");
+            }
+
+            return string.Empty; // Return empty if no icon found
         }
 
         [DllImport("user32.dll")]

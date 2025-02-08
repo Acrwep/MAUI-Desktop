@@ -78,8 +78,6 @@ namespace Hublog.Desktop
 #endif
 #if WINDOWS
             builder.Services.AddSingleton<IScreenCaptureService, Platforms.Windows.WindowsScreenCaptureService>();
-            builder.Services.AddSingleton<LiveStreamClient>(); // Register LiveStreamClient as singleton
-            builder.Services.AddSingleton<IActiveWindowTracker, Platforms.Windows.ActiveWindowTracker>();
 #endif
             return builder.Build();
 

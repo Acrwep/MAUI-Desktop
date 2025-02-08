@@ -351,7 +351,6 @@ namespace Hublog.Desktop.Components.Pages
 
         [Inject]
         public IScreenCaptureService ScreenCaptureService { get; set; }
-        [Inject] public LiveStreamClient _liveStreamClient { get; set; }
 
         [Inject] public HttpClient HttpClient { get; set; }
         #endregion
@@ -586,22 +585,13 @@ namespace Hublog.Desktop.Components.Pages
             httpClient.BaseAddress = new Uri(MauiProgram.OnlineURL);
 
             // Assuming you have a service registered in your DI container that implements IActiveWindowTracker
-            var activeWindowTracker = MauiProgram.CreateMauiApp().Services.GetRequiredService<IActiveWindowTracker>();
             var activeScreenshotTracker = MauiProgram.CreateMauiApp().Services.GetRequiredService<IScreenCaptureService>();
 
-            _monitor = new ApplicationMonitor(httpClient, activeWindowTracker, activeScreenshotTracker);
+            _monitor = new ApplicationMonitor(httpClient, activeScreenshotTracker);
 
             while (isTracking)
             {
                 await _monitor.UpdateApplicationOrUrlUsageAsync(token);
-                //if (_liveStreamClient != null)
-                //{
-                //    await _liveStreamClient.StartSignalR();  // Now it will be initialized
-                //}
-                //else
-                //{
-                //    Console.WriteLine("LiveStreamClient is not initialized.");
-                //}
                 await Task.Delay(2000);
             }
         }
