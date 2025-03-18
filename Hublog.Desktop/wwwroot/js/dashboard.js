@@ -33,6 +33,41 @@ function closePunchoutConfirmationModal() {
     }
 }
 
+function openShiftModal() {
+    const modalElement = new bootstrap.Modal(document.getElementById('shiftModal'), {
+        backdrop: 'static',
+        keyboard: true
+    });
+    modalElement.show();
+}
+function closeShiftModal() {
+    var modalElement = document.getElementById('shiftModal');
+    if (modalElement) {
+        var modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        if (modal) {
+            modal.hide();
+            modal.hide();
+            modal.hide();
+
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+
+            setTimeout(() => {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    let backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                }
+            }, 500);
+        }
+    } else {
+        console.error("Modal element not found");
+    }
+}
+
 function openBreakModal() {
     const modalElement = new bootstrap.Modal(document.getElementById('breakModal'), {
         backdrop: 'static',

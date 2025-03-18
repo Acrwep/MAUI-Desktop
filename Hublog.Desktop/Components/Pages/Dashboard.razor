@@ -194,6 +194,33 @@
         </div>
     </div>
 
+    <!-- Modal Shift -->
+    <div class="modal" id="shiftModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content punchout_confirmationmodal_content">
+                <div class="modal-header punchout_modalheader">
+                    <div class="punchoutmodal_logoContainer">
+                        <img src="/images/hublog.ico" class="punchoutmodal_headericon" />
+                        <p>Shift Alert!</p>
+                    </div>
+                    <div class="punchoutmodal_closebuttonContainer" @onclick="CloseShiftModal">
+                        <img src="/images/closeicon.png" class="punchoutmodal_closeimage" />
+                    </div>
+                </div>
+                <div class="modal-body punchout_modalbody">
+                    <div style="display:flex">
+                        <img src="/images/warning.png" class="inactivitymodal_image" />
+                        <p class="punchout_confirmation_modaltext" style="margin-top:4px">Your shift has not started yet.</p>
+                    </div>
+                    <div style="display:flex;margin-top:6px">
+                        @* <button type="button" class="punchoutConfirmationModal_buttons" style="margin-right:12px" @onclick="InactivityModalClose">Yes</button> *@
+                        <button type="button" class="punchoutConfirmationModal_buttons" @onclick="CloseShiftModal">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Logout -->
     <div class="modal" id="logoutModal" tabindex="-1" aria-labelledby="punchoutConfirmationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
@@ -318,6 +345,14 @@
     private async Task ClosePunchoutModal()
     {
         await JSRuntime.InvokeVoidAsync("closePunchoutConfirmationModal");
+    }
+    private async Task OpenShiftModal()
+    {
+        await JSRuntime.InvokeVoidAsync("openShiftModal");
+    }
+    private async Task CloseShiftModal()
+    {
+        await JSRuntime.InvokeVoidAsync("closeShiftModal");
     }
     private async Task OpenLogoutModal()
     {

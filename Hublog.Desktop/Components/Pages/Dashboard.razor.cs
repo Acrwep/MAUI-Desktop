@@ -579,7 +579,7 @@ namespace Hublog.Desktop.Components.Pages
         private async Task StartTracking()
         {
             //await _liveStreamClient.StartSignalR();
-        isTracking = true;
+            isTracking = true;
 
             var httpClient = MauiProgram.CreateMauiApp().Services.GetRequiredService<HttpClient>();
             httpClient.BaseAddress = new Uri(MauiProgram.OnlineURL);
@@ -990,7 +990,14 @@ namespace Hublog.Desktop.Components.Pages
                 else
                 {
                     Console.WriteLine($"Error response from punchin API: {responseString}");
-                    HandlePunchInFailure();
+                    if (responseString == "Your shift time is not starting yet")
+                    {
+                        await OpenShiftModal();
+                    }
+                    else
+                    {
+                        HandlePunchInFailure();
+                    }
                 }
             }
             catch (Exception ex)
@@ -1805,13 +1812,13 @@ namespace Hublog.Desktop.Components.Pages
                             }
                             var breakDetails = await GetBreakDetails(breakId);
 
-                            var morningBreakDuration = TimeSpan.FromMinutes(breakDetails.Max_Break_Time);
+                            var BreakDuration = TimeSpan.FromMinutes(breakDetails.Max_Break_Time);
 
-                            // Subtract morning break duration
-                            var resulttime = morningBreakDuration - res;
+                            // Subtract break duration
+                            var resulttime = BreakDuration - res;
 
-                            // Check if elapsed time exceeds 15 minutes
-                            if (res >= morningBreakDuration)
+                            // Check if elapsed time exceeds
+                            if (res >= BreakDuration)
                             {
                                 resulttime = TimeSpan.Zero; // Display 00:00:00
                             }
