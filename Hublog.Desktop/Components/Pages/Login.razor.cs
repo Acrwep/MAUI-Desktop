@@ -8,6 +8,13 @@ namespace Hublog.Desktop.Components.Pages
 {
     public partial class Login
     {
+        public class HublogVersionDetails
+        {
+            public int Id { get; set; }
+            public string VersionNumber { get; set; }
+            public string DownloadUrl { get; set; }
+        }
+
         private LoginModels loginModel = new LoginModels();
         private bool isLoggedIn = false;
         private bool isPopupVisible = false;

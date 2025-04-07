@@ -5,9 +5,15 @@
 @using System.IO
 @using System;
 @using System.Diagnostics;
+@using System.Net.Http.Headers;
+@using Newtonsoft.Json;
+@using System.Net.Http
+
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
+
+
 <link href="/css/home.css" rel="stylesheet" />
 
 <div class="homepage_mainContainer">
@@ -164,10 +170,50 @@
 
     private async void HandleUpdateInprogress()
     {
+        progressValue = 5;
+        StateHasChanged(); // Trigger UI re-rendering
+        string downloadUrl = ""; // URL of the new .exe file
+        try
+        {
+            string URL = $"{MauiProgram.OnlineURL}api/SystemInfo/GetHublogVersion";
+
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", MauiProgram.token);
+            var response = await Http.GetAsync(URL);
+            Console.WriteLine("Response Data: " + response);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = await response.Content.ReadAsStringAsync();
+
+                // Deserialize JSON response
+                var hublogVersionResponse = JsonConvert.DeserializeObject<List<HublogVersionDetails>>(responseData);
+
+                if (hublogVersionResponse != null && hublogVersionResponse.Count > 0)
+                {
+                    var hublogVersionDetail = hublogVersionResponse[0];
+
+                    downloadUrl = hublogVersionDetail.DownloadUrl;
+                }
+                else
+                {
+                    Console.WriteLine("No version details found.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching hublogversion: {ex.Message}");
+        }
+        finally
+        {
+            progressValue = 10;
+            StateHasChanged(); // Trigger UI re-rendering
+        }
+
         // Exit the application
         await JSRuntime.InvokeVoidAsync("openUpdateInprogressModal");
 
-        progressValue = 0;
+        progressValue = 20;
         StateHasChanged(); // Trigger UI re-rendering
         await JSRuntime.InvokeVoidAsync("closeLogoutModal");
         await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
@@ -175,17 +221,16 @@
         await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
         await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
         await JSRuntime.InvokeVoidAsync("pauseAudio");
-        progressValue = 10;
+        progressValue = 30;
         StateHasChanged();
         await Task.Delay(500);
         await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
         await JSRuntime.InvokeVoidAsync("removeItem", "updateProcessStatus");
         MauiProgram.Loginlist = new Users();
         MauiProgram.token = "";
-        progressValue = 25;
+        progressValue = 40;
         StateHasChanged();
         await Task.Delay(500);
-        string downloadUrl = "https://hublog.org:8087/Hublog-v1.2.1.exe"; // URL of the new .exe file
         string installDir = @"C:\Program Files (x86)\Hublog"; // Installation directory
         string tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Hublog.exe"); // Temporary location to download the file
         progressValue = 50;

@@ -178,7 +178,7 @@ namespace Hublog.Desktop
                     string[] split = extractedUrl.Split(new[] { " - " }, StringSplitOptions.None);
                     return $"{split[0].Trim().ToLower()}.com";
                 }
-                else if (!extractedUrl.StartsWith("https://") && !extractedUrl.StartsWith("http://")) 
+                else if (!extractedUrl.StartsWith("https://") && !extractedUrl.StartsWith("http://"))
                 {
                     //chrome url handling
                     string domain = extractedUrl.Split('/')[0];
@@ -277,7 +277,7 @@ namespace Hublog.Desktop
 
         private async Task SaveApplicationUsageDataAsync(int userId, string applicationName, string totalUsage)
         {
-            if (string.IsNullOrEmpty(applicationName) || applicationName == "msedge" || applicationName == "chrome" || applicationName == "firefox" || applicationName == "opera" || applicationName == "brave")
+            if (string.IsNullOrEmpty(applicationName) || applicationName == "msedge" || applicationName == "chrome" || applicationName == "firefox" || applicationName == "opera" || applicationName == "brave" || applicationName == null || applicationName == "null" || applicationName == "")
             {
                 return;
             }
@@ -409,7 +409,7 @@ namespace Hublog.Desktop
 
         private async Task LastSaveApplicationUsageDataAsync(int userId, string applicationName, string totalUsage)
         {
-            if (string.IsNullOrEmpty(applicationName) || applicationName == "msedge" || applicationName == "chrome" || applicationName == "firefox" || applicationName == "opera" || applicationName == "brave")
+            if (string.IsNullOrEmpty(applicationName) || applicationName == "msedge" || applicationName == "chrome" || applicationName == "firefox" || applicationName == "opera" || applicationName == "brave" || applicationName == null || applicationName == "null" || applicationName == "")
             {
                 await StopSignalR();
                 return;
@@ -573,7 +573,18 @@ namespace Hublog.Desktop
                 string activeApplogo = validateActiveApp ? GetApplicationIconBase64(activeApp) : "";
                 byte[] screenshotData;
                 string screenshotAsBase64 = string.Empty; // Initialize with an empty string
+                                                          // 🔹 Get Location Data
+                var location = await GetCurrentLocation();
 
+                // 🔹 Extract Latitude & Longitude
+                double latitude = 0.0, longitude = 0.0;
+                if (location is not null)
+                {
+                    latitude = (double)location.GetType().GetProperty("Latitude")?.GetValue(location, null);
+                    longitude = (double)location.GetType().GetProperty("Longitude")?.GetValue(location, null);
+                }
+
+                Console.WriteLine($"Live Data Location - Latitude: {latitude}, Longitude: {longitude}");
                 try
                 {
                     screenshotData = _screenCaptureTracker.CaptureScreen();
@@ -597,6 +608,8 @@ namespace Hublog.Desktop
                     liveStreamStatus = true,
                     activeAppLogo = activeApplogo,
                     activeScreenshot = screenshotAsBase64,
+                    latitude = latitude,
+                    longitude = longitude
                 };
 
                 await _connection.SendAsync("SendLiveData", payload);
@@ -678,6 +691,39 @@ namespace Hublog.Desktop
             }
 
             return string.Empty; // Return empty if no icon found
+        }
+
+        public async Task<object> GetCurrentLocation()
+        {
+            try
+            {
+                var location = await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    var request = new GeolocationRequest(GeolocationAccuracy.Medium);
+                    return await Geolocation.GetLocationAsync(request);
+                });
+
+                if (location != null)
+                {
+                    Console.WriteLine($"Latitude: {location.Latitude}, Longitude: {location.Longitude}");
+
+                    return new
+                    {
+                        Latitude = location.Latitude,
+                        Longitude = location.Longitude
+                    };
+                }
+                else
+                {
+                    Console.WriteLine("Unable to get location.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return new { Latitude = 0.0, Longitude = 0.0 }; // Default if location not found
         }
 
         [DllImport("user32.dll")]

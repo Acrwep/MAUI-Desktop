@@ -175,7 +175,6 @@ namespace Hublog.Desktop.Components.Pages
                         // Check if End_Time is "0001-01-01T00:00:00" (DateTime.MinValue)
                         if (lastStartTime != DateTime.MinValue && lastEndTime == DateTime.MinValue)
                         {
-                            Console.WriteLine("End_Time is the default value: 0001-01-01T00:00:00");
                             try
                             {
                                 string apiUrl = $"{MauiProgram.OnlineURL}api/Users/Get_Active_Time"
@@ -195,7 +194,8 @@ namespace Hublog.Desktop.Components.Pages
                                     var useractivityList = JsonConvert.DeserializeObject<List<UserActivitydatas>>(activityresponseData);
                                     if (useractivityList != null && useractivityList.Count >= 1)
                                     {
-                                        DateTime lastActiveTime = useractivityList[^1].TriggeredTime;
+                                        var lastActivityDetail = useractivityList.Last();  // Get the last item
+                                        DateTime lastActiveTime = lastActivityDetail.TriggeredTime;
                                         Console.WriteLine(lastActiveTime);
 
 
@@ -1961,7 +1961,7 @@ namespace Hublog.Desktop.Components.Pages
                     {
                         var hublogVersionDetail = hublogVersionResponse[0];
 
-                        if (hublogVersionDetail.VersionNumber != "1.2.1")
+                        if (hublogVersionDetail.VersionNumber != "1.2.2")
                         {
                             await JSRuntime.InvokeVoidAsync("openUpdateModal");
                         }
