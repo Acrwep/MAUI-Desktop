@@ -10,7 +10,7 @@ namespace Hublog.Desktop
     public static class MauiProgram
     {
         public static string OnlineURL = "https://localhost:7263/";
-        //public static string OnlineURL = "https://hublog.org:8086/";
+        //public static string OnlineURL = "https://workstatus.qubinex.com:8086/";
 
         public static Users Loginlist = new Users();
         public static string token = "";
@@ -19,7 +19,7 @@ namespace Hublog.Desktop
         public static MauiApp CreateMauiApp()
         {
             //Cleaning the cache .uncommand and run once before taking build.
-            //string userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Hublog");
+            //string userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Workstatus");
             //if (Directory.Exists(userDataPath))
             //{
             //    Directory.Delete(userDataPath, true); // Delete all data in the folder
@@ -27,7 +27,7 @@ namespace Hublog.Desktop
 
             // Set the environment variable for the WebView2 user data folder
             Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER",
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Hublog"));
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Workstatus"));
             if (!mutex.WaitOne(TimeSpan.Zero, true))
             {
                 // Application is already running, exit the program
@@ -51,7 +51,7 @@ namespace Hublog.Desktop
                 {
                     windowsLifecycleBuilder.OnWindowCreated(window =>
                     {
-                        window.Title = "Hublog";
+                        window.Title = "Workstatus";
                         var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
                         var id = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
                         var appWindow =

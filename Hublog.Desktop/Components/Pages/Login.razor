@@ -7,7 +7,10 @@
 @using System.Diagnostics;
 @using System.Net.Http.Headers;
 @using Newtonsoft.Json;
-@using System.Net.Http
+@using System.Net.Http;
+@* #if WINDOWS
+using Microsoft.UI.Xaml;
+#endif *@
 
 @inject NavigationManager Navigation
 @inject HttpClient Http
@@ -50,7 +53,7 @@
                         <ValidationMessage For="@(() => loginModel.UserName)" />
                     </div>
 
-                    <div class="form-group" style="margin-top: 12px; position:relative; margin-bottom:30px;">
+                    <div class="form-group" style="margin-top: 12px; position:relative; margin-bottom:22px;">
                         <label for="password" class="loginform_labels">Password</label>
                         <div style="position: relative;">
                             <InputText id="password" type="@passwordInputType" autocomplete="off" class="form-control signin_passwordtextinput" @bind-Value="loginModel.Password" />
@@ -79,13 +82,28 @@
                                 <p style="color:red;margin-top:3px;">@userNameError</p>
                             </div>
                         }
+
+                        <div class="login_forgotpasswordContainer">
+                            <a href="https://workstatus.qubinex.com/setpassword" class="login_forgotpassword">Forgot Password?</a>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <button type="submit" class="login_button">Login</button>
-                    </div>
+                 
+
+                    @if (loginLoading==true)
+                    {
+                        <div class="form-group">
+                            <button type="submit" class="loadinglogin_button">Loading...</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-group">
+                            <button type="submit" class="login_button">Login</button>
+                        </div>
+                    }
+                  
                 </EditForm>
-                @* <button @onclick="HandleUpdateInprogress">Check</button> *@
             </div>
         </div>
     }
@@ -171,8 +189,9 @@
     private async void HandleUpdateInprogress()
     {
         progressValue = 5;
-        StateHasChanged(); // Trigger UI re-rendering
-        string downloadUrl = ""; // URL of the new .exe file
+        StateHasChanged();
+
+        string downloadUrl = "";
         try
         {
             string URL = $"{MauiProgram.OnlineURL}api/SystemInfo/GetHublogVersion";
@@ -184,15 +203,11 @@
             if (response.IsSuccessStatusCode)
             {
                 var responseData = await response.Content.ReadAsStringAsync();
-
-                // Deserialize JSON response
                 var hublogVersionResponse = JsonConvert.DeserializeObject<List<HublogVersionDetails>>(responseData);
 
                 if (hublogVersionResponse != null && hublogVersionResponse.Count > 0)
                 {
-                    var hublogVersionDetail = hublogVersionResponse[0];
-
-                    downloadUrl = hublogVersionDetail.DownloadUrl;
+                    downloadUrl = hublogVersionResponse[0].DownloadUrl;
                 }
                 else
                 {
@@ -207,78 +222,96 @@
         finally
         {
             progressValue = 10;
-            StateHasChanged(); // Trigger UI re-rendering
+            StateHasChanged();
         }
 
-        // Exit the application
         await JSRuntime.InvokeVoidAsync("openUpdateInprogressModal");
 
         progressValue = 20;
-        StateHasChanged(); // Trigger UI re-rendering
+        StateHasChanged();
+
         await JSRuntime.InvokeVoidAsync("closeLogoutModal");
         await JSRuntime.InvokeVoidAsync("removeItem", "loginToken");
         await JSRuntime.InvokeVoidAsync("removeItem", "punchInTime");
         await JSRuntime.InvokeVoidAsync("setItem", "elapsedTime", "00:00:00");
         await JSRuntime.InvokeVoidAsync("removeItem", "breakStatus");
         await JSRuntime.InvokeVoidAsync("pauseAudio");
+
         progressValue = 30;
         StateHasChanged();
         await Task.Delay(500);
+
         await JSRuntime.InvokeVoidAsync("setItem", "resumeWorkAudioStatus", "false");
         await JSRuntime.InvokeVoidAsync("removeItem", "updateProcessStatus");
+
         MauiProgram.Loginlist = new Users();
         MauiProgram.token = "";
+
         progressValue = 40;
         StateHasChanged();
         await Task.Delay(500);
-        string installDir = @"C:\Program Files (x86)\Hublog"; // Installation directory
-        string tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Hublog.exe"); // Temporary location to download the file
+
+        string tempExePath = Path.Combine(Path.GetTempPath(), "Workstatus.exe");
+        string tempBatPath = Path.Combine(Path.GetTempPath(), "install_update.bat");
+
         progressValue = 50;
         StateHasChanged();
         await Task.Delay(500);
+
         try
         {
-            // Ensure the temporary directory exists
-            Console.WriteLine($"Temp Path: {tempPath}");
+            Console.WriteLine($"Temp EXE Path: {tempExePath}");
 
-            // Download the new version of Hublog.exe to the temp folder
+            // Download new version
             using (var client = new HttpClient())
             using (var response = await client.GetAsync(downloadUrl))
             {
                 progressValue = 65;
                 StateHasChanged();
+
                 response.EnsureSuccessStatusCode();
                 await Task.Delay(500);
-                using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+
+                using (var fileStream = new FileStream(tempExePath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     await response.Content.CopyToAsync(fileStream);
                 }
+
                 progressValue = 75;
                 StateHasChanged();
             }
+
             await Task.Delay(500);
             progressValue = 90;
             StateHasChanged();
-            // Run the installer silently with admin privileges
-#if WINDOWS
-    var process = Process.Start(new ProcessStartInfo
-    {
-    FileName = tempPath,
-    Arguments = $"/S /D={installDir}", // Silent install and target directory
-    UseShellExecute = true,
-    Verb = "runas" // Run as administrator
-    });
 
-    process.WaitForExit(); // Wait for the installer to complete
-#else
-            Console.WriteLine("Process.Start is not supported on this platform.");
-#endif
+            // ✅ Create batch file to install silently with delay
+            string batContent = $@"
+            @echo off
+            timeout /t 3 > nul
+            start """" /wait ""{tempExePath}"" /S
+            exit";
 
+            File.WriteAllText(tempBatPath, batContent);
+
+            await Task.Delay(500);
             progressValue = 100;
             StateHasChanged();
-            await Task.Delay(500);
-            // Close the current application
-            Microsoft.Maui.Controls.Application.Current.Quit();
+
+            // ✅ Run the batch file with admin privileges
+           #if WINDOWS
+           Process.Start(new ProcessStartInfo
+           {
+           FileName = tempBatPath,
+           UseShellExecute = true,
+           Verb = "runas"
+           });
+
+          // Quit the app to release file locks
+          CloseAppWhileUpdate();
+          #else
+            Console.WriteLine("Installer update is not supported on this platform.");
+          #endif
         }
         catch (Exception ex)
         {
@@ -286,7 +319,7 @@
             progressValue = 101;
             StateHasChanged();
             await Task.Delay(2000);
-            Microsoft.Maui.Controls.Application.Current.Quit();
+            CloseAppWhileUpdate();
         }
     }
 }

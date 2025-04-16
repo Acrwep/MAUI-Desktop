@@ -82,13 +82,13 @@
 }
 
 .home_logo {
-    width: 170px;
+    width: 250px;
 }
 
 .signin_text {
     color: #706f6fee;
     font-weight: 600;
-    margin-top: 3px;
+    margin-top: -9px;
     margin-bottom: 20px;
     text-align: center;
     font-size: 14px;
@@ -138,8 +138,46 @@
     font-weight: 500;
     font-size: 14px;
 }
+.login_forgotpasswordContainer {
+    margin-top:6px !important;
+    display:flex;
+    justify-content:flex-end;
+    align-items:flex-end;
+}
+.login_forgotpassword {
+    text-decoration: none;
+    margin: 0;
+    color: #212c36;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+}
+.login_forgotpassword:hover {
+    color: #25a17d;
+ }
+    .login_button {
+        color: #fff;
+        background-color: #25a17d;
+        box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
+        font-size: 14px;
+        height: 35px;
+        width: 100%;
+        font-weight: 600;
+        border-radius: 6px;
+        border-color: #25a17d;
+        border: none;
+    }
 
-.login_button {
+.login_button:hover {
+    background-color: #009737;
+ }
+
+.login_button:active {
+    transform: scale(0.9);
+    box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
+}
+
+.loadinglogin_button {
     color: #fff;
     background-color: #25a17d;
     box-shadow: 0 2px 0 rgba(88, 5, 255, 0.06);
@@ -150,16 +188,10 @@
     border-radius: 6px;
     border-color: #25a17d;
     border: none;
+    opacity: 0.7;
+    cursor: default !important;
 }
 
-    .login_button:hover {
-        background-color: #009737;
-    }
-
-    .login_button:active {
-        transform: scale(0.9);
-        box-shadow: 3px 2px 22px 1px rgba(85, 226, 108, 0.507);
-    }
 .login_passwordvisibilitybutton{
     position:absolute;
     right:6px;
@@ -200,10 +232,10 @@ input[type="password"]::-ms-clear {
     position: absolute;
     left: 0%;
     opacity: 0;
-    top:50%;
+    top:76%;
 }
 .login_activeerroemessage {
-    top: 100%;
+    top: 76%;
     transform: translateX(2%);
     opacity: 1;
     position: absolute;

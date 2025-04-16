@@ -1961,7 +1961,7 @@ namespace Hublog.Desktop.Components.Pages
                     {
                         var hublogVersionDetail = hublogVersionResponse[0];
 
-                        if (hublogVersionDetail.VersionNumber != "1.2.2")
+                        if (hublogVersionDetail.VersionNumber != "1.2.3")
                         {
                             await JSRuntime.InvokeVoidAsync("openUpdateModal");
                         }

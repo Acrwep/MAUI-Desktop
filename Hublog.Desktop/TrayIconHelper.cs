@@ -45,7 +45,7 @@ namespace Hublog.Desktop
                 {
                     Icon = LoadTrayIcon(),
                     Visible = true,
-                    Text = "Hublog"
+                    Text = "Workstatus"
                 };
 
                 _trayIcon.MouseClick += (sender, e) =>

@@ -24,7 +24,7 @@ namespace Hublog.Desktop
                 SystemType = GetSystemType(),
                 IPAddress = GetIPAddress(),
                 AppType = GetAppType(),
-                HublogVersion = "1.2.2"
+                HublogVersion = "1.2.3"
             }; 
 
             return systemInfo;

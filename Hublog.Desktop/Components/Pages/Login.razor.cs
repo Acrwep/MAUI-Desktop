@@ -22,6 +22,7 @@ namespace Hublog.Desktop.Components.Pages
         private string userNameError = "";
         private string passwordError = "";
         private string generalError = "";
+        private bool loginLoading = false;
 
         protected override async Task OnInitializedAsync()
         {
@@ -39,6 +40,11 @@ namespace Hublog.Desktop.Components.Pages
         #region HandleLogin
         private async Task HandleLogin()
         {
+            if (loginLoading == true)
+            {
+                return;
+            }
+            loginLoading = true;
             ClearErrorMessages();
             try
             {
@@ -98,6 +104,11 @@ namespace Hublog.Desktop.Components.Pages
             {
                 userNameError = "Something went wrong. Please try again later";
                 generalError = $"An unexpected error occurred: {ex.Message}";
+            }
+            finally
+            {
+               await Task.Delay(500);
+                loginLoading = false;
             }
         }
         #endregion
@@ -193,5 +204,13 @@ namespace Hublog.Desktop.Components.Pages
                 }
             }
         }
-}
+
+        public static void CloseAppWhileUpdate()
+        {
+#if WINDOWS
+            var window = (Application.Current.Windows[0].Handler.PlatformView as Microsoft.UI.Xaml.Window);
+            window?.Close();
+#endif
+        }
+    }
 }

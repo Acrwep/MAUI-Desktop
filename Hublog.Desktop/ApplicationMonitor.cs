@@ -49,7 +49,7 @@ namespace Hublog.Desktop
                 .Build();
 
             // Start the connection
-            EnsureConnection();
+            //EnsureConnection();
         }
 
         private void UpdateActiveApplication(object state)
@@ -79,16 +79,16 @@ namespace Hublog.Desktop
             string extractName = ExtractName(activeAppOrUrl);
 
             // Listen for the "ReceiveLiveData" event from the SignalR server
-            _connection.On<string, string, string, string, bool, string>("ReceiveLiveData", (userId, organizationId, activeApp, activeUrl, liveStreamStatus, activeAppLogo) =>
-            {
-                // This will be triggered when the server sends data
-                Console.WriteLine($"Received data in client: {userId}, {organizationId}, {activeApp}");
-            });
+            //_connection.On<string, string, string, string, bool, string>("ReceiveLiveData", (userId, organizationId, activeApp, activeUrl, liveStreamStatus, activeAppLogo) =>
+            //{
+            //    // This will be triggered when the server sends data
+            //    Console.WriteLine($"Received data in client: {userId}, {organizationId}, {activeApp}");
+            //});
 
-            if (_isSignalRConnectionStarted == true)
-            {
-                await SendLiveData();
-            }
+            //if (_isSignalRConnectionStarted == true)
+            //{
+            //    await SendLiveData();
+            //}
 
             if (!string.IsNullOrEmpty(activeAppOrUrl))
             {
@@ -411,7 +411,7 @@ namespace Hublog.Desktop
         {
             if (string.IsNullOrEmpty(applicationName) || applicationName == "msedge" || applicationName == "chrome" || applicationName == "firefox" || applicationName == "opera" || applicationName == "brave" || applicationName == null || applicationName == "null" || applicationName == "")
             {
-                await StopSignalR();
+                //await StopSignalR();
                 return;
             }
             bool finalValidationStatus = FinalApplicationNameValidation(applicationName);
@@ -453,7 +453,7 @@ namespace Hublog.Desktop
                     _previousAppOrUrl = string.Empty;
                     _previousFullAppOrUrl = string.Empty;
                     triggerStatus = true;
-                    await StopSignalR();
+                    //await StopSignalR();
                 }
             }
             else
@@ -464,7 +464,7 @@ namespace Hublog.Desktop
 
         private async Task LastSaveUrlUsageDataAsync(int userId, string url, string totalUsage)
         {
-            await StopSignalR();
+            //await StopSignalR();
             bool finalValidationStatus = FinalUrlValidation(url);
 
             if (finalValidationStatus == true)
@@ -504,7 +504,7 @@ namespace Hublog.Desktop
                     _previousAppOrUrl = string.Empty;
                     _previousFullAppOrUrl = string.Empty;
                     triggerStatus = true;
-                    await StopSignalR();
+                    //await StopSignalR();
                 }
             }
             else
@@ -520,129 +520,129 @@ namespace Hublog.Desktop
 
         //livestream code
 
-        private async Task EnsureConnection()
-        {
-            if (!_isSignalRConnectionStarted)
-            {
-                await StartSignalR(); // Start SignalR only if it's not started yet
-            }
-        }
+        //private async Task EnsureConnection()
+        //{
+        //    if (!_isSignalRConnectionStarted)
+        //    {
+        //        await StartSignalR(); // Start SignalR only if it's not started yet
+        //    }
+        //}
 
-        public async Task StartSignalR()
-        {
-            if (_isSignalRConnectionStarted)
-            {
-                Console.WriteLine("SignalR is already started.");
-                return; // Prevent starting again if already connected
-            }
-            try
-            {
-                // Start the SignalR connection
-                _isSignalRConnectionStarted = true; // Mark as started
-
-
-                // Listen for the "ReceiveLiveData" event from the SignalR server
-                _connection.On<string, string, string, string, bool, string>("ReceiveLiveData", (userId, organizationId, activeApp, activeUrl, liveStreamStatus, activeAppLogo) =>
-                {
-                    Console.WriteLine($"Received data in client: {userId}, {organizationId}, {activeApp}");
-                });
-
-                await _connection.StartAsync();
-                Console.WriteLine("Connected to SignalR Hub");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error starting connection: {ex.Message}");
-                if (ex.Message == "The HubConnection cannot be started if it is not in the Disconnected state.")
-                {
-                    await _connection.StopAsync();
-                    _isSignalRConnectionStarted = false;
-                }
-            }
-        }
-
-        private async Task SendLiveData()
-        {
-            try
-            {
-                string activeAppandUrl = GetActiveApplicationName();
-                string activeApp = ExtractApplicationName(activeAppandUrl);
-                bool validateActiveApp = FinalApplicationNameValidation(activeApp);
-                string activeUrl = ExtractUrl(activeAppandUrl);
-                bool validateActiveUrl = FinalUrlValidation(activeUrl);
-                string activeApplogo = validateActiveApp ? GetApplicationIconBase64(activeApp) : "";
-                byte[] screenshotData;
-                string screenshotAsBase64 = string.Empty; // Initialize with an empty string
-                                                          // 🔹 Get Location Data
-                var location = await GetCurrentLocation();
-
-                // 🔹 Extract Latitude & Longitude
-                double latitude = 0.0, longitude = 0.0;
-                if (location is not null)
-                {
-                    latitude = (double)location.GetType().GetProperty("Latitude")?.GetValue(location, null);
-                    longitude = (double)location.GetType().GetProperty("Longitude")?.GetValue(location, null);
-                }
-
-                Console.WriteLine($"Live Data Location - Latitude: {latitude}, Longitude: {longitude}");
-                try
-                {
-                    screenshotData = _screenCaptureTracker.CaptureScreen();
-
-                    screenshotAsBase64 = await UploadScreenshot(screenshotData);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Screenshot Error: {ex.Message}");
-                    screenshotAsBase64 = string.Empty;
-                }
-
-                Console.WriteLine(screenshotAsBase64);
-
-                var payload = new
-                {
-                    userId = MauiProgram.Loginlist.Id,
-                    organizationId = MauiProgram.Loginlist.OrganizationId,
-                    activeApp = validateActiveApp ? activeApp : "",
-                    activeUrl = validateActiveUrl ? activeUrl.Contains("localhost") ? "localhost" : activeUrl : "",
-                    liveStreamStatus = true,
-                    activeAppLogo = activeApplogo,
-                    activeScreenshot = screenshotAsBase64,
-                    latitude = latitude,
-                    longitude = longitude
-                };
-
-                await _connection.SendAsync("SendLiveData", payload);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending data: {ex.Message}");
-            }
-        }
+        //public async Task StartSignalR()
+        //{
+        //    if (_isSignalRConnectionStarted)
+        //    {
+        //        Console.WriteLine("SignalR is already started.");
+        //        return; // Prevent starting again if already connected
+        //    }
+        //    try
+        //    {
+        //        // Start the SignalR connection
+        //        _isSignalRConnectionStarted = true; // Mark as started
 
 
-        public async Task StopSignalR()
-        {
-            var payload = new
-            {
-                userId = MauiProgram.Loginlist.Id, // Replace with actual user ID
-                organizationId = MauiProgram.Loginlist.OrganizationId, // Replace with actual organization ID
-                activeApp = "",
-                activeUrl = "",
-                liveStreamStatus = false,
-                activeAppLogo = "",
-                activeScreenshot = "",
-            };
+        //        // Listen for the "ReceiveLiveData" event from the SignalR server
+        //        _connection.On<string, string, string, string, bool, string>("ReceiveLiveData", (userId, organizationId, activeApp, activeUrl, liveStreamStatus, activeAppLogo) =>
+        //        {
+        //            Console.WriteLine($"Received data in client: {userId}, {organizationId}, {activeApp}");
+        //        });
 
-            // Send the active data to SignalR Hub
-            if (_connection.State == HubConnectionState.Connected)
-            {
-                await _connection.SendAsync("SendLiveData", payload);
-            }
-            _isSignalRConnectionStarted = false;
-            await _connection.StopAsync();
-            await Task.Delay(1000); // Give time for loop to exit
-        }
+        //        await _connection.StartAsync();
+        //        Console.WriteLine("Connected to SignalR Hub");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error starting connection: {ex.Message}");
+        //        if (ex.Message == "The HubConnection cannot be started if it is not in the Disconnected state.")
+        //        {
+        //            await _connection.StopAsync();
+        //            _isSignalRConnectionStarted = false;
+        //        }
+        //    }
+        //}
+
+        //private async Task SendLiveData()
+        //{
+        //    try
+        //    {
+        //        string activeAppandUrl = GetActiveApplicationName();
+        //        string activeApp = ExtractApplicationName(activeAppandUrl);
+        //        bool validateActiveApp = FinalApplicationNameValidation(activeApp);
+        //        string activeUrl = ExtractUrl(activeAppandUrl);
+        //        bool validateActiveUrl = FinalUrlValidation(activeUrl);
+        //        string activeApplogo = validateActiveApp ? GetApplicationIconBase64(activeApp) : "";
+        //        byte[] screenshotData;
+        //        string screenshotAsBase64 = string.Empty; // Initialize with an empty string
+        //                                                  // 🔹 Get Location Data
+        //        var location = await GetCurrentLocation();
+
+        //        // 🔹 Extract Latitude & Longitude
+        //        double latitude = 0.0, longitude = 0.0;
+        //        if (location is not null)
+        //        {
+        //            latitude = (double)location.GetType().GetProperty("Latitude")?.GetValue(location, null);
+        //            longitude = (double)location.GetType().GetProperty("Longitude")?.GetValue(location, null);
+        //        }
+
+        //        Console.WriteLine($"Live Data Location - Latitude: {latitude}, Longitude: {longitude}");
+        //        try
+        //        {
+        //            screenshotData = _screenCaptureTracker.CaptureScreen();
+
+        //            screenshotAsBase64 = await UploadScreenshot(screenshotData);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Console.WriteLine($"Screenshot Error: {ex.Message}");
+        //            screenshotAsBase64 = string.Empty;
+        //        }
+
+        //        Console.WriteLine(screenshotAsBase64);
+
+        //        var payload = new
+        //        {
+        //            userId = MauiProgram.Loginlist.Id,
+        //            organizationId = MauiProgram.Loginlist.OrganizationId,
+        //            activeApp = validateActiveApp ? activeApp : "",
+        //            activeUrl = validateActiveUrl ? activeUrl.Contains("localhost") ? "localhost" : activeUrl : "",
+        //            liveStreamStatus = true,
+        //            activeAppLogo = activeApplogo,
+        //            activeScreenshot = screenshotAsBase64,
+        //            latitude = latitude,
+        //            longitude = longitude
+        //        };
+
+        //        await _connection.SendAsync("SendLiveData", payload);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error sending data: {ex.Message}");
+        //    }
+        //}
+
+
+        //public async Task StopSignalR()
+        //{
+        //    var payload = new
+        //    {
+        //        userId = MauiProgram.Loginlist.Id, // Replace with actual user ID
+        //        organizationId = MauiProgram.Loginlist.OrganizationId, // Replace with actual organization ID
+        //        activeApp = "",
+        //        activeUrl = "",
+        //        liveStreamStatus = false,
+        //        activeAppLogo = "",
+        //        activeScreenshot = "",
+        //    };
+
+        //    // Send the active data to SignalR Hub
+        //    if (_connection.State == HubConnectionState.Connected)
+        //    {
+        //        await _connection.SendAsync("SendLiveData", payload);
+        //    }
+        //    _isSignalRConnectionStarted = false;
+        //    await _connection.StopAsync();
+        //    await Task.Delay(1000); // Give time for loop to exit
+        //}
 
         private async Task CaptureAndUploadScreenshot()
         {
