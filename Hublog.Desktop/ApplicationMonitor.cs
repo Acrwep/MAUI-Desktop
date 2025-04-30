@@ -12,6 +12,7 @@ using System.Threading;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System;
+using System.Net.WebSockets;
 
 
 #if WINDOWS
@@ -35,6 +36,7 @@ namespace Hublog.Desktop
         private bool _isSignalRConnectionStarted = false;  // Flag to track connection state
         private HubConnection _connection;
         private readonly IScreenCaptureService _screenCaptureTracker;
+        private ClientWebSocket _webSocket;
 
         public ApplicationMonitor(HttpClient httpClient, IScreenCaptureService screenCaptureTracker)
         {
@@ -734,5 +736,100 @@ namespace Hublog.Desktop
 
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        #region WebSocket
+        // Create and connect to the server
+        private async Task ConnectWebSocketAsync()
+        {
+            try
+            {
+                _webSocket = new ClientWebSocket();
+                Uri serverUri = new Uri("wss://localhost:7263/ws/livestream");
+
+                await _webSocket.ConnectAsync(serverUri, CancellationToken.None);
+                Console.WriteLine("WebSocket Connected!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"WebSocket connection failed: {ex.Message}");
+            }
+        }
+
+        // Send message through WebSocket
+        private async Task SendMessageAsync()
+        {
+            if (_webSocket == null || _webSocket.State != WebSocketState.Open)
+            {
+                Console.WriteLine("WebSocket is not connected.");
+                return;
+            }
+
+            string activeAppandUrl = GetActiveApplicationName();
+            string activeApp = ExtractApplicationName(activeAppandUrl);
+            bool validateActiveApp = FinalApplicationNameValidation(activeApp);
+            string activeUrl = ExtractUrl(activeAppandUrl);
+            bool validateActiveUrl = FinalUrlValidation(activeUrl);
+            string activeApplogo = validateActiveApp ? GetApplicationIconBase64(activeApp) : "";
+            byte[] screenshotData;
+            string screenshotAsBase64 = string.Empty; // Initialize with an empty string
+                                                      // 🔹 Get Location Data
+            var location = await GetCurrentLocation();
+
+            // 🔹 Extract Latitude & Longitude
+            double latitude = 0.0, longitude = 0.0;
+            if (location is not null)
+            {
+                latitude = (double)location.GetType().GetProperty("Latitude")?.GetValue(location, null);
+                longitude = (double)location.GetType().GetProperty("Longitude")?.GetValue(location, null);
+            }
+
+            Console.WriteLine($"Live Data Location - Latitude: {latitude}, Longitude: {longitude}");
+            try
+            {
+                screenshotData = _screenCaptureTracker.CaptureScreen();
+
+                screenshotAsBase64 = await UploadScreenshot(screenshotData);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Screenshot Error: {ex.Message}");
+                screenshotAsBase64 = string.Empty;
+            }
+
+            Console.WriteLine(screenshotAsBase64);
+
+            // Create a sample payload to send
+            var payload = new
+            {
+                UserId = MauiProgram.Loginlist.Id,
+                OrganizationId = MauiProgram.Loginlist.OrganizationId,
+                ActiveApp = validateActiveApp ? activeApp : "",
+                ActiveUrl = validateActiveUrl ? activeUrl.Contains("localhost") ? "localhost" : activeUrl : "",
+                LiveStreamStatus = true,
+                ActiveAppLogo = activeApplogo,
+                ActiveScreenshot = screenshotAsBase64,
+                Latitude = latitude,
+                Longitude = longitude
+            };
+
+            string message = JsonSerializer.Serialize(payload);
+
+            var bytes = Encoding.UTF8.GetBytes(message);
+            var buffer = new ArraySegment<byte>(bytes);
+
+            await _webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            Console.WriteLine("Message sent via WebSocket.");
+        }
+
+        // Disconnect WebSocket cleanly
+        private async Task DisconnectWebSocketAsync()
+        {
+            if (_webSocket != null && _webSocket.State == WebSocketState.Open)
+            {
+                await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                Console.WriteLine("WebSocket disconnected.");
+            }
+        }
+        #endregion
     }
 }
