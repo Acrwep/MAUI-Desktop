@@ -651,9 +651,8 @@ namespace Hublog.Desktop
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Screenshot Error: {ex.Message}");
-                    screenshotAsBase64 = string.Empty;
+                    screenshotAsBase64 = "";
                 }
-
                 var payload = new
                 {
                     userId = MauiProgram.Loginlist.Id,
@@ -670,13 +669,24 @@ namespace Hublog.Desktop
                 var jsonPayload = JsonSerializer.Serialize(payload);
                 var bytes = Encoding.UTF8.GetBytes(jsonPayload);
 
-                if (_webSocket.State == WebSocketState.Open)
+                if (_webSocket != null && _webSocket.State == WebSocketState.Open)
                 {
-                    await _webSocket.SendAsync(
-                        new ArraySegment<byte>(bytes),
-                        WebSocketMessageType.Text,
-                        true,
-                        _webSocketCts.Token);
+                    if (bytes != null && _webSocketCts != null)
+                    {
+                        await _webSocket.SendAsync(
+                            new ArraySegment<byte>(bytes),
+                            WebSocketMessageType.Text,
+                            true,
+                            _webSocketCts.Token);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Bytes or CancellationTokenSource is null.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("WebSocket is not connected.");
                 }
             }
             catch (Exception ex)
@@ -688,20 +698,39 @@ namespace Hublog.Desktop
 
         public async Task StopWebSocket()
         {
+            //send last status befor stopping
+            var payload = new
+            {
+                userId = MauiProgram.Loginlist.Id,
+                organizationId = MauiProgram.Loginlist.OrganizationId,
+                activeApp = "",
+                activeUrl = "",
+                liveStreamStatus = false,
+                activeAppLogo = "",
+                activeScreenshot = "",
+                latitude = 0.0,
+                longitude = 0.0
+            };
+
+            var jsonPayload = JsonSerializer.Serialize(payload);
+            var bytes = Encoding.UTF8.GetBytes(jsonPayload);
+
             try
             {
-                if (_webSocket?.State == WebSocketState.Open)
-                {
-                    // Send close message
-                    await _webSocket.CloseAsync(
-                        WebSocketCloseStatus.NormalClosure,
-                        "Client closing",
-                        CancellationToken.None);
-                }
+                await _webSocket.SendAsync(
+                    new ArraySegment<byte>(bytes),
+                    WebSocketMessageType.Text,
+                    true,
+                    _webSocketCts.Token);
+
+                await _webSocket.CloseAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "Client closing",
+                    CancellationToken.None);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"WebSocket close error: {ex.Message}");
+                Console.WriteLine($"Error while sending or closing WebSocket: {ex.Message}");
             }
             finally
             {

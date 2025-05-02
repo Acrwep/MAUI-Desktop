@@ -1442,8 +1442,8 @@ namespace Hublog.Desktop.Components.Pages
                     // Ensure HandleIdletimeApi is called only once every 2 minutes
                     if (_lastApiCallTime == DateTime.MinValue || DateTime.Now.Subtract(_lastApiCallTime).TotalMinutes >= 2)
                     {
-                        await HandleIdletimeApi();
                         _lastApiCallTime = DateTime.Now;  // Update the last call time to now
+                        await HandleIdletimeApi();
                     }
                 }
             }
@@ -1645,6 +1645,7 @@ namespace Hublog.Desktop.Components.Pages
                 }
                 catch (Exception ex)
                 {
+                    _lastApiCallTime = DateTime.Now;
                     Console.WriteLine($"Exception: {ex.Message}");
                 }
             }

@@ -20,6 +20,7 @@ namespace Hublog.Desktop.Components.Pages
         private bool isPopupVisible = false;
 
         private string userNameError = "";
+        private string emailError = "";
         private string passwordError = "";
         private string generalError = "";
         private bool loginLoading = false;
@@ -40,12 +41,9 @@ namespace Hublog.Desktop.Components.Pages
         #region HandleLogin
         private async Task HandleLogin()
         {
-            if (loginLoading == true)
-            {
-                return;
-            }
             loginLoading = true;
             ClearErrorMessages();
+
             try
             {
                 var requestContent = JsonContent.Create(loginModel);

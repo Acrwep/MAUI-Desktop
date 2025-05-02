@@ -243,6 +243,16 @@ input[type="password"]::-ms-clear {
     margin: 0 !important;
     transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
 }
+.login_activewrongerroemessage {
+    top: 76%;
+    transform: translateX(2%);
+    opacity: 1;
+    position: absolute;
+    font-size: 11px;
+    margin: 0 !important;
+    transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+    width:220px;
+}
 /*loginnetwork modal styles*/
 .loginNetworkmodalmodal_content {
     padding: 4px 0px !important;

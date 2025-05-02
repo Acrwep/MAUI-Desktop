@@ -76,6 +76,12 @@ using Microsoft.UI.Xaml;
                                 <p>@userNameError</p>
                             </div>
                         }
+                        else if (@userNameError == "Something went wrong. Please try again later")
+                        {
+                            <div class="login_activewrongerroemessage">
+                                <p style="color:red;margin-top:3px;">@userNameError</p>
+                            </div>
+                        }
                         else
                         {
                             <div class="login_activeerroemessage">
