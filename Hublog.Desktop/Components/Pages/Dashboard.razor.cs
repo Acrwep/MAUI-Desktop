@@ -599,7 +599,7 @@ namespace Hublog.Desktop.Components.Pages
         public async Task StopTracking()
         {
             isTracking = false;
-            //await InvokeAsync(StateHasChanged);
+            await InvokeAsync(StateHasChanged);
             //await _monitor.StopSignalR();  // Now it will be initialized
         }
         #endregion
