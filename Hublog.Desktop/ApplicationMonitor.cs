@@ -35,6 +35,16 @@ namespace Hublog.Desktop
         private ClientWebSocket _webSocket;
         private CancellationTokenSource _webSocketCts;
         private bool _isWebSocketConnected = false;
+        private CancellationTokenSource _metadataCts; // 👈 Add this line
+        private bool _appLogoSent = false;
+        //private string _currentMode = "metadata"; // default to sending metadata
+        private int _screenshotRequestUserId = 0; // Track who requested screenshot
+
+        // Add these at class level
+        private enum ConnectionMode { Metadata, Screenshot }
+        private ConnectionMode _currentMode = ConnectionMode.Metadata;
+        private readonly SemaphoreSlim _modeLock = new SemaphoreSlim(1, 1);
+        private DateTime _lastScreenshotRequest = DateTime.MinValue;
 
         public ApplicationMonitor(HttpClient httpClient, IScreenCaptureService screenCaptureTracker)
         {
@@ -526,7 +536,7 @@ namespace Hublog.Desktop
 
         //livestream code
 
-        private async Task EnsureWebSocketConnection()
+        public async Task EnsureWebSocketConnection()
         {
             if (!_isWebSocketConnected)
             {
@@ -534,9 +544,10 @@ namespace Hublog.Desktop
             }
         }
 
+        // Start the WebSocket connection
         public async Task StartWebSocket()
         {
-            if (_isWebSocketConnected || _webSocket?.State == WebSocketState.Open)
+            if (_isWebSocketConnected || (_webSocket != null && _webSocket.State == WebSocketState.Open))
             {
                 Console.WriteLine("WebSocket is already connected.");
                 return;
@@ -544,126 +555,340 @@ namespace Hublog.Desktop
 
             try
             {
-                // Recreate if disposed
-                if (_webSocket == null)
-                {
-                    _webSocket = new ClientWebSocket();
-                    _webSocketCts = new CancellationTokenSource();
-                }
+                _webSocketCts = new CancellationTokenSource();
+                _metadataCts = new CancellationTokenSource();
+                _webSocket = new ClientWebSocket();
 
-                // Bypass SSL for development (remove in production)
 #if DEBUG
                 _webSocket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
 #endif
 
-                var wsUri = new Uri("wss://localhost:7263/ws/livestream");
+                // 🔄 Replace with your SERVER IP or actual domain
+                var wsUri = new Uri("wss://192.168.1.25:7263/ws/livestream");
                 await _webSocket.ConnectAsync(wsUri, _webSocketCts.Token);
-                _isWebSocketConnected = true;
-                Console.WriteLine("Connected to WebSocket");
 
-                // Start listening for messages
+                _isWebSocketConnected = true;
+                _appLogoSent = false;
+
+                Console.WriteLine("✅ Connected to WebSocket");
+
                 _ = ReceiveWebSocketMessages();
+                _ = StartSendingMetadataLoop();
+                _ = SendHeartbeatLoop();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"WebSocket connection error: {ex.Message}");
+                Console.WriteLine($"❌ WebSocket connection error: {ex.Message}");
                 _isWebSocketConnected = false;
                 await ReconnectWebSocket();
             }
         }
-
+        // Reconnect with delay
         private async Task ReconnectWebSocket()
         {
             try
             {
-                await Task.Delay(5000); // Wait 5 seconds before reconnecting
+                Console.WriteLine("🔁 Reconnecting WebSocket in 5 seconds...");
+                await Task.Delay(5000);
                 await StartWebSocket();
             }
-            catch
-            {
-                // Ignore reconnection errors
-            }
+            catch { }
         }
 
+        // Receive and handle incoming WebSocket messages
         private async Task ReceiveWebSocketMessages()
         {
-            var buffer = new byte[4096];
+            var buffer = new byte[8192];
 
             try
             {
-                while (_webSocket?.State == WebSocketState.Open &&
-                      !_webSocketCts.IsCancellationRequested)
+                while (_webSocket?.State == WebSocketState.Open && !_webSocketCts.IsCancellationRequested)
                 {
-                    var result = await _webSocket.ReceiveAsync(
-                        new ArraySegment<byte>(buffer),
-                        _webSocketCts.Token);
+                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _webSocketCts.Token);
 
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        await _webSocket.CloseAsync(
-                            WebSocketCloseStatus.NormalClosure,
-                            string.Empty,
-                            CancellationToken.None);
-                        break;
+                        Console.WriteLine("🔌 WebSocket closed by server.");
+                        _isWebSocketConnected = false;
+
+                        await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing as requested", CancellationToken.None);
+                        await ReconnectWebSocket();
+                        return;
                     }
 
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    Console.WriteLine($"Received: {message}");
+                    Console.WriteLine($"📩 Received: {message}");
 
-                    // Process server messages here
+                    await HandleWebSocketMessage(message);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"WebSocket receive error: {ex.Message}");
+                Console.WriteLine($"⚠️ WebSocket receive error: {ex.Message}");
                 _isWebSocketConnected = false;
                 await ReconnectWebSocket();
             }
         }
-
-        private async Task SendLiveDataViaWebSocket()
+        // Handle received commands
+        private async Task HandleWebSocketMessage(string message)
         {
             try
             {
-                string activeAppandUrl = GetActiveApplicationName();
-                string activeApp = ExtractApplicationName(activeAppandUrl);
-                bool validateActiveApp = FinalApplicationNameValidation(activeApp);
-                string activeUrl = ExtractUrl(activeAppandUrl);
-                bool validateActiveUrl = FinalUrlValidation(activeUrl);
-                string activeApplogo = validateActiveApp ? GetApplicationIconBase64(activeApp) : "";
-                byte[] screenshotData;
-                string screenshotAsBase64 = string.Empty;
+                Console.WriteLine($"🔍 Parsing message: {message}");
 
-                // Get Location Data
-                var location = await GetCurrentLocation();
-                double latitude = 0.0, longitude = 0.0;
-                if (location is not null)
-                {
-                    latitude = (double)location.GetType().GetProperty("Latitude")?.GetValue(location, null);
-                    longitude = (double)location.GetType().GetProperty("Longitude")?.GetValue(location, null);
-                }
+                using JsonDocument doc = JsonDocument.Parse(message);
+                JsonElement root = doc.RootElement;
 
-                try
+                if (root.TryGetProperty("type", out JsonElement typeElement))
                 {
-                    screenshotData = _screenCaptureTracker.CaptureScreen();
-                    screenshotAsBase64 = await UploadScreenshot(screenshotData);
+                    string type = typeElement.GetString();
+                    Console.WriteLine($"📦 Message type: {type}");
+
+                    await _modeLock.WaitAsync();
+                    try
+                    {
+                        if (type == "requestScreenshot")
+                        {
+                            Console.WriteLine("📸 Screenshot request received.");
+
+                            if (root.TryGetProperty("userId", out JsonElement userIdElement))
+                            {
+                                int userId = userIdElement.GetInt32();
+
+                                Console.WriteLine($"🆔 Message userId: {userId}, Local userId: {MauiProgram.Loginlist.Id}");
+
+                                if (userId == MauiProgram.Loginlist.Id)
+                                {
+                                    _currentMode = ConnectionMode.Screenshot;
+                                    _lastScreenshotRequest = DateTime.UtcNow;
+                                    await SendScreenshot();
+                                }
+                                else
+                                {
+                                    Console.WriteLine("🚫 Screenshot request not for this user.");
+                                }
+                            }
+                        }
+                        else if (type == "resumeMetadata")
+                        {
+                            _currentMode = ConnectionMode.Metadata;
+                            Console.WriteLine("🔄 Resume metadata requested.");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"⚠️ Unhandled message type: {type}");
+                        }
+                    }
+                    finally
+                    {
+                        _modeLock.Release();
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine($"Screenshot Error: {ex.Message}");
-                    screenshotAsBase64 = "";
+                    Console.WriteLine("❗ No 'type' found in message.");
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"🚨 Error handling message: {ex.Message}");
+            }
+        }
+        // Send metadata every second
+        private async Task StartSendingMetadataLoop()
+        {
+            try
+            {
+                while (!_metadataCts.IsCancellationRequested)
+                {
+                    await _modeLock.WaitAsync();
+                    try
+                    {
+                        if (_currentMode == ConnectionMode.Metadata)
+                        {
+                            await SendLiveDataViaWebSocket();
+                        }
+                        // Auto-resume metadata if screenshot was taken more than 5 seconds ago
+                        else if (_currentMode == ConnectionMode.Screenshot &&
+                                (DateTime.UtcNow - _lastScreenshotRequest).TotalSeconds > 5)
+                        {
+                            _currentMode = ConnectionMode.Metadata;
+                            Console.WriteLine("Automatically resuming metadata after screenshot");
+                        }
+                    }
+                    finally
+                    {
+                        _modeLock.Release();
+                    }
+
+                    await Task.Delay(1000, _metadataCts.Token);
+                }
+            }
+            catch (TaskCanceledException) { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Metadata loop error: {ex.Message}");
+            }
+        }
+        // Send a ping message every 5 seconds to keep connection alive
+        private async Task SendHeartbeatLoop()
+        {
+            try
+            {
+                while (_webSocket != null && _webSocket.State == WebSocketState.Open && !_webSocketCts.IsCancellationRequested)
+                {
+                    var pingMessage = Encoding.UTF8.GetBytes("{\"type\":\"ping\"}");
+                    await _webSocket.SendAsync(new ArraySegment<byte>(pingMessage),
+                        WebSocketMessageType.Text,
+                        true,
+                        _webSocketCts.Token);
+
+                    // Increase delay to 30 seconds (standard WebSocket ping interval)
+                    await Task.Delay(30000, _webSocketCts.Token);
+                }
+            }
+            catch (TaskCanceledException) { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Heartbeat error: {ex.Message}");
+            }
+        }
+
+        // Send metadata and application icon if not sent already
+        private async Task SendLiveDataViaWebSocket()
+        {
+            //try
+            //{
+            //    string activeAppAndUrl = GetActiveApplicationName();
+            //    string activeApp = ExtractApplicationName(activeAppAndUrl);
+            //    bool isValidApp = FinalApplicationNameValidation(activeApp);
+            //    string activeUrl = ExtractUrl(activeAppAndUrl);
+            //    bool isValidUrl = FinalUrlValidation(activeUrl);
+
+            //    byte[] appLogoBytes = isValidApp ? GetApplicationIconBytes(activeApp) : Array.Empty<byte>();
+
+            //    var location = await GetCurrentLocation();
+            //    double latitude = 0.0, longitude = 0.0;
+            //    if (location != null)
+            //    {
+            //        latitude = (double)(location.GetType().GetProperty("Latitude")?.GetValue(location, null) ?? 0.0);
+            //        longitude = (double)(location.GetType().GetProperty("Longitude")?.GetValue(location, null) ?? 0.0);
+            //    }
+            //    var metadata = new
+            //    {
+            //        type = "metadata",
+            //        userId = MauiProgram.Loginlist.Id,
+            //        organizationId = MauiProgram.Loginlist.OrganizationId,
+            //        activeApp = isValidApp ? activeApp : "",
+            //        activeUrl = isValidUrl ? (activeUrl.Contains("localhost") ? "localhost" : activeUrl) : "",
+            //        liveStreamStatus = true,
+            //        latitude,
+            //        longitude
+            //    };
+
+            //    if (_webSocket != null && _webSocket.State == WebSocketState.Open)
+            //    {
+            //        var metadataBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(metadata));
+            //        await _webSocket.SendAsync(new ArraySegment<byte>(metadataBytes), WebSocketMessageType.Text, true, _webSocketCts.Token);
+
+            //        // Send application icon only once after connection
+            //        if (!_appLogoSent && appLogoBytes.Length > 0)
+            //        {
+            //            _appLogoSent = true;
+
+            //            var logoHeader = Encoding.UTF8.GetBytes("{\"type\":\"applogo\"}");
+            //            await _webSocket.SendAsync(new ArraySegment<byte>(logoHeader), WebSocketMessageType.Text, true, _webSocketCts.Token);
+
+            //            await _webSocket.SendAsync(new ArraySegment<byte>(appLogoBytes), WebSocketMessageType.Binary, true, _webSocketCts.Token);
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine($"Error sending WebSocket data: {ex.Message}");
+            //    _isWebSocketConnected = false;
+            //}
+        }
+
+        // Capture application icon bytes
+        public byte[] GetApplicationIconBytes(string activeAppName)
+        {
+            try
+            {
+                Process[] processes = Process.GetProcessesByName(activeAppName);
+                if (processes.Length > 0)
+                {
+                    string exePath = processes[0].MainModule.FileName;
+                    using (var icon = System.Drawing.Icon.ExtractAssociatedIcon(exePath))
+                    {
+                        if (icon != null)
+                        {
+                            using (var ms = new MemoryStream())
+                            {
+                                icon.ToBitmap().Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                                return ms.ToArray();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting application icon: {ex.Message}");
+            }
+
+            return Array.Empty<byte>();
+        }
+
+        // Send screenshot on request
+        private async Task SendScreenshot()
+        {
+            try
+            {
+                Console.WriteLine("Preparing to send screenshot...");
+                byte[] screenshotData = _screenCaptureTracker.NewCaptureScreen();
+
+                if (_webSocket?.State == WebSocketState.Open && screenshotData.Length > 0)
+                {
+                    Console.WriteLine($"Sending screenshot ({screenshotData.Length} bytes)");
+
+                    var screenshotHeader = Encoding.UTF8.GetBytes("{\"type\":\"screenshot\"}");
+                    await _webSocket.SendAsync(
+                        new ArraySegment<byte>(screenshotHeader),
+                        WebSocketMessageType.Text,
+                        true,
+                        _webSocketCts.Token);
+
+                    await _webSocket.SendAsync(
+                        new ArraySegment<byte>(screenshotData),
+                        WebSocketMessageType.Binary,
+                        true,
+                        _webSocketCts.Token);
+
+                    Console.WriteLine("Screenshot sent successfully");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send screenshot: {ex.Message}");
+            }
+        }
+        // Stop and clean up the WebSocket connection
+        public async Task StopWebSocket()
+        {
+            try
+            {
                 var payload = new
                 {
                     userId = MauiProgram.Loginlist.Id,
                     organizationId = MauiProgram.Loginlist.OrganizationId,
-                    activeApp = validateActiveApp ? activeApp : "",
-                    activeUrl = validateActiveUrl ? activeUrl.Contains("localhost") ? "localhost" : activeUrl : "",
-                    liveStreamStatus = true,
-                    activeAppLogo = activeApplogo,
-                    activeScreenshot = screenshotAsBase64,
-                    latitude = latitude,
-                    longitude = longitude
+                    activeApp = "",
+                    activeUrl = "",
+                    liveStreamStatus = false,
+                    activeAppLogo = "",
+                    activeScreenshot = "",
+                    latitude = 0.0,
+                    longitude = 0.0
                 };
 
                 var jsonPayload = JsonSerializer.Serialize(payload);
@@ -671,62 +896,9 @@ namespace Hublog.Desktop
 
                 if (_webSocket != null && _webSocket.State == WebSocketState.Open)
                 {
-                    if (bytes != null && _webSocketCts != null)
-                    {
-                        await _webSocket.SendAsync(
-                            new ArraySegment<byte>(bytes),
-                            WebSocketMessageType.Text,
-                            true,
-                            _webSocketCts.Token);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Bytes or CancellationTokenSource is null.");
-                    }
+                    await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _webSocketCts.Token);
+                    await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
                 }
-                else
-                {
-                    Console.WriteLine("WebSocket is not connected.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending WebSocket data: {ex.Message}");
-                _isWebSocketConnected = false;
-            }
-        }
-
-        public async Task StopWebSocket()
-        {
-            //send last status befor stopping
-            var payload = new
-            {
-                userId = MauiProgram.Loginlist.Id,
-                organizationId = MauiProgram.Loginlist.OrganizationId,
-                activeApp = "",
-                activeUrl = "",
-                liveStreamStatus = false,
-                activeAppLogo = "",
-                activeScreenshot = "",
-                latitude = 0.0,
-                longitude = 0.0
-            };
-
-            var jsonPayload = JsonSerializer.Serialize(payload);
-            var bytes = Encoding.UTF8.GetBytes(jsonPayload);
-
-            try
-            {
-                await _webSocket.SendAsync(
-                    new ArraySegment<byte>(bytes),
-                    WebSocketMessageType.Text,
-                    true,
-                    _webSocketCts.Token);
-
-                await _webSocket.CloseAsync(
-                    WebSocketCloseStatus.NormalClosure,
-                    "Client closing",
-                    CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -735,7 +907,10 @@ namespace Hublog.Desktop
             finally
             {
                 _isWebSocketConnected = false;
+
                 _webSocketCts?.Cancel();
+                _metadataCts?.Cancel();
+
                 _webSocket?.Dispose();
                 _webSocket = null;
             }
